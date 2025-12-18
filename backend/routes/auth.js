@@ -1,4 +1,3 @@
-// routes/auth.js
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -11,7 +10,6 @@ router.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // Optional: check if user exists
     const existing = await User.findOne({ email });
     if (existing) {
       return res.status(400).json({ error: 'Email already in use' });
