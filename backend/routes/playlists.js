@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const Playlist = require('../models/Playlist');
 const auth = require('../middleware/auth'); 
 const router = express.Router();
+const User = require('../models/User');
 
 // CREATE playlist
 router.post('/', auth, async (req, res) => {
@@ -56,6 +57,38 @@ router.delete('/:id', auth, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+// GET feed playlists from followed users with pagination
+router.get('/feed', auth, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Get users current user follows (with fallback)
+    const user = await User.findById(req.user.id).select('followings');
+    const followingIds = user?.followings?.map(id => id.toString()) || [];
+
+    const playlists = await Playlist.find({ 
+      owner: { $in: followingIds },
+      isPublic: true 
+    })
+    .populate('owner', 'username')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+    res.json({ 
+      playlists, 
+      pagination: { 
+        current: page, 
+        limit,
+        followingCount: followingIds.length 
+      } 
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
