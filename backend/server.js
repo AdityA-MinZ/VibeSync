@@ -17,6 +17,7 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/playlists', require('./routes/playlists'));
 
 // Basic test route (optional)
 app.get('/', (req, res) => {
@@ -24,7 +25,7 @@ app.get('/', (req, res) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 6000;
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Playlist routes
