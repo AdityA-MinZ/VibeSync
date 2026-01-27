@@ -1,33 +1,21 @@
-// server.js
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config();
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: '*' }
+});
 
 // Middlewares
 app.use(cors());
 app.use(express.json());
 
-// MongoDB connection
+// MongoDB
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB connected'))
-  .catch(err => console.log('MongoDB error:', err));
-
-// Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/playlists', require('./routes/playlists'));
-
-// Basic test route (optional)
-app.get('/', (req, res) => {
-  res.send('VibeSync backend running');
-});
-
-// Start server
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-// Playlist routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/playlists', require('./routes/playlists'));
+  .catch(err => console.error('MongoDB connection error:', err));
