@@ -1,3 +1,8 @@
+router.post('/request/:userId', auth, async (req, res) => {
+  console.log('Friends request - user:', req.user.id);
+  console.log('Target ID:', req.params.userId);
+});
+
 const express = require('express');
 const router = express.Router();
 const Friend = require('../models/Friend');  // Create models/Friend.js if missing
