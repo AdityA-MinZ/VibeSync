@@ -3,10 +3,6 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-console.log('Found user:', user ? user.username : 'null');
-console.log('Input password length:', password.length);
-console.log('Stored hash preview:', user.password ? user.password.slice(0, 20) + '...' : 'null');
-console.log('bcrypt match:', isMatch);
 
 
 // POST /api/auth/register
@@ -47,11 +43,23 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ error: 'Invalid credentials' });
-
+    console.log('Login attempt:', { email: email.toLowerCase().trim() });
+    
+    const user = await User.findOne({ email: { $regex: new RegExp(`^${email.trim()}$`, 'i') } });
+    console.log('Found user:', user ? user.username : 'none');
+    
+    if (!user) {
+      console.log('No user found');
+      return res.status(400).json({ error: 'Invalid credentials' });
+    }
+    
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
+    console.log('Password match:', isMatch);
+    
+    if (!isMatch) {
+      console.log('Password no match');
+      return res.status(400).json({ error: 'Invalid credentials' });
+    }
 
     const payload = { id: user.id };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -65,6 +73,7 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Login error:', error.message);
     res.status(500).json({ error: 'Server error' });
   }
 });
