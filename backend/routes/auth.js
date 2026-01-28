@@ -3,6 +3,11 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+console.log('Found user:', user ? user.username : 'null');
+console.log('Input password length:', password.length);
+console.log('Stored hash preview:', user.password ? user.password.slice(0, 20) + '...' : 'null');
+console.log('bcrypt match:', isMatch);
+
 
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
