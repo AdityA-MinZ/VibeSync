@@ -14,6 +14,8 @@ const io = new Server(server, {
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use('/api/friends', require('./routes/friends'));
+
 
 // MongoDB
 mongoose.connect(process.env.MONGODB_URI)
