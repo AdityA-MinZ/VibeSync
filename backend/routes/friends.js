@@ -1,70 +1,76 @@
-require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const http = require('http');
-const { Server } = require('socket.io');
+const router = express.Router();
+const Friend = require('../models/Friend');  // Create models/Friend.js if missing
+const auth = require('../middleware/auth');  // Create if missing
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*",  // Adjust for production: process.env.FRONTEND_URL
-    methods: ["GET", "POST"]
+// POST /api/friends/request/:userId
+router.post('/request/:userId', auth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const requesterId = req.user.id;
+    
+    // Check if request already exists
+    const existing = await Friend.findOne({
+      $or: [
+        { user1: requesterId, user2: userId },
+        { user1: userId, user2: requesterId }
+      ]
+    });
+    
+    if (existing) {
+      return res.status(400).json({ error: 'Request already exists' });
+    }
+    
+    const friendReq = new Friend({
+      user1: requesterId,
+      user2: userId,
+      status: 'pending'
+    });
+    await friendReq.save();
+    
+    res.status(201).json({ 
+      message: 'Friend request sent',
+      requestId: friendReq._id 
+    });
+  } catch (error) {
+    console.error('Friend request error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Middlewares
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
-
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/vibesync')
-  .then(() => console.log('✅ MongoDB connected'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
-
-// Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/playlists', require('./routes/playlists'));
-app.use('/api/friends', require('./routes/friends'));
-
-// Socket.IO for VibeSync real-time (Listen Together, notifications)
-io.on('connection', (socket) => {
-  console.log('🔌 Socket connected:', socket.id);
-  
-  // Join user room (use JWT in production)
-  socket.on('join-room', (userId) => {
-    socket.join(userId);
-    console.log(`User ${userId} joined room`);
-  });
-  
-  // Playlist sync example
-  socket.on('playlist-update', (data) => {
-    io.to(data.userId).emit('playlist-synced', data);
-  });
-  
-  socket.on('disconnect', () => {
-    console.log('🔌 Socket disconnected:', socket.id);
-  });
+// PUT /api/friends/accept/:requestId
+router.put('/accept/:requestId', auth, async (req, res) => {
+  try {
+    const friendReq = await Friend.findOneAndUpdate(
+      { _id: req.params.requestId, user2: req.user.id, status: 'pending' },
+      { status: 'accepted' },
+      { new: true }
+    ).populate('user1 user2', 'username email');
+    
+    if (!friendReq) {
+      return res.status(404).json({ error: 'Request not found or already handled' });
+    }
+    
+    res.json({ 
+      message: 'Friend request accepted',
+      friend: friendReq 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-// Make io available in routes (for notifications)
-app.set('io', io);
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+// GET /api/friends
+router.get('/', auth, async (req, res) => {
+  try {
+    const friends = await Friend.find({
+      $or: [{ user1: req.user.id }, { user2: req.user.id }],
+      status: 'accepted'
+    }).populate('user1 user2', 'username email');
+    res.json(friends);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-// Health check
-app.get('/', (req, res) => {
-  res.json({ message: 'VibeSync Backend ✅', timestamp: new Date().toISOString() });
-});
-
-// Start server
-const PORT = process.env.PORT || 4000;
-server.listen(PORT, () => {
-  console.log(`🚀 VibeSync Server + Socket.IO on port ${PORT}`);
-});
+module.exports = router;

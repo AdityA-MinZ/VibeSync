@@ -21,3 +21,9 @@ app.use('/api/friends', require('./routes/friends'));
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
+
+// Port server
+const PORT = process.env.PORT || 4000;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 VibeSync Server + Socket.IO on port ${PORT}`);
+});
