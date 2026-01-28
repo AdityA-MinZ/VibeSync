@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true }
 }, { timestamps: true });
 
-userSchema.pre('save', async function(next) {
+/*userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   
   try {
@@ -17,7 +17,7 @@ userSchema.pre('save', async function(next) {
   } catch (err) {
     next(err);
   }
-});
+});*/
 
 
 module.exports = mongoose.model('User', userSchema);
