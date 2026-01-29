@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head><title>VibeSync Socket Test</title></head>
+<body>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+  const socket = io('https://vibesync-hqgy.onrender.com', {
+    transports: ['websocket', 'polling'],
+    cors: { origin: '*' }
+  });
+  
+  socket.on('connect', () => {
+    console.log('✅ Connected to Render!', socket.id);
+    socket.emit('user-login', {userId: 'friend1'});
+  });
+  
+  socket.on('connect_error', (err) => {
+    console.log('❌ Error:', err.message);
+  });
+  
+  socket.on('user-online', (data) => {
+    console.log('👥 User online:', data);
+  });
+</script>
+</body>
+</html>
