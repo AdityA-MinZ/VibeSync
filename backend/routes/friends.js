@@ -4,9 +4,21 @@ const Friend = require('../models/Friend');  // Create models/Friend.js if missi
 const auth = require('../middleware/auth');  // Create if missing
 
 router.post('/request/:userId', auth, async (req, res) => {
-  console.log('Friends request - user:', req.user.id);
-  console.log('Target ID:', req.params.userId);
+  console.log('Friends request START');
+  try {
+    const { userId } = req.params;
+    const senderId = req.user.id;
+    console.log('Creating request:', senderId, '->', userId);
+    
+    // Your friend request code here...
+    res.json({ message: 'Friend request sent', requestId: 'test123' });
+    console.log('Friends request SUCCESS');
+  } catch (error) {
+    console.log('Friends request ERROR:', error.message);
+    res.status(500).json({ error: error.message });
+  }
 });
+
 
 // POST /api/friends/request/:userId
 router.post('/request/:userId', auth, async (req, res) => {
