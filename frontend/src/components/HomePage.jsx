@@ -50,7 +50,7 @@ function HomePage({ user }) {
           </div>
           <div className="profile-item">
             <label>Favorite Genre</label>
-            <div className="value">Electronic</div>
+            <div className="value">Heavy Metal</div>
           </div>
         </div>
       </div>
