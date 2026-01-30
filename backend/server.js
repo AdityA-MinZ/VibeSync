@@ -33,6 +33,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/playlists', require('./routes/playlists'));
 app.use('/api/friends', require('./routes/friends'));
+app.use('/api/feed', require('./routes/feed'));
 
 // Production: Serve React frontend (if you have client/build folder)
 if (process.env.NODE_ENV === 'production') {
