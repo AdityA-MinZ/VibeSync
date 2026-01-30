@@ -1,60 +1,44 @@
-import { useState } from 'react';
-import api from '../api';
+import React, { useState } from 'react';
 
-function LoginForm() {
+function LoginForm({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [status, setStatus] = useState('');
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setStatus('Logging in...');
-
-    try {
-      const res = await api.post('/auth/login', { email, password });
-      const token = res.data.token;
-      if (token) {
-        localStorage.setItem('token', token);
-      }
-      setStatus('Login successful');
-    } catch (err) {
-      const msg =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        err.message;
-      setStatus('Error: ' + msg);
-    }
+    onLogin(email, password);
   };
 
   return (
-    <div className="card">
-      <h2>Login</h2>
-      <form className="form" onSubmit={handleSubmit}>
-        <label>
-          Email
+    <div className="auth-container">
+      <h2>Welcome Back</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label htmlFor="loginEmail">Email</label>
           <input
             type="email"
+            id="loginEmail"
+            placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
             required
           />
-        </label>
-
-        <label>
-          Password
+        </div>
+        <div className="form-group">
+          <label htmlFor="loginPassword">Password</label>
           <input
             type="password"
+            id="loginPassword"
+            placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
             required
           />
-        </label>
-
-        <button type="submit">Log in</button>
+        </div>
+        <button type="submit" className="btn-submit">
+          Log in
+        </button>
       </form>
-      {status && <p style={{ marginTop: '0.75rem' }}>{status}</p>}
     </div>
   );
 }

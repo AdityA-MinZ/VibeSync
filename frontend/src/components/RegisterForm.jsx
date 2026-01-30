@@ -1,72 +1,56 @@
-import { useState } from 'react';
-import api from '../api';
+import React, { useState } from 'react';
 
-function RegisterForm() {
+function RegisterForm({ onRegister }) {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [status, setStatus] = useState('');
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setStatus('Creating account...');
-
-    try {
-      const res = await api.post('/auth/register', {
-        username,
-        email,
-        password,
-      });
-      setStatus(res.data.message || 'Registration successful');
-    } catch (err) {
-      const msg =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        err.message;
-      setStatus('Error: ' + msg);
-    }
+    onRegister(username, email, password);
   };
 
   return (
-    <div className="card">
-      <h2>Register</h2>
-      <form className="form" onSubmit={handleSubmit}>
-        <label>
-          Username
+    <div className="auth-container">
+      <h2>Create Account</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label htmlFor="registerUsername">Username</label>
           <input
             type="text"
+            id="registerUsername"
+            placeholder="your handle"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="your handle"
             required
           />
-        </label>
-
-        <label>
-          Email
+        </div>
+        <div className="form-group">
+          <label htmlFor="registerEmail">Email</label>
           <input
             type="email"
+            id="registerEmail"
+            placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
             required
           />
-        </label>
-
-        <label>
-          Password
+        </div>
+        <div className="form-group">
+          <label htmlFor="registerPassword">Password</label>
           <input
             type="password"
+            id="registerPassword"
+            placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="choose a strong password"
             required
           />
-        </label>
-
-        <button type="submit">Create account</button>
+        </div>
+        <button type="submit" className="btn-submit">
+          Register
+        </button>
       </form>
-      {status && <p style={{ marginTop: '0.75rem' }}>{status}</p>}
     </div>
   );
 }
