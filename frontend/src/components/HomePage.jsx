@@ -62,7 +62,7 @@ function HomePage({ user }) {
           <div className="list-item">
             <div className="list-item-icon">🎶</div>
             <div className="list-item-content">
-              <div className="list-item-title">Chill Vibes</div>
+              <div className="list-item-title">Chatpate Ganne</div>
               <div className="list-item-subtitle">24 tracks • 1.5 hours</div>
             </div>
             <button className="btn-action">Play</button>
@@ -70,7 +70,7 @@ function HomePage({ user }) {
           <div className="list-item">
             <div className="list-item-icon">🔥</div>
             <div className="list-item-content">
-              <div className="list-item-title">Workout Beats</div>
+              <div className="list-item-title">Party Playlist</div>
               <div className="list-item-subtitle">32 tracks • 2.1 hours</div>
             </div>
             <button className="btn-action">Play</button>
@@ -78,7 +78,7 @@ function HomePage({ user }) {
           <div className="list-item">
             <div className="list-item-icon">🌙</div>
             <div className="list-item-content">
-              <div className="list-item-title">Night Drive</div>
+              <div className="list-item-title">Driving Playlist</div>
               <div className="list-item-subtitle">18 tracks • 1.2 hours</div>
             </div>
             <button className="btn-action">Play</button>
@@ -93,7 +93,7 @@ function HomePage({ user }) {
           <div className="list-item">
             <div className="list-item-icon">👤</div>
             <div className="list-item-content">
-              <div className="list-item-title">Alex Johnson</div>
+              <div className="list-item-title">W NICOLE</div>
               <div className="list-item-subtitle">Listening to Lo-Fi Beats</div>
             </div>
             <button className="btn-action">View Profile</button>
@@ -101,7 +101,7 @@ function HomePage({ user }) {
           <div className="list-item">
             <div className="list-item-icon">👤</div>
             <div className="list-item-content">
-              <div className="list-item-title">Sarah Williams</div>
+              <div className="list-item-title">L HAUZEL</div>
               <div className="list-item-subtitle">Created a new playlist</div>
             </div>
             <button className="btn-action">View Profile</button>
@@ -109,7 +109,7 @@ function HomePage({ user }) {
           <div className="list-item">
             <div className="list-item-icon">👤</div>
             <div className="list-item-content">
-              <div className="list-item-title">Mike Chen</div>
+              <div className="list-item-title">ADITYA SAN</div>
               <div className="list-item-subtitle">Shared 5 new tracks</div>
             </div>
             <button className="btn-action">View Profile</button>
@@ -124,7 +124,7 @@ function HomePage({ user }) {
           <div className="list-item">
             <div className="list-item-icon">🎵</div>
             <div className="list-item-content">
-              <div className="list-item-title">DJ MusicMaster</div>
+              <div className="list-item-title">EZ Snippet</div>
               <div className="list-item-subtitle">128 playlists • 1.2K followers</div>
             </div>
             <button className="btn-action">Follow</button>
@@ -132,7 +132,7 @@ function HomePage({ user }) {
           <div className="list-item">
             <div className="list-item-icon">🎸</div>
             <div className="list-item-content">
-              <div className="list-item-title">Indie Explorer</div>
+              <div className="list-item-title">Sohm</div>
               <div className="list-item-subtitle">56 playlists • 890 followers</div>
             </div>
             <button className="btn-action">Follow</button>
@@ -140,7 +140,7 @@ function HomePage({ user }) {
           <div className="list-item">
             <div className="list-item-icon">🎤</div>
             <div className="list-item-content">
-              <div className="list-item-title">Hip Hop Head</div>
+              <div className="list-item-title">Sufr</div>
               <div className="list-item-subtitle">94 playlists • 2.5K followers</div>
             </div>
             <button className="btn-action">Follow</button>
