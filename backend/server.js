@@ -45,7 +45,26 @@ if (process.env.NODE_ENV === 'production') {
 // Socket.IO events for VibeSync (team listening, etc.)
 io.on('connection', (socket) => {
   console.log('🔌 Socket connected:', socket.id);
-  socket.on('disconnect', () => console.log('Socket disconnected'));
+  
+  socket.on('disconnect', () => console.log('Socket disconnected:', socket.id));
+  
+  socket.on('user-login', (data) => {
+    console.log('LOGIN EVENT:', data);
+    socket.userId = data.userId;  // Store userId on socket
+    io.emit('user-online', { userId: data.userId, status: 'online' });
+  });
+  
+  socket.on('playing-track', (data) => {
+    console.log('PLAYING EVENT:', data);
+    // Broadcast to friends room only
+    io.to(`friends-${data.userId}`).emit('friend-playing', data);
+  });
+  
+  socket.on('join-friends-room', (userId) => {
+    console.log('Joining room:', `friends-${userId}`);
+    socket.join(`friends-${userId}`);
+    socket.join(`user-${userId}`);
+  });
 });
 
 // Start server (Render-compatible)
