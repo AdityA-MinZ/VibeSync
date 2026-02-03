@@ -588,6 +588,7 @@ function HomePage({ user }) {
         )}
       </div>
 
+<<<<<<< HEAD
       {/* Modal */}
       {modalTrack && (
         <div className="modal active" onClick={(e) => e.target === e.currentTarget && closeModal()}>
@@ -650,6 +651,124 @@ function HomePage({ user }) {
         </div>
       )}
     </>
+=======
+      {/* Profile Section */}
+      <div className="section-full">
+        <h2>👤 Profile</h2>
+        <div className="profile-details">
+          <div className="profile-item">
+            <label>Username</label>
+            <div className="value">{user.username}</div>
+          </div>
+          <div className="profile-item">
+            <label>Email</label>
+            <div className="value">{user.email}</div>
+          </div>
+          <div className="profile-item">
+            <label>Member Since</label>
+            <div className="value">January 2026</div>
+          </div>
+          <div className="profile-item">
+            <label>Favorite Genre</label>
+            <div className="value">Heavy Metal</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Playlists Section */}
+      <div className="section-full">
+        <h2>🎵 My Playlists</h2>
+        <div className="playlist-list">
+          <div className="list-item">
+            <div className="list-item-icon">🎶</div>
+            <div className="list-item-content">
+              <div className="list-item-title">Chatpate Ganne</div>
+              <div className="list-item-subtitle">24 tracks • 1.5 hours</div>
+            </div>
+            <button className="btn-action">Play</button>
+          </div>
+          <div className="list-item">
+            <div className="list-item-icon">🔥</div>
+            <div className="list-item-content">
+              <div className="list-item-title">Party Playlist</div>
+              <div className="list-item-subtitle">32 tracks • 2.1 hours</div>
+            </div>
+            <button className="btn-action">Play</button>
+          </div>
+          <div className="list-item">
+            <div className="list-item-icon">🌙</div>
+            <div className="list-item-content">
+              <div className="list-item-title">Driving Playlist</div>
+              <div className="list-item-subtitle">18 tracks • 1.2 hours</div>
+            </div>
+            <button className="btn-action">Play</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Friends Section */}
+      <div className="section-full">
+        <h2>👥 Friends</h2>
+        <div className="friends-list">
+          <div className="list-item">
+            <div className="list-item-icon">👤</div>
+            <div className="list-item-content">
+              <div className="list-item-title">W NICOLE</div>
+              <div className="list-item-subtitle">Listening to Lo-Fi Beats</div>
+            </div>
+            <button className="btn-action">View Profile</button>
+          </div>
+          <div className="list-item">
+            <div className="list-item-icon">👤</div>
+            <div className="list-item-content">
+              <div className="list-item-title">L HAUZEL</div>
+              <div className="list-item-subtitle">Created a new playlist</div>
+            </div>
+            <button className="btn-action">View Profile</button>
+          </div>
+          <div className="list-item">
+            <div className="list-item-icon">👤</div>
+            <div className="list-item-content">
+              <div className="list-item-title">ADITYA SAN</div>
+              <div className="list-item-subtitle">Shared 5 new tracks</div>
+            </div>
+            <button className="btn-action">View Profile</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Discover Users Section */}
+      <div className="section-full">
+        <h2>🔍 Discover Users</h2>
+        <div className="users-list">
+          <div className="list-item">
+            <div className="list-item-icon">🎵</div>
+            <div className="list-item-content">
+              <div className="list-item-title">EZ Snippet</div>
+              <div className="list-item-subtitle">128 playlists • 1.2K followers</div>
+            </div>
+            <button className="btn-action">Follow</button>
+          </div>
+          <div className="list-item">
+            <div className="list-item-icon">🎸</div>
+            <div className="list-item-content">
+              <div className="list-item-title">Sohm</div>
+              <div className="list-item-subtitle">56 playlists • 890 followers</div>
+            </div>
+            <button className="btn-action">Follow</button>
+          </div>
+          <div className="list-item">
+            <div className="list-item-icon">🎤</div>
+            <div className="list-item-content">
+              <div className="list-item-title">Sufr</div>
+              <div className="list-item-subtitle">94 playlists • 2.5K followers</div>
+            </div>
+            <button className="btn-action">Follow</button>
+          </div>
+        </div>
+      </div>
+    </div>
+>>>>>>> fa60328df709e80d57b66fa79261c7bcd90ccb31
   );
 }
 
