@@ -1,6 +1,7 @@
 // frontend/src/components/HomePage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import Sidebar from "./Sidebar";
+import SearchResults from "./SearchResults";
 
 const musicData = [
   {
@@ -156,6 +157,7 @@ function HomePage({ user }) {
   const [currentPage, setCurrentPage] = useState("home");
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const [modalTrack, setModalTrack] = useState(null);
 
   const filteredData = useMemo(() => {
@@ -173,21 +175,37 @@ function HomePage({ user }) {
     return base;
   }, [currentFilter, searchTerm]);
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim().length >= 2) {
+      setShowSearchResults(true);
+    }
+  };
+
+  const closeSearchResults = () => {
+    setShowSearchResults(false);
+  };
+
+  const handleTrackSelect = (track) => {
+    setModalTrack(track);
+    document.body.style.overflow = "hidden";
+  };
+
+  // Handle Escape key to close search
   useEffect(() => {
-    // re-run masonry on changes
-    setTimeout(() => {
-      const cards = document.querySelectorAll(".card");
-      cards.forEach((card) => {
-        const img = card.querySelector(".card-image");
-        const content = card.querySelector(".card-content");
-        const actions = card.querySelector(".card-actions");
-        if (!img || !content || !actions) return;
-        const height =
-          img.offsetHeight + content.offsetHeight + actions.offsetHeight;
-        card.style.gridRowEnd = `span ${Math.ceil(height / 10)}`;
-      });
-    }, 100);
-  }, [filteredData, sidebarExpanded]);
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        closeSearchResults();
+      }
+    };
+
+    if (showSearchResults) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [showSearchResults]);
+
+
 
   const toggleLike = (trackId) => {
     setLiked((prev) => {
@@ -211,7 +229,8 @@ function HomePage({ user }) {
   return (
     <>
       {/* Search bar */}
-      <div
+      <form
+        onSubmit={handleSearch}
         className="search-container"
         style={{
           marginLeft: sidebarExpanded ? 280 : 80,
@@ -225,7 +244,15 @@ function HomePage({ user }) {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-      </div>
+        {searchTerm.trim().length >= 2 && (
+          <button type="submit" className="search-submit-btn">
+            🔍
+          </button>
+        )}
+        {searchTerm.trim().length > 0 && searchTerm.trim().length < 2 && (
+          <p className="search-hint">Type at least 2 characters to search</p>
+        )}
+      </form>
 
       {/* Sidebar */}
       <Sidebar
@@ -244,68 +271,52 @@ function HomePage({ user }) {
         {/* Home feed */}
         {currentPage === "home" && (
           <div className="page-content active">
-            <div className="masonry-grid">
+            <div className="playlist-grid">
               {filteredData.map((track) => {
                 const isLiked = liked.has(track.id);
-                // random height like original
-                const heights = [250, 300, 350, 400, 450];
-                const randomHeight =
-                  heights[Math.floor(Math.random() * heights.length)];
                 return (
                   <div
                     key={track.id}
-                    className="card"
-                    style={{
-                      gridRowEnd: `span ${Math.ceil(randomHeight / 10)}`,
-                    }}
+                    className="playlist-card"
+                    onClick={() => openModal(track)}
                   >
-                    <div
-                      className="card-image"
-                      style={{ height: randomHeight }}
-                    >
+                    <div className="playlist-card-image">
                       <img src={track.image} alt={track.title} />
                       <div className="genre-badge">{track.genre}</div>
                       <div className="play-overlay">
-                        <div className="play-icon" />
-                      </div>
-                      <div className="card-overlay">
-                        <div className="card-title">{track.title}</div>
-                        <div className="card-artist">{track.artist}</div>
+                        <div className="play-icon">▶</div>
                       </div>
                     </div>
-                    <div className="card-content">
-                      <div className="card-title">{track.title}</div>
-                      <div className="card-artist">{track.artist}</div>
-                      <div className="card-stats">
-                        <div className="stat-item">
-                          <span>👍</span>
-                          <span>{track.likes}</span>
-                        </div>
-                        <div className="stat-item">
-                          <span>▶</span>
-                          <span>{track.plays}</span>
-                        </div>
-                        <div className="stat-item">
-                          <span>💬</span>
-                          <span>{track.comments}</span>
-                        </div>
+                    <div className="playlist-card-content">
+                      <h3 className="playlist-card-title">{track.title}</h3>
+                      <p className="playlist-card-artist">{track.artist}</p>
+                      <div className="playlist-card-stats">
+                        <span className="stat">
+                          <span className="stat-icon">👍</span>
+                          {formatNumber(track.likes)}
+                        </span>
+                        <span className="stat">
+                          <span className="stat-icon">▶</span>
+                          {formatNumber(track.plays)}
+                        </span>
                       </div>
                     </div>
-                    <div className="card-actions">
+                    <div className="playlist-card-actions">
                       <button
-                        className={`action-btn ${
-                          isLiked ? "liked" : ""
-                        }`}
+                        className={`action-btn like-btn ${isLiked ? "liked" : ""}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleLike(track.id);
                         }}
                       >
-                        {isLiked ? "❤️ Like" : "🤍 Like"}
+                        {isLiked ? "❤️" : "🤍"}
                       </button>
                       <button
-                        className="action-btn"
-                        onClick={() => openModal(track)}
+                        className="action-btn view-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openModal(track);
+                        }}
                       >
                         View
                       </button>
@@ -323,36 +334,120 @@ function HomePage({ user }) {
             <div className="page-header">
               <h1 className="page-title">Profile</h1>
               <p className="page-subtitle">
-                Manage your account and preferences
+                Manage your account and view your music journey
               </p>
             </div>
-            <div className="profile-card">
-              <div className="profile-avatar-large">
-                {(user.name || "A").charAt(0).toUpperCase()}
+            
+            {/* Profile Hero Card */}
+            <div className="profile-hero-card">
+              <div className="profile-cover-image" />
+              <div className="profile-info-section">
+                <div className="profile-avatar-wrapper">
+                  <div className="profile-avatar-large">
+                    {(user?.username || "A").charAt(0).toUpperCase()}
+                  </div>
+                  <button className="edit-avatar-btn" title="Change photo">
+                    📷
+                  </button>
+                </div>
+                <div className="profile-details">
+                  <h2 className="profile-name">{user?.username || "adi"}</h2>
+                  <p className="profile-handle">@{user?.username?.toLowerCase() || "adi"}</p>
+                  <p className="profile-bio">Music lover 🎵 | Creating vibes since 2024</p>
+                  <div className="profile-meta">
+                    <span className="meta-item">📅 Joined January 2026</span>
+                    <span className="meta-item">📍 Global</span>
+                    <span className="meta-item">🔗 vibesync.com/u/{user?.username?.toLowerCase() || "adi"}</span>
+                  </div>
+                </div>
+                <div className="profile-actions">
+                  <button className="btn-primary">Edit Profile</button>
+                  <button className="action-btn">Share Profile</button>
+                </div>
               </div>
-              <h2>{user.name || "adi"}</h2>
-              <p
-                style={{
-                  color: "#a0a8c8",
-                  marginBottom: "1rem",
-                }}
-              >
-                {user.email || "adi@gmail.com"}
-              </p>
-              <p style={{ color: "#a0a8c8" }}>Member Since: January 2026</p>
-              <div className="profile-stats">
-                <div className="profile-stat">
-                  <div className="profile-stat-number">12</div>
-                  <div className="profile-stat-label">Playlists</div>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="stats-grid">
+              <div className="stat-card">
+                <div className="stat-icon-wrapper">🎵</div>
+                <div className="stat-info">
+                  <div className="stat-number">12</div>
+                  <div className="stat-label">Playlists</div>
                 </div>
-                <div className="profile-stat">
-                  <div className="profile-stat-number">48</div>
-                  <div className="profile-stat-label">Friends</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon-wrapper">👥</div>
+                <div className="stat-info">
+                  <div className="stat-number">48</div>
+                  <div className="stat-label">Friends</div>
                 </div>
-                <div className="profile-stat">
-                  <div className="profile-stat-number">324</div>
-                  <div className="profile-stat-label">Hours Listened</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon-wrapper">🎧</div>
+                <div className="stat-info">
+                  <div className="stat-number">324</div>
+                  <div className="stat-label">Hours Listened</div>
                 </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon-wrapper">❤️</div>
+                <div className="stat-info">
+                  <div className="stat-number">1.2K</div>
+                  <div className="stat-label">Likes Received</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="section-card">
+              <div className="section-header">
+                <h3>Recent Activity</h3>
+                <button className="view-all-btn">View All</button>
+              </div>
+              <div className="activity-list">
+                {[
+                  { icon: "🎵", text: "Created playlist 'Electronic Dreams'", time: "2 days ago", color: "#7c3aed" },
+                  { icon: "❤️", text: "Liked 'Midnight Dreams' by Luna Eclipse", time: "3 days ago", color: "#ec4899" },
+                  { icon: "👥", text: "Became friends with Street Sound", time: "5 days ago", color: "#06b6d4" },
+                  { icon: "▶️", text: "Listened to 'Summer Vibes' 15 times", time: "1 week ago", color: "#f59e0b" },
+                ].map((activity, idx) => (
+                  <div key={idx} className="activity-item">
+                    <div className="activity-icon" style={{ background: activity.color }}>
+                      {activity.icon}
+                    </div>
+                    <div className="activity-content">
+                      <p className="activity-text">{activity.text}</p>
+                      <span className="activity-time">{activity.time}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Top Playlists */}
+            <div className="section-card">
+              <div className="section-header">
+                <h3>Your Playlists</h3>
+                <button className="view-all-btn">See All</button>
+              </div>
+              <div className="playlist-mini-grid">
+                {[
+                  { title: "Electronic Dreams", tracks: 24, color: "#7c3aed" },
+                  { title: "Chill Vibes", tracks: 18, color: "#06b6d4" },
+                  { title: "Workout Mix", tracks: 32, color: "#ec4899" },
+                  { title: "Late Night", tracks: 15, color: "#f59e0b" },
+                ].map((playlist, idx) => (
+                  <div key={idx} className="playlist-mini-card" style={{ background: `linear-gradient(135deg, ${playlist.color}22, ${playlist.color}11)` }}>
+                    <div className="playlist-mini-cover" style={{ background: playlist.color }}>
+                      🎵
+                    </div>
+                    <div className="playlist-mini-info">
+                      <h4>{playlist.title}</h4>
+                      <span>{playlist.tracks} tracks</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -363,93 +458,193 @@ function HomePage({ user }) {
           <div className="page-content active">
             <div className="page-header">
               <h1 className="page-title">Create</h1>
-              <p className="page-subtitle">Upload and share your music</p>
+              <p className="page-subtitle">Upload and share your music with the world</p>
             </div>
-            <div className="settings-group">
-              <h3>Upload New Track</h3>
-              <div className="setting-item">
-                <div>
-                  <div style={{ fontWeight: 600 }}>Track Title</div>
-                  <input
-                    type="text"
-                    className="auth-input"
-                    placeholder="Enter track name"
-                    style={{ marginTop: "0.5rem" }}
-                  />
+            
+            <div className="create-layout">
+              {/* Left Column - Form */}
+              <div className="create-form-section">
+                <div className="form-card">
+                  <div className="form-section-header">
+                    <span className="form-step">1</span>
+                    <h3>Track Information</h3>
+                  </div>
+                  
+                  <div className="form-group-modern">
+                    <label className="form-label">
+                      Track Title <span className="required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input-modern"
+                      placeholder="Give your track a catchy name"
+                    />
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group-modern">
+                      <label className="form-label">Genre</label>
+                      <select className="form-input-modern form-select">
+                        <option value="">Select a genre</option>
+                        <option value="electronic">Electronic</option>
+                        <option value="pop">Pop</option>
+                        <option value="hiphop">Hip Hop</option>
+                        <option value="rock">Rock</option>
+                        <option value="jazz">Jazz</option>
+                        <option value="classical">Classical</option>
+                        <option value="rnb">R&B</option>
+                        <option value="folk">Folk</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group-modern">
+                      <label className="form-label">Mood</label>
+                      <select className="form-input-modern form-select">
+                        <option value="">Select mood</option>
+                        <option value="happy">Happy</option>
+                        <option value="sad">Sad</option>
+                        <option value="energetic">Energetic</option>
+                        <option value="chill">Chill</option>
+                        <option value="romantic">Romantic</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-group-modern">
+                    <label className="form-label">Description</label>
+                    <textarea
+                      className="form-input-modern form-textarea"
+                      placeholder="Tell the story behind your track..."
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="form-group-modern">
+                    <label className="form-label">Tags</label>
+                    <div className="tags-input">
+                      <input
+                        type="text"
+                        className="form-input-modern"
+                        placeholder="Add tags (press Enter)"
+                      />
+                    </div>
+                    <div className="tags-help">Add up to 5 tags to help people discover your music</div>
+                  </div>
+                </div>
+
+                <div className="form-card">
+                  <div className="form-section-header">
+                    <span className="form-step">2</span>
+                    <h3>Upload Files</h3>
+                  </div>
+
+                  {/* Audio Upload */}
+                  <div className="upload-zone">
+                    <div className="upload-icon">🎵</div>
+                    <h4>Upload Audio File</h4>
+                    <p className="upload-hint">Drag & drop your audio file here or click to browse</p>
+                    <p className="upload-formats">Supported: MP3, WAV, FLAC (max 50MB)</p>
+                    <button className="upload-btn">Choose File</button>
+                  </div>
+
+                  {/* Cover Art Upload */}
+                  <div className="upload-zone upload-zone-small">
+                    <div className="upload-preview">
+                      <span className="upload-placeholder">🖼️</span>
+                    </div>
+                    <div className="upload-info">
+                      <h4>Cover Art</h4>
+                      <p className="upload-hint">Recommended: 1400x1400px</p>
+                      <button className="upload-btn-secondary">Upload Image</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-card">
+                  <div className="form-section-header">
+                    <span className="form-step">3</span>
+                    <h3>Visibility</h3>
+                  </div>
+                  
+                  <div className="visibility-options">
+                    <label className="visibility-option">
+                      <input type="radio" name="visibility" value="public" defaultChecked />
+                      <div className="visibility-content">
+                        <span className="visibility-icon">🌍</span>
+                        <div>
+                          <div className="visibility-title">Public</div>
+                          <div className="visibility-desc">Everyone can see and listen to your track</div>
+                        </div>
+                      </div>
+                    </label>
+                    <label className="visibility-option">
+                      <input type="radio" name="visibility" value="friends" />
+                      <div className="visibility-content">
+                        <span className="visibility-icon">👥</span>
+                        <div>
+                          <div className="visibility-title">Friends Only</div>
+                          <div className="visibility-desc">Only your friends can see this track</div>
+                        </div>
+                      </div>
+                    </label>
+                    <label className="visibility-option">
+                      <input type="radio" name="visibility" value="private" />
+                      <div className="visibility-content">
+                        <span className="visibility-icon">🔒</span>
+                        <div>
+                          <div className="visibility-title">Private</div>
+                          <div className="visibility-desc">Only you can see this track</div>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="form-actions">
+                  <button className="btn-save-draft">Save as Draft</button>
+                  <button className="btn-publish">Publish Track</button>
                 </div>
               </div>
-              <div className="setting-item">
-                <div style={{ width: "100%" }}>
-                  <div style={{ fontWeight: 600 }}>Genre</div>
-                  <select
-                    className="auth-input"
-                    style={{ marginTop: "0.5rem" }}
-                  >
-                    <option>Electronic</option>
-                    <option>Pop</option>
-                    <option>Hip Hop</option>
-                    <option>Rock</option>
-                    <option>Jazz</option>
-                    <option>Classical</option>
-                  </select>
+
+              {/* Right Column - Preview */}
+              <div className="create-preview-section">
+                <div className="preview-card sticky">
+                  <h3 className="preview-title">Preview</h3>
+                  <div className="track-preview">
+                    <div className="preview-cover">
+                      <span className="preview-cover-placeholder">🎵</span>
+                    </div>
+                    <div className="preview-info">
+                      <h4 className="preview-track-title">Your Track Title</h4>
+                      <p className="preview-track-artist">{user?.username || "adi"}</p>
+                    </div>
+                  </div>
+                  <div className="preview-waveform">
+                    <div className="waveform-placeholder">
+                      {[...Array(40)].map((_, i) => (
+                        <div key={i} className="waveform-bar" style={{ height: `${Math.random() * 100}%` }} />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="preview-actions">
+                    <button className="preview-btn play-btn">▶</button>
+                    <button className="preview-btn">❤️</button>
+                    <button className="preview-btn">➕</button>
+                    <span className="preview-duration">3:45</span>
+                  </div>
                 </div>
-              </div>
-              <div className="setting-item">
-                <div style={{ width: "100%" }}>
-                  <div style={{ fontWeight: 600 }}>Description</div>
-                  <textarea
-                    className="auth-input"
-                    placeholder="Describe your track..."
-                    style={{ marginTop: "0.5rem", minHeight: 100 }}
-                  />
-                </div>
-              </div>
-              <div className="setting-item">
-                <div style={{ width: "100%" }}>
-                  <div style={{ fontWeight: 600 }}>Audio File</div>
-                  <button
-                    className="action-btn"
-                    style={{
-                      width: "100%",
-                      marginTop: "0.5rem",
-                      padding: "1rem",
-                      background: "var(--color-accent)",
-                      color: "#fff",
-                    }}
-                  >
-                    Choose File
-                  </button>
-                </div>
-              </div>
-              <div className="setting-item">
-                <div style={{ width: "100%" }}>
-                  <div style={{ fontWeight: 600 }}>Cover Art</div>
-                  <button
-                    className="action-btn"
-                    style={{
-                      width: "100%",
-                      marginTop: "0.5rem",
-                      padding: "1rem",
-                    }}
-                  >
-                    Upload Image
-                  </button>
+
+                <div className="tips-card">
+                  <h4>💡 Pro Tips</h4>
+                  <ul>
+                    <li>Use a high-quality cover image to attract listeners</li>
+                    <li>Add descriptive tags for better discoverability</li>
+                    <li>Write an engaging description to tell your story</li>
+                    <li>Set your track to "Public" to reach more people</li>
+                  </ul>
                 </div>
               </div>
             </div>
-            <button
-              className="action-btn"
-              style={{
-                width: "100%",
-                padding: "1rem",
-                background: "var(--color-accent)",
-                color: "#fff",
-                fontSize: "1rem",
-                fontWeight: 600,
-              }}
-            >
-              Publish Track
-            </button>
           </div>
         )}
 
@@ -459,24 +654,125 @@ function HomePage({ user }) {
             <div className="page-header">
               <h1 className="page-title">Explore</h1>
               <p className="page-subtitle">
-                Discover new music and trending artists
+                Discover new music, trending artists, and curated playlists
               </p>
             </div>
-            <div className="explore-grid">
-              {[
-                { icon: "🔥", title: "Trending Now", desc: "Check out the hottest tracks of the week" },
-                { icon: "🆕", title: "New Releases", desc: "Fresh music from your favorite artists" },
-                { icon: "🎭", title: "Genres", desc: "Explore music by genre" },
-                { icon: "⭐", title: "Top Charts", desc: "Most played tracks globally" },
-                { icon: "🎨", title: "Mood & Activity", desc: "Music for every moment" },
-                { icon: "🌍", title: "Around the World", desc: "Discover international hits" },
-              ].map((card) => (
-                <div key={card.title} className="explore-card">
-                  <div className="explore-icon">{card.icon}</div>
-                  <div className="explore-title">{card.title}</div>
-                  <div className="explore-description">{card.desc}</div>
+
+            {/* Featured Section */}
+            <div className="explore-section">
+              <h3 className="section-title">Featured</h3>
+              <div className="featured-grid">
+                <div className="featured-card featured-large">
+                  <div className="featured-bg" style={{ background: 'linear-gradient(135deg, #7c3aed, #ec4899)' }}>
+                    <span className="featured-badge">🔥 Trending</span>
+                    <div className="featured-content">
+                      <h4>Weekly Top 50</h4>
+                      <p>The hottest tracks this week</p>
+                      <button className="featured-btn">Listen Now</button>
+                    </div>
+                  </div>
                 </div>
-              ))}
+                <div className="featured-card">
+                  <div className="featured-bg" style={{ background: 'linear-gradient(135deg, #06b6d4, #3b82f6)' }}>
+                    <span className="featured-badge">🆕 New</span>
+                    <div className="featured-content">
+                      <h4>Fresh Drops</h4>
+                      <p>New releases daily</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="featured-card">
+                  <div className="featured-bg" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)' }}>
+                    <span className="featured-badge">⭐ Best</span>
+                    <div className="featured-content">
+                      <h4>All Time Hits</h4>
+                      <p>Most loved tracks</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Categories Grid */}
+            <div className="explore-section">
+              <h3 className="section-title">Browse by Category</h3>
+              <div className="explore-categories-grid">
+                {[
+                  { icon: "🎭", title: "Genres", desc: "Electronic, Rock, Jazz & more", color: "#7c3aed", items: ["Electronic", "Pop", "Rock", "Hip Hop", "Jazz", "Classical"] },
+                  { icon: "🎨", title: "Moods", desc: "Music for every feeling", color: "#ec4899", items: ["Happy", "Sad", "Energetic", "Chill", "Romantic", "Focus"] },
+                  { icon: "🏃", title: "Activities", desc: "Perfect for any occasion", color: "#06b6d4", items: ["Workout", "Study", "Party", "Sleep", "Commute", "Work"] },
+                  { icon: "🌍", title: "Global", desc: "Discover worldwide sounds", color: "#f59e0b", items: ["K-Pop", "Latin", "Afrobeat", "Bollywood", "Reggae", "Classical"] },
+                ].map((category) => (
+                  <div key={category.title} className="explore-category-card">
+                    <div className="category-header" style={{ background: `linear-gradient(135deg, ${category.color}22, ${category.color}11)` }}>
+                      <div className="category-icon-wrapper" style={{ background: category.color }}>
+                        <span className="category-icon">{category.icon}</span>
+                      </div>
+                      <div className="category-info">
+                        <h4>{category.title}</h4>
+                        <p>{category.desc}</p>
+                      </div>
+                    </div>
+                    <div className="category-items">
+                      {category.items.map((item) => (
+                        <button key={item} className="category-item-btn">{item}</button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Trending Artists */}
+            <div className="explore-section">
+              <div className="section-header-flex">
+                <h3 className="section-title">Trending Artists</h3>
+                <button className="view-all-btn">View All</button>
+              </div>
+              <div className="artists-row">
+                {[
+                  { name: "Luna Eclipse", genre: "Electronic", followers: "1.2M" },
+                  { name: "Street Sound", genre: "Hip Hop", followers: "856K" },
+                  { name: "The Waves", genre: "Pop", followers: "2.1M" },
+                  { name: "Blue Notes", genre: "Jazz", followers: "432K" },
+                  { name: "Neon Knights", genre: "Rock", followers: "678K" },
+                ].map((artist) => (
+                  <div key={artist.name} className="artist-card">
+                    <div className="artist-avatar">
+                      {artist.name.charAt(0)}
+                    </div>
+                    <h4 className="artist-name">{artist.name}</h4>
+                    <p className="artist-genre">{artist.genre}</p>
+                    <p className="artist-followers">{artist.followers} followers</p>
+                    <button className="follow-btn">Follow</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Discover Weekly */}
+            <div className="explore-section">
+              <div className="section-header-flex">
+                <h3 className="section-title">Made For You</h3>
+                <button className="refresh-btn">🔄 Refresh</button>
+              </div>
+              <div className="playlist-row">
+                {[
+                  { title: "Discover Weekly", desc: "Your weekly mixtape", color: "#7c3aed" },
+                  { title: "Daily Mix 1", desc: "Electronic & Pop", color: "#ec4899" },
+                  { title: "On Repeat", desc: "Songs you love", color: "#06b6d4" },
+                  { title: "Release Radar", desc: "New releases", color: "#f59e0b" },
+                ].map((playlist) => (
+                  <div key={playlist.title} className="discover-card" style={{ background: `linear-gradient(135deg, ${playlist.color}33, ${playlist.color}11)` }}>
+                    <div className="discover-cover" style={{ background: playlist.color }}>
+                      🎵
+                    </div>
+                    <h4>{playlist.title}</h4>
+                    <p>{playlist.desc}</p>
+                    <button className="play-btn-small">▶</button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -490,56 +786,25 @@ function HomePage({ user }) {
                 Stay updated with your music activity
               </p>
             </div>
-            <div className="notification-item">
-              <div
-                className="notification-icon"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #ec4899, #8b5cf6)",
-                }}
-              >
-                ❤️
-              </div>
-              <div className="notification-content">
-                <div className="notification-text">
-                  <strong>Luna Eclipse</strong> liked your playlist
+            <div className="notifications-container">
+              {[
+                { icon: "❤️", text: "Luna Eclipse liked your playlist 'Electronic Dreams'", time: "2 hours ago", color: "#ec4899" },
+                { icon: "🎵", text: "New track added to your playlist 'Electronic Mix'", time: "5 hours ago", color: "#06b6d4" },
+                { icon: "👥", text: "Street Sound started following you", time: "1 day ago", color: "#f59e0b" },
+                { icon: "💬", text: "MC Flow commented on your track 'Midnight Dreams'", time: "1 day ago", color: "#8b5cf6" },
+                { icon: "▶️", text: "Your track reached 1,000 plays!", time: "2 days ago", color: "#10b981" },
+                { icon: "🎁", text: "You received a gift from The Blue Notes", time: "3 days ago", color: "#f472b6" },
+              ].map((notif, idx) => (
+                <div key={idx} className="notification-item">
+                  <div className="notification-icon" style={{ background: `linear-gradient(135deg, ${notif.color}, ${notif.color}88)` }}>
+                    {notif.icon}
+                  </div>
+                  <div className="notification-content">
+                    <div className="notification-text">{notif.text}</div>
+                    <div className="notification-time">{notif.time}</div>
+                  </div>
                 </div>
-                <div className="notification-time">2 hours ago</div>
-              </div>
-            </div>
-            <div className="notification-item">
-              <div
-                className="notification-icon"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #06b6d4, #3b82f6)",
-                }}
-              >
-                🎵
-              </div>
-              <div className="notification-content">
-                <div className="notification-text">
-                  New track added to <strong>Electronic Mix</strong>
-                </div>
-                <div className="notification-time">5 hours ago</div>
-              </div>
-            </div>
-            <div className="notification-item">
-              <div
-                className="notification-icon"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #f59e0b, #ef4444)",
-                }}
-              >
-                👥
-              </div>
-              <div className="notification-content">
-                <div className="notification-text">
-                  <strong>Street Sound</strong> started following you
-                </div>
-                <div className="notification-time">1 day ago</div>
-              </div>
+              ))}
             </div>
           </div>
         )}
@@ -553,35 +818,62 @@ function HomePage({ user }) {
                 Customize your VibeSync experience
               </p>
             </div>
-            <div className="settings-group">
-              <h3>Account Settings</h3>
-              <div className="setting-item">
-                <div>
-                  <div style={{ fontWeight: 600 }}>Email</div>
-                  <div
-                    style={{
-                      color: "var(--color-text-secondary)",
-                      fontSize: "0.875rem",
-                    }}
-                  >
-                    {user.email || "adi@gmail.com"}
-                  </div>
-                </div>
-                <button className="action-btn">Edit</button>
+            <div className="settings-layout">
+              <div className="settings-nav">
+                <button className="settings-nav-item active">Account</button>
+                <button className="settings-nav-item">Notifications</button>
+                <button className="settings-nav-item">Privacy</button>
+                <button className="settings-nav-item">Audio Quality</button>
+                <button className="settings-nav-item">Appearance</button>
+                <button className="settings-nav-item">Connected Apps</button>
               </div>
-              <div className="setting-item">
-                <div>
-                  <div style={{ fontWeight: 600 }}>Password</div>
-                  <div
-                    style={{
-                      color: "var(--color-text-secondary)",
-                      fontSize: "0.875rem",
-                    }}
-                  >
-                    ••••••••
+              <div className="settings-content">
+                <div className="settings-card">
+                  <h3 className="settings-section-title">Profile Information</h3>
+                  <div className="settings-form">
+                    <div className="settings-form-group">
+                      <label className="settings-label">Display Name</label>
+                      <input type="text" className="settings-input" defaultValue={user?.username || "adi"} />
+                    </div>
+                    <div className="settings-form-group">
+                      <label className="settings-label">Email</label>
+                      <input type="email" className="settings-input" defaultValue={user?.email || "adi@gmail.com"} />
+                    </div>
+                    <div className="settings-form-group">
+                      <label className="settings-label">Bio</label>
+                      <textarea className="settings-input" rows="3" placeholder="Tell us about yourself..."></textarea>
+                    </div>
+                    <button className="btn-save">Save Changes</button>
                   </div>
                 </div>
-                <button className="action-btn">Change</button>
+                <div className="settings-card">
+                  <h3 className="settings-section-title">Change Password</h3>
+                  <div className="settings-form">
+                    <div className="settings-form-group">
+                      <label className="settings-label">Current Password</label>
+                      <input type="password" className="settings-input" placeholder="Enter current password" />
+                    </div>
+                    <div className="settings-form-group">
+                      <label className="settings-label">New Password</label>
+                      <input type="password" className="settings-input" placeholder="Enter new password" />
+                    </div>
+                    <div className="settings-form-group">
+                      <label className="settings-label">Confirm New Password</label>
+                      <input type="password" className="settings-input" placeholder="Confirm new password" />
+                    </div>
+                    <button className="btn-save">Update Password</button>
+                  </div>
+                </div>
+                <div className="settings-card danger-zone">
+                  <h3 className="settings-section-title">Danger Zone</h3>
+                  <div className="danger-item">
+                    <div>
+                      <div className="danger-title">Delete Account</div>
+                      <div className="danger-desc">Once you delete your account, there is no going back. Please be certain.</div>
+                    </div>
+                    <button className="btn-danger">Delete Account</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -648,6 +940,15 @@ function HomePage({ user }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Search Results Overlay */}
+      {showSearchResults && (
+        <SearchResults
+          query={searchTerm}
+          onClose={closeSearchResults}
+          onTrackSelect={handleTrackSelect}
+        />
       )}
     </>
   );

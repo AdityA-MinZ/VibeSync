@@ -5,6 +5,7 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');  // For frontend serving
+const streakIntegration = require('./utils/streakIntegration');
 
 const app = express();
 const server = http.createServer(app);
@@ -34,6 +35,10 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/playlists', require('./routes/playlists'));
 app.use('/api/friends', require('./routes/friends'));
 app.use('/api/feed', require('./routes/feed'));
+app.use('/api/search', require('./routes/search'));
+app.use('/api/spotify', require('./routes/spotify'));
+app.use('/api/youtube', require('./routes/youtube'));
+app.use('/api/streaks', require('./routes/streaks'));
 
 // Production: Serve React frontend (if you have client/build folder)
 if (process.env.NODE_ENV === 'production') {
@@ -55,10 +60,27 @@ io.on('connection', (socket) => {
     io.emit('user-online', { userId: data.userId, status: 'online' });
   });
   
-  socket.on('playing-track', (data) => {
+  socket.on('playing-track', async (data) => {
     console.log('PLAYING EVENT:', data);
     // Broadcast to friends room only
     io.to(`friends-${data.userId}`).emit('friend-playing', data);
+    
+    // Update user's listening streak
+    if (data.userId) {
+      try {
+        const streakResult = await streakIntegration.onTrackPlay(data.userId);
+        if (streakResult) {
+          // Notify user of streak update
+          socket.emit('streak-update', {
+            currentStreak: streakResult.currentStreak,
+            longestStreak: streakResult.longestStreak,
+            message: streakResult.message
+          });
+        }
+      } catch (error) {
+        console.error('Streak update error in socket:', error.message);
+      }
+    }
   });
   
   socket.on('join-friends-room', (userId) => {
