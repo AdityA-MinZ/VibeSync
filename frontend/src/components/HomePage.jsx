@@ -2,6 +2,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Sidebar from "./Sidebar";
 import SearchResults from "./SearchResults";
+import LikeButton from "./LikeButton";
+import FollowButton from "./FollowButton";
+import CommentSection from "./CommentSection";
+import SaveToBoard from "./SaveToBoard";
 
 const musicData = [
   {
@@ -153,12 +157,12 @@ function formatNumber(num) {
 
 function HomePage({ user }) {
   const [currentFilter, setCurrentFilter] = useState("electronic");
-  const [liked, setLiked] = useState(new Set());
   const [currentPage, setCurrentPage] = useState("home");
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [modalTrack, setModalTrack] = useState(null);
+  const [showSaveToBoard, setShowSaveToBoard] = useState(false);
 
   const filteredData = useMemo(() => {
     const base =
@@ -204,17 +208,6 @@ function HomePage({ user }) {
       return () => document.removeEventListener('keydown', handleEscape);
     }
   }, [showSearchResults]);
-
-
-
-  const toggleLike = (trackId) => {
-    setLiked((prev) => {
-      const next = new Set(prev);
-      if (next.has(trackId)) next.delete(trackId);
-      else next.add(trackId);
-      return next;
-    });
-  };
 
   const openModal = (track) => {
     setModalTrack(track);
@@ -272,14 +265,12 @@ function HomePage({ user }) {
         {currentPage === "home" && (
           <div className="page-content active">
             <div className="playlist-grid">
-              {filteredData.map((track) => {
-                const isLiked = liked.has(track.id);
-                return (
-                  <div
-                    key={track.id}
-                    className="playlist-card"
-                    onClick={() => openModal(track)}
-                  >
+              {filteredData.map((track) => (
+                <div
+                  key={track.id}
+                  className="playlist-card"
+                  onClick={() => openModal(track)}
+                >
                     <div className="playlist-card-image">
                       <img src={track.image} alt={track.title} />
                       <div className="genre-badge">{track.genre}</div>
@@ -302,15 +293,13 @@ function HomePage({ user }) {
                       </div>
                     </div>
                     <div className="playlist-card-actions">
-                      <button
-                        className={`action-btn like-btn ${isLiked ? "liked" : ""}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleLike(track.id);
-                        }}
-                      >
-                        {isLiked ? "❤️" : "🤍"}
-                      </button>
+                      <LikeButton
+                        targetType="track"
+                        targetId={track.id.toString()}
+                        initialCount={track.likes}
+                        showCount={true}
+                        size="small"
+                      />
                       <button
                         className="action-btn view-btn"
                         onClick={(e) => {
@@ -322,8 +311,7 @@ function HomePage({ user }) {
                       </button>
                     </div>
                   </div>
-                );
-              })}
+                ))}
             </div>
           </div>
         )}
@@ -731,11 +719,11 @@ function HomePage({ user }) {
               </div>
               <div className="artists-row">
                 {[
-                  { name: "Luna Eclipse", genre: "Electronic", followers: "1.2M" },
-                  { name: "Street Sound", genre: "Hip Hop", followers: "856K" },
-                  { name: "The Waves", genre: "Pop", followers: "2.1M" },
-                  { name: "Blue Notes", genre: "Jazz", followers: "432K" },
-                  { name: "Neon Knights", genre: "Rock", followers: "678K" },
+                  { id: "artist1", name: "Luna Eclipse", genre: "Electronic", followers: "1.2M" },
+                  { id: "artist2", name: "Street Sound", genre: "Hip Hop", followers: "856K" },
+                  { id: "artist3", name: "The Waves", genre: "Pop", followers: "2.1M" },
+                  { id: "artist4", name: "Blue Notes", genre: "Jazz", followers: "432K" },
+                  { id: "artist5", name: "Neon Knights", genre: "Rock", followers: "678K" },
                 ].map((artist) => (
                   <div key={artist.name} className="artist-card">
                     <div className="artist-avatar">
@@ -744,7 +732,7 @@ function HomePage({ user }) {
                     <h4 className="artist-name">{artist.name}</h4>
                     <p className="artist-genre">{artist.genre}</p>
                     <p className="artist-followers">{artist.followers} followers</p>
-                    <button className="follow-btn">Follow</button>
+                    <FollowButton userId={artist.id} size="small" />
                   </div>
                 ))}
               </div>
@@ -907,9 +895,7 @@ function HomePage({ user }) {
                 </button>
                 <button
                   className="modal-btn secondary"
-                  onClick={() =>
-                    alert("Added to playlist (hook playlist logic)")
-                  }
+                  onClick={() => setShowSaveToBoard(true)}
                 >
                   + Add to Playlist
                 </button>
@@ -925,8 +911,13 @@ function HomePage({ user }) {
                 style={{ justifyContent: "center", gap: "2rem" }}
               >
                 <div className="stat-item">
-                  <span>👍</span>
-                  <span>{formatNumber(modalTrack.likes)}</span>
+                  <LikeButton
+                    targetType="track"
+                    targetId={modalTrack.id.toString()}
+                    initialCount={modalTrack.likes}
+                    showCount={true}
+                    size="medium"
+                  />
                 </div>
                 <div className="stat-item">
                   <span>▶</span>
@@ -937,6 +928,13 @@ function HomePage({ user }) {
                   <span>{formatNumber(modalTrack.comments)}</span>
                 </div>
               </div>
+              
+              {/* Comments Section */}
+              <CommentSection
+                targetType="track"
+                targetId={modalTrack.id.toString()}
+                currentUser={user}
+              />
             </div>
           </div>
         </div>
@@ -950,6 +948,14 @@ function HomePage({ user }) {
           onTrackSelect={handleTrackSelect}
         />
       )}
+
+      {/* Save to Board Modal */}
+      <SaveToBoard
+        isOpen={showSaveToBoard}
+        onClose={() => setShowSaveToBoard(false)}
+        track={modalTrack}
+        currentUser={user}
+      />
     </>
   );
 }

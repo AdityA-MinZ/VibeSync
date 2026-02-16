@@ -1,0 +1,95 @@
+.follow-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.follow-button.small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.follow-button.large {
+  padding: 10px 20px;
+  font-size: 16px;
+}
+
+.follow-button.not-following {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+}
+
+.follow-button.not-following:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.follow-button.following {
+  background: transparent;
+  color: #667eea;
+  border-color: #667eea;
+}
+
+.follow-button.following:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.follow-button.following:hover::before {
+  content: 'Unfollow';
+}
+
+.follow-button.following:hover span {
+  display: none;
+}
+
+.follow-button.friends {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-color: transparent;
+}
+
+.follow-button.friends:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.follow-button.follow-back {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border-color: transparent;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+  }
+}
+
+.follow-button.follow-back:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.follow-button.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.follow-button:disabled {
+  cursor: not-allowed;
+}
