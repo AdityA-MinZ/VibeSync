@@ -6,6 +6,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');  // For frontend serving
 const streakIntegration = require('./utils/streakIntegration');
+const PlaybackSocketHandler = require('./socket/playbackSocket');
 
 const app = express();
 const server = http.createServer(app);
@@ -39,6 +40,11 @@ app.use('/api/search', require('./routes/search'));
 app.use('/api/spotify', require('./routes/spotify'));
 app.use('/api/youtube', require('./routes/youtube'));
 app.use('/api/streaks', require('./routes/streaks'));
+app.use('/api/sessions', require('./routes/sessions'));
+app.use('/api/social', require('./routes/social'));
+app.use('/api/social', require('./routes/follows'));
+app.use('/api/social', require('./routes/comments'));
+app.use('/api/social', require('./routes/boards'));
 
 // Production: Serve React frontend (if you have client/build folder)
 if (process.env.NODE_ENV === 'production') {
@@ -90,8 +96,13 @@ io.on('connection', (socket) => {
   });
 });
 
+// Initialize Playback Session Socket Handler
+const playbackSocketHandler = new PlaybackSocketHandler(io);
+console.log('🎵 Playback Session Socket Handler initialized');
+
 // Start server (Render-compatible)
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 VibeSync Server + Socket.IO on port ${PORT}`);
+  console.log('📡 Features: Auth, Friends, Spotify, YouTube, Search, Streaks, Collaborative Playback');
 });

@@ -8,7 +8,9 @@
     "test:socket": "node test-socket.js",
     "test:youtube": "node test-youtube.js",
     "test:streaks": "node test-streaks.js",
-    "test:all": "npm run test:socket && npm run test:youtube && npm run test:streaks"
+    "test:playback": "node test-playback.js",
+    "test:social": "node test-social.js",
+    "test:all": "npm run test:youtube && npm run test:streaks && npm run test:playback && npm run test:social"
   },
   "dependencies": {
     "axios": "^1.13.5",

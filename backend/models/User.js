@@ -122,4 +122,76 @@ userSchema.methods.getStreakInfo = function() {
   };
 };
 
+// Method to follow a user
+userSchema.methods.follow = async function(userIdToFollow) {
+  // Check if already following
+  if (this.followings.includes(userIdToFollow)) {
+    throw new Error('Already following this user');
+  }
+  
+  // Can't follow yourself
+  if (this._id.toString() === userIdToFollow.toString()) {
+    throw new Error('Cannot follow yourself');
+  }
+  
+  this.followings.push(userIdToFollow);
+  await this.save();
+  
+  // Add to other user's followers
+  await mongoose.model('User').findByIdAndUpdate(
+    userIdToFollow,
+    { $addToSet: { followers: this._id } }
+  );
+  
+  return this;
+};
+
+// Method to unfollow a user
+userSchema.methods.unfollow = async function(userIdToUnfollow) {
+  // Remove from followings
+  this.followings = this.followings.filter(id => 
+    id.toString() !== userIdToUnfollow.toString()
+  );
+  await this.save();
+  
+  // Remove from other user's followers
+  await mongoose.model('User').findByIdAndUpdate(
+    userIdToUnfollow,
+    { $pull: { followers: this._id } }
+  );
+  
+  return this;
+};
+
+// Method to check if following
+userSchema.methods.isFollowing = function(userId) {
+  return this.followings.some(id => id.toString() === userId.toString());
+};
+
+// Method to get followers count
+userSchema.methods.getFollowersCount = function() {
+  return this.followers.length;
+};
+
+// Method to get following count
+userSchema.methods.getFollowingCount = function() {
+  return this.followings.length;
+};
+
+// Static method to get user profile with social stats
+userSchema.statics.getUserProfile = async function(userId) {
+  const user = await this.findById(userId)
+    .select('-password -spotify.accessToken -spotify.refreshToken');
+  
+  if (!user) {
+    throw new Error('User not found');
+  }
+  
+  return {
+    ...user.toObject(),
+    followersCount: user.getFollowersCount(),
+    followingCount: user.getFollowingCount()
+  };
+};
+
 module.exports = mongoose.model('User', userSchema);
