@@ -4,7 +4,7 @@ import './LikeButton.css';
 
 function LikeButton({ targetType, targetId, initialCount = 0, showCount = true, size = 'medium' }) {
   const [isLiked, setIsLiked] = useState(false);
-  const [count, setCount] = useState(initialCount);
+  const [count, setCount] = useState(initialCount || 0);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -22,7 +22,7 @@ function LikeButton({ targetType, targetId, initialCount = 0, showCount = true, 
     const fetchCount = async () => {
       try {
         const result = await getLikeCount(targetType, targetId);
-        setCount(result.count);
+        setCount(result.count ?? 0);
       } catch (error) {
         console.error('Failed to fetch like count:', error);
       }
@@ -45,7 +45,7 @@ function LikeButton({ targetType, targetId, initialCount = 0, showCount = true, 
     try {
       const result = await toggleLike(targetType, targetId);
       setIsLiked(result.liked);
-      setCount(result.count);
+      setCount(result.count ?? 0);
     } catch (error) {
       console.error('Failed to toggle like:', error);
     } finally {
@@ -65,7 +65,7 @@ function LikeButton({ targetType, targetId, initialCount = 0, showCount = true, 
       </span>
       {showCount && (
         <span className="like-count">
-          {count.toLocaleString()}
+          {(count || 0).toLocaleString()}
         </span>
       )}
     </button>

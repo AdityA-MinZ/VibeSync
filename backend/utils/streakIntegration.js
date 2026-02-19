@@ -1,4 +1,4 @@
-const streakService = require('./services/streakService');
+const streakService = require('../services/streakService');
 
 /**
  * Streak Integration Module
