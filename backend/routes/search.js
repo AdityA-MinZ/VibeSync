@@ -239,6 +239,28 @@ router.get('/trending', auth, async (req, res) => {
   }
 });
 
+// Search tracks specifically
+// GET /api/search/tracks?q=query&limit=20
+router.get('/tracks', auth, async (req, res) => {
+  try {
+    const { q, limit = 20 } = req.query;
+    
+    if (!q || q.trim().length === 0) {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+
+    const searchRegex = new RegExp(q.trim(), 'i');
+    const resultsLimit = parseInt(limit) || 20;
+
+    const tracks = await searchTracks(searchRegex, resultsLimit);
+
+    res.json(tracks);
+  } catch (error) {
+    console.error('Track search error:', error.message);
+    res.status(500).json({ error: 'Track search failed' });
+  }
+});
+
 // Mock track search function - replace with actual Track model queries
 async function searchTracks(regex, limit, skip = 0, filters = {}, sort = {}) {
   // This is mock data - in production, query your Track model

@@ -7,7 +7,8 @@ import LikeButton from "./LikeButton";
 import CommentSection from "./CommentSection";
 import SaveToBoard from "./SaveToBoard";
 import EditProfileModal from "./EditProfileModal";
-import { getUserProfile, getUserPlaylists, getUserStats, getUserActivity, updateUserProfile } from "../services/userService";
+import { getUserProfile, getUserPlaylists, getUserStats, getUserActivity, updateUserProfile, importSpotifyPlaylist, importYouTubePlaylist, searchTracks, createPlaylist } from "../services/userService";
+import { getNotifications, markAsRead, markAllAsRead, getUnreadCount } from "../services/notificationService";
 
 const musicData = [
   {
@@ -167,16 +168,21 @@ function HomePage({ user }) {
   const [showSaveToBoard, setShowSaveToBoard] = useState(false);
 
   // Create page state
-  const [trackTitle, setTrackTitle] = useState("");
-  const [trackGenre, setTrackGenre] = useState("");
-  const [trackMood, setTrackMood] = useState("");
-  const [trackDescription, setTrackDescription] = useState("");
-  const [trackTags, setTrackTags] = useState([]);
-  const [tagInput, setTagInput] = useState("");
-  const [coverImage, setCoverImage] = useState(null);
-  const [audioFile, setAudioFile] = useState(null);
+  const [importMode, setImportMode] = useState(null); // 'spotify', 'youtube', 'manual'
+  const [importUrl, setImportUrl] = useState("");
+  const [playlistName, setPlaylistName] = useState("");
+  const [playlistDescription, setPlaylistDescription] = useState("");
+  const [playlistGenre, setPlaylistGenre] = useState("");
+  const [playlistTracks, setPlaylistTracks] = useState([]);
+  const [trackSearchQuery, setTrackSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
   const [visibility, setVisibility] = useState("public");
   const [isPlaying, setIsPlaying] = useState(false);
+
+  // Legacy track state (for backward compatibility)
+  const [trackTitle, setTrackTitle] = useState("");
+  const [trackTags, setTrackTags] = useState([]);
+  const [tagInput, setTagInput] = useState("");
 
   // Profile state
   const [profileData, setProfileData] = useState(null);
@@ -184,6 +190,10 @@ function HomePage({ user }) {
   const [profilePlaylists, setProfilePlaylists] = useState([]);
   const [profileActivity, setProfileActivity] = useState([]);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+
+  // Notifications state
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const handleAddTag = (e) => {
     if (e.key === "Enter" && tagInput.trim() && trackTags.length < 5) {
@@ -199,52 +209,136 @@ function HomePage({ user }) {
     setTrackTags(trackTags.filter((tag) => tag !== tagToRemove));
   };
 
-  const handleCoverUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCoverImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleAudioUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setAudioFile(file);
-    }
-  };
-
   const handlePublish = () => {
-    const playlistData = {
-      title: trackTitle,
-      genre: trackGenre,
-      mood: trackMood,
-      description: trackDescription,
-      tags: trackTags,
-      coverImage,
-      audioFile: audioFile?.name,
-      visibility,
-    };
-    console.log("Publishing playlist:", playlistData);
-    alert("Playlist published successfully!");
+    handleCreatePlaylist();
   };
 
-  const handleSaveDraft = () => {
-    const playlistData = {
-      title: trackTitle,
-      genre: trackGenre,
-      mood: trackMood,
-      description: trackDescription,
-      tags: trackTags,
-      coverImage,
-      audioFile: audioFile?.name,
-      visibility,
-    };
-    console.log("Saving draft:", playlistData);
-    alert("Draft saved!");
+  const handleSaveDraft = async () => {
+    if (!playlistName.trim()) {
+      alert('Please enter a playlist name');
+      return;
+    }
+
+    try {
+      const playlistData = {
+        name: playlistName,
+        description: playlistDescription,
+        genre: playlistGenre,
+        tags: trackTags,
+        tracks: playlistTracks,
+        visibility,
+        isDraft: true,
+      };
+      
+      await createPlaylist(playlistData);
+      alert('Draft saved!');
+      
+      setImportMode(null);
+      setPlaylistName('');
+      setPlaylistDescription('');
+      setPlaylistGenre('');
+      setPlaylistTracks([]);
+      setTrackTags([]);
+    } catch (error) {
+      console.error('Save draft error:', error);
+      alert('Failed to save draft. Please try again.');
+    }
+  };
+
+  // Create page handlers
+  const handleImportFromSpotify = () => {
+    setImportMode('spotify');
+  };
+
+  const handleImportFromYouTube = () => {
+    setImportMode('youtube');
+  };
+
+  const handleCreateManual = () => {
+    setImportMode('manual');
+  };
+
+  const handleImportSubmit = async () => {
+    if (!importUrl.trim()) {
+      alert('Please enter a URL');
+      return;
+    }
+
+    try {
+      let response;
+      if (importMode === 'spotify') {
+        response = await importSpotifyPlaylist(importUrl);
+      } else if (importMode === 'youtube') {
+        response = await importYouTubePlaylist(importUrl);
+      }
+
+      if (response) {
+        setPlaylistName(response.name || 'Imported Playlist');
+        setPlaylistDescription(response.description || '');
+        setPlaylistTracks(response.tracks || []);
+        setImportMode('manual');
+        setImportUrl('');
+        alert('Playlist imported successfully!');
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      alert('Failed to import playlist. Please check the URL and try again.');
+    }
+  };
+
+  const handleTrackSearch = async () => {
+    if (!trackSearchQuery.trim()) return;
+
+    try {
+      const results = await searchTracks(trackSearchQuery);
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Search error:', error);
+    }
+  };
+
+  const handleAddTrackToPlaylist = (track) => {
+    if (!playlistTracks.find(t => t.id === track.id)) {
+      setPlaylistTracks([...playlistTracks, track]);
+    }
+    setSearchResults([]);
+    setTrackSearchQuery('');
+  };
+
+  const handleRemoveTrack = (index) => {
+    setPlaylistTracks(playlistTracks.filter((_, i) => i !== index));
+  };
+
+  const handleCreatePlaylist = async () => {
+    if (!playlistName.trim()) {
+      alert('Please enter a playlist name');
+      return;
+    }
+
+    try {
+      const playlistData = {
+        name: playlistName,
+        description: playlistDescription,
+        genre: playlistGenre,
+        tags: trackTags,
+        tracks: playlistTracks,
+        visibility,
+      };
+      
+      await createPlaylist(playlistData);
+      alert('Playlist created successfully!');
+      
+      // Reset form
+      setImportMode(null);
+      setPlaylistName('');
+      setPlaylistDescription('');
+      setPlaylistGenre('');
+      setPlaylistTracks([]);
+      setTrackTags([]);
+    } catch (error) {
+      console.error('Create playlist error:', error);
+      alert('Failed to create playlist. Please try again.');
+    }
   };
 
   const filteredData = useMemo(() => {
@@ -277,6 +371,23 @@ function HomePage({ user }) {
     setModalTrack(track);
     document.body.style.overflow = "hidden";
   };
+
+  // Fetch unread notification count on mount
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const result = await getUnreadCount();
+        setUnreadCount(result.count || 0);
+      } catch (error) {
+        console.error('Error fetching unread count:', error);
+      }
+    };
+    fetchUnreadCount();
+
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Handle Escape key to close search
   useEffect(() => {
@@ -314,6 +425,87 @@ function HomePage({ user }) {
       fetchProfileData();
     }
   }, [currentPage]);
+
+  // Fetch notifications when on notifications page
+  useEffect(() => {
+    if (currentPage === "notifications") {
+      const fetchNotifications = async () => {
+        try {
+          const result = await getNotifications({ limit: 50 });
+          setNotifications(result.notifications || []);
+          setUnreadCount(result.unreadCount || 0);
+        } catch (error) {
+          console.error('Error fetching notifications:', error);
+        }
+      };
+      fetchNotifications();
+    }
+  }, [currentPage]);
+
+  const handleNotificationClick = async (notification) => {
+    if (!notification.isRead) {
+      try {
+        await markAsRead(notification._id);
+        setNotifications(prev => 
+          prev.map(n => n._id === notification._id ? { ...n, isRead: true } : n)
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllAsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+    }
+  };
+
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'like': return '❤️';
+      case 'comment': return '💬';
+      case 'follow': return '👥';
+      case 'playlist_share': return '🎵';
+      case 'track_added': return '🎧';
+      case 'achievement': return '🏆';
+      case 'friend_request': return '🤝';
+      default: return '🔔';
+    }
+  };
+
+  const getNotificationColor = (type) => {
+    switch (type) {
+      case 'like': return '#ec4899';
+      case 'comment': return '#8b5cf6';
+      case 'follow': return '#06b6d4';
+      case 'playlist_share': return '#7c3aed';
+      case 'track_added': return '#f59e0b';
+      case 'achievement': return '#10b981';
+      case 'friend_request': return '#3b82f6';
+      default: return '#6b7280';
+    }
+  };
+
+  const getRelativeTime = (date) => {
+    const now = new Date();
+    const then = new Date(date);
+    const diffMs = now - then;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return then.toLocaleDateString();
+  };
 
   const openModal = (track) => {
     setModalTrack(track);
@@ -361,6 +553,7 @@ function HomePage({ user }) {
         onNavigate={setCurrentPage}
         expanded={sidebarExpanded}
         onToggle={() => setSidebarExpanded((s) => !s)}
+        unreadCount={unreadCount}
       />
 
       {/* Main container */}
@@ -547,344 +740,191 @@ function HomePage({ user }) {
           </div>
         )}
 
-        {/* Create */}
-        {currentPage === "create" && (
-          <div className="page-content active">
-            <div className="page-header">
-              <h1 className="page-title">Create</h1>
-              <p className="page-subtitle">Upload and share your music with the world</p>
-            </div>
-            
-            <div className="create-layout">
-              {/* Left Column - Form */}
-              <div className="create-form-section">
-                <div className="form-card">
-                  <div className="form-section-header">
-                    <span className="form-step">1</span>
-                    <h3>Track Information</h3>
-                  </div>
-                  
-                  <div className="form-group-modern">
-                    <label className="form-label">
-                      Track Title <span className="required">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="form-input-modern"
-                      placeholder="Give your track a catchy name"
-                      value={trackTitle}
-                      onChange={(e) => setTrackTitle(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group-modern">
-                      <label className="form-label">Genre</label>
-                      <input
-                        type="text"
-                        className="form-input-modern"
-                        placeholder="Enter or select genre"
-                        value={trackGenre}
-                        onChange={(e) => setTrackGenre(e.target.value)}
-                        list="genre-suggestions"
-                      />
-                      <datalist id="genre-suggestions">
-                        <option value="electronic" />
-                        <option value="pop" />
-                        <option value="hiphop" />
-                        <option value="rock" />
-                        <option value="jazz" />
-                        <option value="classical" />
-                        <option value="rnb" />
-                        <option value="folk" />
-                        <option value="metal" />
-                        <option value="country" />
-                        <option value="reggae" />
-                        <option value="soul" />
-                        <option value="indie" />
-                        <option value="alternative" />
-                        <option value="dance" />
-                        <option value="house" />
-                        <option value="techno" />
-                      </datalist>
-                    </div>
-
-                    <div className="form-group-modern">
-                      <label className="form-label">Mood</label>
-                      <select 
-                        className="form-input-modern form-select"
-                        value={trackMood}
-                        onChange={(e) => setTrackMood(e.target.value)}
-                      >
-                        <option value="">Select mood</option>
-                        <option value="happy">Happy</option>
-                        <option value="sad">Sad</option>
-                        <option value="energetic">Energetic</option>
-                        <option value="chill">Chill</option>
-                        <option value="romantic">Romantic</option>
-                        <option value="angry">Angry</option>
-                        <option value="melancholic">Melancholic</option>
-                        <option value="dreamy">Dreamy</option>
-                        <option value="uplifting">Uplifting</option>
-                        <option value="dark">Dark</option>
-                        <option value="nostalgic">Nostalgic</option>
-                        <option value="intense">Intense</option>
-                        <option value="peaceful">Peaceful</option>
-                        <option value="aggressive">Aggressive</option>
-                        <option value="mysterious">Mysterious</option>
-                        <option value="groovy">Groovy</option>
-                        <option value="bittersweet">Bittersweet</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="form-group-modern">
-                    <label className="form-label">Description</label>
-                    <textarea
-                      className="form-input-modern form-textarea"
-                      placeholder="Tell the story behind your track..."
-                      rows={4}
-                      value={trackDescription}
-                      onChange={(e) => setTrackDescription(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="form-group-modern">
-                    <label className="form-label">Tags</label>
-                    <div className="tags-input">
-                      <input
-                        type="text"
-                        className="form-input-modern"
-                        placeholder="Add tags (press Enter)"
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        onKeyDown={handleAddTag}
-                      />
-                    </div>
-                    {trackTags.length > 0 && (
-                      <div className="tags-list">
-                        {trackTags.map((tag) => (
-                          <span key={tag} className="tag-item">
-                            {tag}
-                            <button type="button" onClick={() => handleRemoveTag(tag)} className="tag-remove">×</button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <div className="tags-help">Add up to 5 tags to help people discover your music</div>
-                  </div>
-                </div>
-
-                <div className="form-card">
-                  <div className="form-section-header">
-                    <span className="form-step">2</span>
-                    <h3>Upload Files</h3>
-                  </div>
-
-                  {/* Audio Upload */}
-                  <div className="upload-zone">
-                    <div className="upload-icon">🎵</div>
-                    <h4>Upload Audio File</h4>
-                    <p className="upload-hint">Drag & drop your audio file here or click to browse</p>
-                    <p className="upload-formats">Supported: MP3, WAV, FLAC (max 50MB)</p>
-                    {audioFile ? (
-                      <div className="file-selected">{audioFile.name}</div>
-                    ) : (
-                      <input
-                        type="file"
-                        accept="audio/*"
-                        onChange={handleAudioUpload}
-                        className="file-input"
-                        id="audio-upload"
-                      />
-                    )}
-                    <label htmlFor="audio-upload" className="upload-btn">
-                      {audioFile ? "Change File" : "Choose File"}
-                    </label>
-                  </div>
-
-                  {/* Cover Art Upload */}
-                  <div className="upload-zone upload-zone-small">
-                    <div className="upload-preview">
-                      {coverImage ? (
-                        <img src={coverImage} alt="Cover" className="cover-preview-img" />
-                      ) : (
-                        <span className="upload-placeholder">🖼️</span>
-                      )}
-                    </div>
-                    <div className="upload-info">
-                      <h4>Cover Art</h4>
-                      <p className="upload-hint">Recommended: 1400x1400px</p>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleCoverUpload}
-                        className="file-input"
-                        id="cover-upload"
-                      />
-                      <label htmlFor="cover-upload" className="upload-btn-secondary">
-                        {coverImage ? "Change Image" : "Upload Image"}
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="form-card">
-                  <div className="form-section-header">
-                    <span className="form-step">3</span>
-                    <h3>Visibility</h3>
-                  </div>
-                  
-                  <div className="visibility-options">
-                    <label className="visibility-option">
-                      <input 
-                        type="radio" 
-                        name="visibility" 
-                        value="public" 
-                        checked={visibility === "public"}
-                        onChange={(e) => setVisibility(e.target.value)}
-                      />
-                      <div className="visibility-content">
-                        <span className="visibility-icon">🌍</span>
-                        <div>
-                          <div className="visibility-title">Public</div>
-                          <div className="visibility-desc">Everyone can see and listen to your track</div>
-                        </div>
-                      </div>
-                    </label>
-                    <label className="visibility-option">
-                      <input 
-                        type="radio" 
-                        name="visibility" 
-                        value="friends"
-                        checked={visibility === "friends"}
-                        onChange={(e) => setVisibility(e.target.value)}
-                      />
-                      <div className="visibility-content">
-                        <span className="visibility-icon">👥</span>
-                        <div>
-                          <div className="visibility-title">Friends Only</div>
-                          <div className="visibility-desc">Only your friends can see this track</div>
-                        </div>
-                      </div>
-                    </label>
-                    <label className="visibility-option">
-                      <input 
-                        type="radio" 
-                        name="visibility" 
-                        value="private"
-                        checked={visibility === "private"}
-                        onChange={(e) => setVisibility(e.target.value)}
-                      />
-                      <div className="visibility-content">
-                        <span className="visibility-icon">🔒</span>
-                        <div>
-                          <div className="visibility-title">Private</div>
-                          <div className="visibility-desc">Only you can see this track</div>
-                        </div>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="form-actions">
-                  <button className="btn-save-draft" onClick={handleSaveDraft}>Save as Draft</button>
-                  <button className="btn-publish" onClick={handlePublish}>Publish Track</button>
-                </div>
-              </div>
-
-              {/* Right Column - Preview */}
-              <div className="create-preview-section">
-                <div className="preview-card sticky">
-                  <h3 className="preview-title">Preview</h3>
-                  <div className="track-preview">
-                    <div className="preview-cover">
-                      {coverImage ? (
-                        <img src={coverImage} alt="Cover" className="preview-cover-img" />
-                      ) : (
-                        <span className="preview-cover-placeholder">🎵</span>
-                      )}
-                    </div>
-                    <div className="preview-info">
-                      <h4 className="preview-track-title">
-                        {trackTitle || "Your Track Title"}
-                      </h4>
-                      <p className="preview-track-artist">{user?.username || "adi"}</p>
-                      {trackGenre && <span className="preview-genre">{trackGenre}</span>}
-                    </div>
-                  </div>
-                  <div className="preview-waveform">
-                    <div className="waveform-placeholder">
-                      {[...Array(40)].map((_, i) => (
-                        <div key={i} className="waveform-bar" style={{ height: `${Math.random() * 100}%` }} />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="preview-actions">
-                    <button 
-                      className="preview-btn play-btn"
-                      onClick={() => setIsPlaying(!isPlaying)}
-                    >
-                      {isPlaying ? "⏸" : "▶"}
-                    </button>
-                    <button className="preview-btn">❤️</button>
-                    <button className="preview-btn">➕</button>
-                    <span className="preview-duration">
-                      {audioFile ? "3:45" : "--:--"}
-                    </span>
-                  </div>
-                  {trackDescription && (
-                    <div className="preview-description">
-                      {trackDescription}
-                    </div>
-                  )}
-                  {trackTags.length > 0 && (
-                    <div className="preview-tags">
-                      {trackTags.map((tag) => (
-                        <span key={tag} className="preview-tag">{tag}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            </div>
-          )}
-
         {/* Friends */}
         {currentPage === "friends" && (
           <FriendsPage user={user} sidebarExpanded={sidebarExpanded} />
         )}
 
-        {/* Notifications */}
-        {currentPage === "notifications" && (
+        {/* Create */}
+        {currentPage === "create" && (
           <div className="page-content active">
             <div className="page-header">
-              <h1 className="page-title">Notifications</h1>
-              <p className="page-subtitle">
-                Stay updated with your music activity
-              </p>
+              <h1 className="page-title">Create Playlist</h1>
+              <p className="page-subtitle">Import from Spotify or YouTube, or create your own</p>
             </div>
-            <div className="notifications-container">
-              {[
-                { icon: "❤️", text: "Luna Eclipse liked your playlist 'Electronic Dreams'", time: "2 hours ago", color: "#ec4899" },
-                { icon: "🎵", text: "New track added to your playlist 'Electronic Mix'", time: "5 hours ago", color: "#06b6d4" },
-                { icon: "👥", text: "Street Sound started following you", time: "1 day ago", color: "#f59e0b" },
-                { icon: "💬", text: "MC Flow commented on your track 'Midnight Dreams'", time: "1 day ago", color: "#8b5cf6" },
-                { icon: "▶️", text: "Your track reached 1,000 plays!", time: "2 days ago", color: "#10b981" },
-                { icon: "🎁", text: "You received a gift from The Blue Notes", time: "3 days ago", color: "#f472b6" },
-              ].map((notif, idx) => (
-                <div key={idx} className="notification-item">
-                  <div className="notification-icon" style={{ background: `linear-gradient(135deg, ${notif.color}, ${notif.color}88)` }}>
-                    {notif.icon}
+            
+            <div className="create-options">
+              {/* Import from Spotify */}
+              <div className="create-option-card" onClick={() => handleImportFromSpotify()}>
+                <div className="option-icon" style={{ background: '#1DB954' }}>🎵</div>
+                <h3>Import from Spotify</h3>
+                <p>Enter a Spotify playlist URL to import</p>
+              </div>
+
+              {/* Import from YouTube */}
+              <div className="create-option-card" onClick={() => handleImportFromYouTube()}>
+                <div className="option-icon" style={{ background: '#FF0000' }}>▶️</div>
+                <h3>Import from YouTube</h3>
+                <p>Enter a YouTube playlist URL to import</p>
+              </div>
+
+              {/* Create Manually */}
+              <div className="create-option-card" onClick={() => handleCreateManual()}>
+                <div className="option-icon" style={{ background: '#7c3aed' }}>✨</div>
+                <h3>Create Manually</h3>
+                <p>Build your own playlist from scratch</p>
+              </div>
+            </div>
+
+            {/* Import Form (shown when importing) */}
+            {(importMode === 'spotify' || importMode === 'youtube') && (
+              <div className="import-form">
+                <h3>Import from {importMode === 'spotify' ? 'Spotify' : 'YouTube'}</h3>
+                <div className="form-group-modern">
+                  <input
+                    type="text"
+                    className="form-input-modern"
+                    placeholder={importMode === 'spotify' ? 'Paste Spotify playlist URL...' : 'Paste YouTube playlist URL...'}
+                    value={importUrl}
+                    onChange={(e) => setImportUrl(e.target.value)}
+                  />
+                </div>
+                <button className="btn-primary" onClick={handleImportSubmit}>
+                  Import Playlist
+                </button>
+                <button className="btn-secondary" onClick={() => setImportMode(null)}>
+                  Cancel
+                </button>
+              </div>
+            )}
+
+            {/* Manual Playlist Creation */}
+            {importMode === 'manual' && (
+              <div className="create-layout">
+                <div className="create-form-section">
+                  <div className="form-card">
+                    <div className="form-section-header">
+                      <h3>Playlist Details</h3>
+                    </div>
+                    
+                    <div className="form-group-modern">
+                      <label className="form-label">Playlist Name <span className="required">*</span></label>
+                      <input
+                        type="text"
+                        className="form-input-modern"
+                        placeholder="Give your playlist a name"
+                        value={playlistName}
+                        onChange={(e) => setPlaylistName(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group-modern">
+                      <label className="form-label">Description</label>
+                      <textarea
+                        className="form-input-modern form-textarea"
+                        placeholder="Describe your playlist..."
+                        rows={3}
+                        value={playlistDescription}
+                        onChange={(e) => setPlaylistDescription(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group-modern">
+                      <label className="form-label">Genre</label>
+                      <input
+                        type="text"
+                        className="form-input-modern"
+                        placeholder="e.g., Pop, Rock, Electronic"
+                        value={playlistGenre}
+                        onChange={(e) => setPlaylistGenre(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group-modern">
+                      <label className="form-label">Tags</label>
+                      <div className="tags-input">
+                        <input
+                          type="text"
+                          className="form-input-modern"
+                          placeholder="Add tags (press Enter)"
+                          value={tagInput}
+                          onChange={(e) => setTagInput(e.target.value)}
+                          onKeyDown={handleAddTag}
+                        />
+                      </div>
+                      {trackTags.length > 0 && (
+                        <div className="tags-list">
+                          {trackTags.map((tag) => (
+                            <span key={tag} className="tag-item">
+                              {tag}
+                              <button type="button" onClick={() => handleRemoveTag(tag)} className="tag-remove">×</button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="notification-content">
-                    <div className="notification-text">{notif.text}</div>
-                    <div className="notification-time">{notif.time}</div>
+
+                  <div className="form-card">
+                    <div className="form-section-header">
+                      <h3>Search & Add Tracks</h3>
+                    </div>
+                    <div className="track-search-box">
+                      <input
+                        type="text"
+                        className="form-input-modern"
+                        placeholder="Search for tracks to add..."
+                        value={trackSearchQuery}
+                        onChange={(e) => setTrackSearchQuery(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleTrackSearch()}
+                      />
+                      <button className="search-btn" onClick={handleTrackSearch}>🔍</button>
+                    </div>
+                    {searchResults.length > 0 && (
+                      <div className="search-results-list">
+                        {searchResults.map((track) => (
+                          <div key={track.id} className="search-result-item" onClick={() => handleAddTrackToPlaylist(track)}>
+                            <img src={track.image} alt="" className="result-thumb" />
+                            <div className="result-info">
+                              <div className="result-title">{track.title}</div>
+                              <div className="result-artist">{track.artist}</div>
+                            </div>
+                            <button className="add-btn">+</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Selected Tracks */}
+                  {playlistTracks.length > 0 && (
+                    <div className="form-card">
+                      <div className="form-section-header">
+                        <h3>Selected Tracks ({playlistTracks.length})</h3>
+                      </div>
+                      <div className="selected-tracks">
+                        {playlistTracks.map((track, idx) => (
+                          <div key={idx} className="selected-track-item">
+                            <span className="track-number">{idx + 1}</span>
+                            <img src={track.image} alt="" className="track-thumb" />
+                            <div className="track-info">
+                              <div className="track-title">{track.title}</div>
+                              <div className="track-artist">{track.artist}</div>
+                            </div>
+                            <button className="remove-btn" onClick={() => handleRemoveTrack(idx)}>×</button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="form-actions">
+                    <button className="btn-save-draft" onClick={handleSaveDraft}>Save as Draft</button>
+                    <button className="btn-publish" onClick={handlePublish}>Create Playlist</button>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
         )}
 

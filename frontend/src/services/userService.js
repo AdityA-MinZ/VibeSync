@@ -80,3 +80,62 @@ export const getUserActivity = async (userId, limit = 10) => {
     throw error;
   }
 };
+
+export const importSpotifyPlaylist = async (url) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.post(
+      `${API_URL}/spotify/import-playlist`,
+      { url },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Import Spotify playlist error:', error);
+    throw error;
+  }
+};
+
+export const importYouTubePlaylist = async (url) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.post(
+      `${API_URL}/youtube/import-playlist`,
+      { url },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Import YouTube playlist error:', error);
+    throw error;
+  }
+};
+
+export const searchTracks = async (query) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${API_URL}/search/tracks`, {
+      params: { q: query },
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Search tracks error:', error);
+    throw error;
+  }
+};
+
+export const createPlaylist = async (playlistData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.post(
+      `${API_URL}/playlists`,
+      playlistData,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Create playlist error:', error);
+    throw error;
+  }
+};

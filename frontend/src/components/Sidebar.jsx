@@ -1,13 +1,13 @@
 // frontend/src/components/Sidebar.jsx
 import React from "react";
 
-function Sidebar({ currentPage, onNavigate, expanded, onToggle }) {
+function Sidebar({ currentPage, onNavigate, expanded, onToggle, unreadCount = 0 }) {
   const navItems = [
     { id: "home", icon: "🏠", label: "Home" },
     { id: "profile", icon: "👤", label: "Profile" },
     { id: "create", icon: "➕", label: "Create" },
     { id: "friends", icon: "👥", label: "Friends" },
-    { id: "notifications", icon: "🔔", label: "Notifications" },
+    { id: "notifications", icon: "🔔", label: "Notifications", badge: unreadCount > 0 ? unreadCount : null },
   ];
 
   return (
@@ -25,7 +25,10 @@ function Sidebar({ currentPage, onNavigate, expanded, onToggle }) {
             className={`nav-btn ${currentPage === item.id ? "active" : ""}`}
             onClick={() => onNavigate(item.id)}
           >
-            <span className="nav-icon">{item.icon}</span>
+            <span className="nav-icon">
+              {item.icon}
+              {item.badge && <span className="nav-badge">{item.badge > 99 ? '99+' : item.badge}</span>}
+            </span>
             <span>{item.label}</span>
           </button>
         ))}

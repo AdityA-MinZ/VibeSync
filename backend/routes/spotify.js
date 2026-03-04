@@ -564,4 +564,63 @@ router.get('/me/player', auth, async (req, res) => {
   }
 });
 
+// ============================================
+// IMPORT ROUTES
+// ============================================
+
+// Import playlist from URL
+// POST /api/spotify/import-playlist
+router.post('/import-playlist', auth, async (req, res) => {
+  try {
+    const { url } = req.body;
+    
+    if (!url) {
+      return res.status(400).json({ error: 'URL is required' });
+    }
+
+    const accessToken = await getValidAccessToken(req.user.id);
+
+    // Extract playlist ID from URL
+    // Formats: https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M
+    // or: spotify:playlist:37i9dQZF1DXcBWIGoYBM5M
+    let playlistId;
+    if (url.includes('spotify.com/playlist/')) {
+      playlistId = url.split('spotify.com/playlist/')[1].split('?')[0];
+    } else if (url.includes('spotify:playlist:')) {
+      playlistId = url.split('spotify:playlist:')[1];
+    } else {
+      return res.status(400).json({ error: 'Invalid Spotify playlist URL' });
+    }
+
+    // Get playlist details
+    const playlist = await spotifyService.getPlaylist(accessToken, playlistId);
+    
+    // Get playlist tracks
+    const tracksData = await spotifyService.getPlaylistTracks(accessToken, playlistId, 100, 0);
+    
+    const tracks = tracksData.items.map(item => ({
+      id: item.track.id,
+      title: item.track.name,
+      artist: item.track.artists.map(a => a.name).join(', '),
+      album: item.track.album.name,
+      image: item.track.album.images?.[0]?.url || '',
+      duration: item.track.duration_ms,
+      spotifyUrl: item.track.external_urls?.spotify,
+    })).filter(t => t.id); // Filter out null tracks
+
+    res.json({
+      name: playlist.name,
+      description: playlist.description || '',
+      image: playlist.images?.[0]?.url || '',
+      tracks: tracks,
+    });
+  } catch (error) {
+    console.error('Import playlist error:', error.message);
+    if (error.message.includes('Spotify not connected')) {
+      return res.status(401).json({ error: 'Spotify not connected', needsAuth: true });
+    }
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
