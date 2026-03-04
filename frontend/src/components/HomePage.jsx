@@ -223,6 +223,11 @@ function HomePage({ user, onLogout }) {
     confirmPassword: ''
   });
 
+  // Home page state
+  const [homePlaylists, setHomePlaylists] = useState([]);
+  const [homeLoading, setHomeLoading] = useState(false);
+  const [homeError, setHomeError] = useState(null);
+
   const handleViewAllActivity = () => {
     // Navigate to a dedicated activity page or expand the current section
     alert('Full activity view coming soon!');
@@ -492,6 +497,29 @@ function HomePage({ user, onLogout }) {
     }
   }, [profileData]);
 
+  // Fetch home page playlists
+  const fetchHomePlaylists = async () => {
+    setHomeLoading(true);
+    setHomeError(null);
+    
+    try {
+      const playlists = await getUserPlaylists();
+      setHomePlaylists(playlists || []);
+    } catch (error) {
+      console.error('Error fetching home playlists:', error);
+      setHomeError('Failed to load playlists. Please try again.');
+    } finally {
+      setHomeLoading(false);
+    }
+  };
+
+  // Fetch playlists when on home page
+  useEffect(() => {
+    if (currentPage === "home") {
+      fetchHomePlaylists();
+    }
+  }, [currentPage]);
+
   const handleAddTag = (e) => {
     if (e.key === "Enter" && tagInput.trim() && trackTags.length < 5) {
       e.preventDefault();
@@ -639,19 +667,44 @@ function HomePage({ user, onLogout }) {
   };
 
   const filteredData = useMemo(() => {
-    const base =
-      searchTerm.trim().length > 0
-        ? musicData.filter((t) => {
-            const s = searchTerm.toLowerCase();
-            return (
-              t.title.toLowerCase().includes(s) ||
-              t.artist.toLowerCase().includes(s) ||
-              t.genre.toLowerCase().includes(s)
-            );
-          })
-        : musicData.filter((t) => t.genre === currentFilter);
-    return base;
-  }, [currentFilter, searchTerm]);
+  const base = homePlaylists;
+  
+  if (searchTerm.trim().length > 0) {
+    const s = searchTerm.toLowerCase();
+    return base.filter((playlist) => {
+      return (
+        playlist.title?.toLowerCase().includes(s) ||
+        playlist.description?.toLowerCase().includes(s) ||
+        playlist.owner?.username?.toLowerCase().includes(s)
+      );
+    });
+  }
+  
+  if (currentFilter !== 'all') {
+    return base.filter((playlist) => {
+      // For playlists, we'll use a simple categorization based on title/description
+      const playlistText = `${playlist.title || ''} ${playlist.description || ''}`.toLowerCase();
+      switch (currentFilter) {
+        case 'electronic':
+          return playlistText.includes('electronic') || playlistText.includes('edm') || playlistText.includes('techno') || playlistText.includes('synth');
+        case 'pop':
+          return playlistText.includes('pop') || playlistText.includes('hits') || playlistText.includes('top') || playlistText.includes('summer');
+        case 'rock':
+          return playlistText.includes('rock') || playlistText.includes('alternative') || playlistText.includes('metal') || playlistText.includes('classics');
+        case 'hiphop':
+          return playlistText.includes('hip') || playlistText.includes('rap') || playlistText.includes('hop');
+        case 'jazz':
+          return playlistText.includes('jazz') || playlistText.includes('blues') || playlistText.includes('swing');
+        case 'classical':
+          return playlistText.includes('classical') || playlistText.includes('orchestra') || playlistText.includes('symphony');
+        default:
+          return true;
+      }
+    });
+  }
+  
+  return base;
+}, [homePlaylists, currentFilter, searchTerm]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -870,55 +923,111 @@ function HomePage({ user, onLogout }) {
         {/* Home feed */}
         {currentPage === "home" && (
           <div className="page-content active">
-            <div className="playlist-grid">
-              {filteredData.map((track) => (
-                <div
-                  key={track.id}
-                  className="playlist-card"
-                  onClick={() => openModal(track)}
-                >
-                    <div className="playlist-card-image">
-                      <img src={track.image} alt={track.title} />
-                      <div className="genre-badge">{track.genre}</div>
-                      <div className="play-overlay">
-                        <div className="play-icon">▶</div>
-                      </div>
-                    </div>
-                    <div className="playlist-card-content">
-                      <h3 className="playlist-card-title">{track.title}</h3>
-                      <p className="playlist-card-artist">{track.artist}</p>
-                      <div className="playlist-card-stats">
-                        <span className="stat">
-                          <span className="stat-icon">👍</span>
-                          {formatNumber(track.likes)}
-                        </span>
-                        <span className="stat">
-                          <span className="stat-icon">▶</span>
-                          {formatNumber(track.plays)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="playlist-card-actions">
-                      <LikeButton
-                        targetType="track"
-                        targetId={track.id.toString()}
-                        initialCount={track.likes}
-                        showCount={true}
-                        size="small"
-                      />
-                      <button
-                        className="action-btn view-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openModal(track);
-                        }}
-                      >
-                        View
+            {homeLoading && (
+              <div className="loading-state">
+                <div className="loading-spinner">Loading playlists...</div>
+              </div>
+            )}
+            
+            {homeError && (
+              <div className="error-state">
+                <div className="error-message">{homeError}</div>
+                <button className="btn-primary" onClick={fetchHomePlaylists}>
+                  Try Again
+                </button>
+              </div>
+            )}
+            
+            {!homeLoading && !homeError && (
+              <>
+                {filteredData.length === 0 ? (
+                  <div className="empty-state">
+                    <div className="empty-icon">🎵</div>
+                    <h3>No playlists found</h3>
+                    <p>
+                      {searchTerm.trim() 
+                        ? 'No playlists match your search. Try different keywords.'
+                        : 'No playlists yet. Create your first playlist to get started!'
+                      }
+                    </p>
+                    {!searchTerm.trim() && (
+                      <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
+                        Create Playlist
                       </button>
-                    </div>
+                    )}
                   </div>
-                ))}
-            </div>
+                ) : (
+                  <div className="playlist-grid">
+                    {filteredData.map((playlist) => (
+                      <div
+                        key={playlist._id || playlist.id}
+                        className="playlist-card"
+                        onClick={() => handlePlaylistClick(playlist)}
+                      >
+                        <div className="playlist-card-image">
+                          <img 
+                            src={playlist.coverImage || `https://picsum.photos/400/500?random=${playlist._id || playlist.id}`} 
+                            alt={playlist.title} 
+                          />
+                          <div className="genre-badge">
+                            {playlist.tracks?.length || 0} tracks
+                          </div>
+                          <div className="play-overlay">
+                            <div className="play-icon">▶</div>
+                          </div>
+                        </div>
+                        <div className="playlist-card-content">
+                          <h3 className="playlist-card-title">{playlist.title}</h3>
+                          <p className="playlist-card-artist">
+                            By {playlist.owner?.username || 'Unknown'}
+                          </p>
+                          {playlist.description && (
+                            <p className="playlist-card-description">
+                              {playlist.description.length > 100 
+                                ? `${playlist.description.substring(0, 100)}...`
+                                : playlist.description
+                              }
+                            </p>
+                          )}
+                          <div className="playlist-card-stats">
+                            <span className="stat">
+                              <span className="stat-icon">🎵</span>
+                              {playlist.tracks?.length || 0}
+                            </span>
+                            <span className="stat">
+                              <span className="stat-icon">❤️</span>
+                              {playlist.likes || 0}
+                            </span>
+                            <span className="stat">
+                              <span className="stat-icon">▶</span>
+                              {playlist.plays || 0}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="playlist-card-actions">
+                          <LikeButton
+                            targetType="playlist"
+                            targetId={playlist._id || playlist.id}
+                            initialCount={playlist.likes || 0}
+                            showCount={true}
+                            size="small"
+                          />
+                          <button
+                            className="action-btn view-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePlaylistClick(playlist);
+                            }}
+                          >
+                            View
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 
