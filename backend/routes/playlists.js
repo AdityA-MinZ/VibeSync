@@ -9,6 +9,22 @@ router.get('/', async (req, res) => {
   res.json(playlists);
 });
 
+// GET user's playlists (protected)
+router.get('/me', auth, async (req, res) => {
+  const playlists = await Playlist.find({ owner: req.user.id })
+    .populate('owner', 'username')
+    .sort({ createdAt: -1 });
+  res.json(playlists);
+});
+
+// GET playlists by user ID
+router.get('/user/:userId', auth, async (req, res) => {
+  const playlists = await Playlist.find({ owner: req.params.userId, isPublic: true })
+    .populate('owner', 'username')
+    .sort({ createdAt: -1 });
+  res.json(playlists);
+});
+
 // POST create (protected)
 router.post('/', auth, async (req, res) => {
   const playlist = new Playlist({ ...req.body, owner: req.user.id });

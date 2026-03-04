@@ -6,7 +6,7 @@ function Sidebar({ currentPage, onNavigate, expanded, onToggle }) {
     { id: "home", icon: "🏠", label: "Home" },
     { id: "profile", icon: "👤", label: "Profile" },
     { id: "create", icon: "➕", label: "Create" },
-    { id: "explore", icon: "🔍", label: "Explore" },
+    { id: "friends", icon: "👥", label: "Friends" },
     { id: "notifications", icon: "🔔", label: "Notifications" },
   ];
 

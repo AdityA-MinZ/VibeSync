@@ -45,6 +45,9 @@ app.use('/api/social', require('./routes/social'));
 app.use('/api/social', require('./routes/follows'));
 app.use('/api/social', require('./routes/comments'));
 app.use('/api/social', require('./routes/boards'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/messages', require('./routes/messages'));
+app.use('/api/listening-sessions', require('./routes/listeningSessions'));
 
 // Production: Serve React frontend (if you have client/build folder)
 if (process.env.NODE_ENV === 'production') {
