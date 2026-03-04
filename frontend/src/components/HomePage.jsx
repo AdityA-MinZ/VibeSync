@@ -158,7 +158,7 @@ function formatNumber(num) {
   return num.toString();
 }
 
-function HomePage({ user }) {
+function HomePage({ user, onLogout }) {
   const [currentFilter, setCurrentFilter] = useState("electronic");
   const [currentPage, setCurrentPage] = useState("home");
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
@@ -190,10 +190,307 @@ function HomePage({ user }) {
   const [profilePlaylists, setProfilePlaylists] = useState([]);
   const [profileActivity, setProfileActivity] = useState([]);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState(null);
 
   // Notifications state
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  // Settings state
+  const [settingsSection, setSettingsSection] = useState('account');
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsMessage, setSettingsMessage] = useState('');
+  const [notificationSettings, setNotificationSettings] = useState({
+    followRequests: true,
+    newFollowers: true,
+    playlistShares: true,
+    trackLikes: true,
+    comments: true,
+    newMessages: true,
+    systemUpdates: false
+  });
+  const [accountSettings, setAccountSettings] = useState({
+    username: '',
+    email: '',
+    bio: '',
+    location: '',
+    website: ''
+  });
+  const [passwordSettings, setPasswordSettings] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+
+  const handleViewAllActivity = () => {
+    // Navigate to a dedicated activity page or expand the current section
+    alert('Full activity view coming soon!');
+  };
+
+  const handleViewAllPlaylists = () => {
+    // Navigate to a dedicated playlists page or expand the current section
+    alert('Full playlists view coming soon!');
+  };
+
+  const handleProfilePictureUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('profileImage', file);
+
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:4000/api/users/me/profile-image', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload profile picture');
+      }
+
+      const result = await response.json();
+      
+      // Update profile data with new image
+      setProfileData(prev => ({
+        ...prev,
+        profileImage: result.profileImage
+      }));
+
+      alert('Profile picture updated successfully!');
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      alert('Failed to upload profile picture. Please try again.');
+    }
+  };
+
+  const handlePlaylistClick = (playlist) => {
+    // Navigate to playlist details page
+    alert(`Opening playlist: ${playlist.name || playlist.title}`);
+  };
+
+  const handleShareProfile = async () => {
+    const profileUrl = `${window.location.origin}/profile/${profileData?.username || user?.username}`;
+    
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `${profileData?.username || user?.username}'s Profile`,
+          text: `Check out ${profileData?.username || user?.username}'s profile on VibeSync!`,
+          url: profileUrl
+        });
+      } else {
+        await navigator.clipboard.writeText(profileUrl);
+        alert('Profile link copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Error sharing profile:', error);
+      // Fallback: manually create a temporary input to copy
+      const tempInput = document.createElement('input');
+      tempInput.value = profileUrl;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+      alert('Profile link copied to clipboard!');
+    }
+  };
+
+  // Settings handlers
+  const handleSettingsNavClick = (section) => {
+    setSettingsSection(section);
+    setSettingsMessage('');
+  };
+
+  const handleAccountSettingsChange = (field, value) => {
+    setAccountSettings(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleNotificationSettingsChange = (setting, value) => {
+    setNotificationSettings(prev => ({
+      ...prev,
+      [setting]: value
+    }));
+  };
+
+  const handlePasswordSettingsChange = (field, value) => {
+    setPasswordSettings(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSaveAccountSettings = async () => {
+    setSettingsLoading(true);
+    setSettingsMessage('');
+    
+    try {
+      await updateUserProfile(accountSettings);
+      setSettingsMessage('Account settings saved successfully!');
+      
+      // Update profile data
+      setProfileData(prev => ({
+        ...prev,
+        ...accountSettings
+      }));
+    } catch (error) {
+      console.error('Error saving account settings:', error);
+      setSettingsMessage('Failed to save account settings. Please try again.');
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const handleSaveNotificationSettings = async () => {
+    setSettingsLoading(true);
+    setSettingsMessage('');
+    
+    try {
+      // Save notification preferences to backend
+      const token = localStorage.getItem('token');
+      await fetch('http://localhost:4000/api/users/me/notification-settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(notificationSettings)
+      });
+      
+      setSettingsMessage('Notification preferences saved successfully!');
+    } catch (error) {
+      console.error('Error saving notification settings:', error);
+      setSettingsMessage('Failed to save notification settings. Please try again.');
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    const { currentPassword, newPassword, confirmPassword } = passwordSettings;
+    
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setSettingsMessage('Please fill in all password fields');
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      setSettingsMessage('New passwords do not match');
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      setSettingsMessage('Password must be at least 6 characters long');
+      return;
+    }
+    
+    setSettingsLoading(true);
+    setSettingsMessage('');
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:4000/api/auth/change-password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword
+        })
+      });
+      
+      if (response.ok) {
+        setSettingsMessage('Password changed successfully!');
+        setPasswordSettings({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      } else {
+        const error = await response.json();
+        setSettingsMessage(error.error || 'Failed to change password');
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+      setSettingsMessage('Failed to change password. Please try again.');
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmDelete = window.confirm(
+      'Are you sure you want to delete your account? This action cannot be undone and will permanently delete all your data.'
+    );
+    
+    if (!confirmDelete) return;
+    
+    const finalConfirm = window.confirm(
+      'This is your last chance! Are you absolutely sure you want to delete your account?'
+    );
+    
+    if (!finalConfirm) return;
+    
+    setSettingsLoading(true);
+    setSettingsMessage('');
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:4000/api/users/me/delete-account', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        setSettingsMessage('Account deleted successfully. Redirecting...');
+        setTimeout(() => {
+          if (onLogout) onLogout();
+          window.location.href = '/';
+        }, 2000);
+      } else {
+        const error = await response.json();
+        setSettingsMessage(error.error || 'Failed to delete account');
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      setSettingsMessage('Failed to delete account. Please try again.');
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  // Load account settings when profile data is available
+  useEffect(() => {
+    if (profileData) {
+      setAccountSettings({
+        username: profileData.username || '',
+        email: profileData.email || '',
+        bio: profileData.bio || '',
+        location: profileData.location || '',
+        website: profileData.website || ''
+      });
+    }
+  }, [profileData]);
 
   const handleAddTag = (e) => {
     if (e.key === "Enter" && tagInput.trim() && trackTags.length < 5) {
@@ -407,6 +704,9 @@ function HomePage({ user }) {
   useEffect(() => {
     if (currentPage === "profile") {
       const fetchProfileData = async () => {
+        setProfileLoading(true);
+        setProfileError(null);
+        
         try {
           const [profile, stats, playlists, activity] = await Promise.all([
             getUserProfile(),
@@ -420,8 +720,12 @@ function HomePage({ user }) {
           setProfileActivity(activity);
         } catch (error) {
           console.error('Error fetching profile data:', error);
+          setProfileError('Failed to load profile data. Please try again.');
+        } finally {
+          setProfileLoading(false);
         }
       };
+      
       fetchProfileData();
     }
   }, [currentPage]);
@@ -554,6 +858,7 @@ function HomePage({ user }) {
         expanded={sidebarExpanded}
         onToggle={() => setSidebarExpanded((s) => !s)}
         unreadCount={unreadCount}
+        onLogout={onLogout}
       />
 
       {/* Main container */}
@@ -627,15 +932,51 @@ function HomePage({ user }) {
               </p>
             </div>
             
-            {/* Profile Hero Card */}
-            <div className="profile-hero-card">
+            {profileLoading && (
+              <div className="loading-state">
+                <div className="loading-spinner">Loading profile...</div>
+              </div>
+            )}
+            
+            {profileError && (
+              <div className="error-state">
+                <div className="error-message">{profileError}</div>
+                <button className="btn-primary" onClick={() => window.location.reload()}>
+                  Try Again
+                </button>
+              </div>
+            )}
+            
+            {!profileLoading && !profileError && (
+              <>
+                {/* Profile Hero Card */}
+                <div className="profile-hero-card">
               <div className="profile-cover-image" />
               <div className="profile-info-section">
                 <div className="profile-avatar-wrapper">
                   <div className="profile-avatar-large">
-                    {(profileData?.username || user?.username || "A").charAt(0).toUpperCase()}
+                    {profileData?.profileImage ? (
+                      <img 
+                        src={profileData.profileImage} 
+                        alt="Profile" 
+                        className="profile-avatar-img"
+                      />
+                    ) : (
+                      (profileData?.username || user?.username || "A").charAt(0).toUpperCase()
+                    )}
                   </div>
-                  <button className="edit-avatar-btn" title="Change photo" onClick={() => setIsEditingProfile(true)}>
+                  <input
+                    type="file"
+                    id="profile-image-upload"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={handleProfilePictureUpload}
+                  />
+                  <button 
+                    className="edit-avatar-btn" 
+                    title="Change photo" 
+                    onClick={() => document.getElementById('profile-image-upload').click()}
+                  >
                     📷
                   </button>
                 </div>
@@ -651,7 +992,7 @@ function HomePage({ user }) {
                 </div>
                 <div className="profile-actions">
                   <button className="btn-primary" onClick={() => setIsEditingProfile(true)}>Edit Profile</button>
-                  <button className="action-btn">Share Profile</button>
+                  <button className="action-btn" onClick={handleShareProfile}>Share Profile</button>
                 </div>
               </div>
             </div>
@@ -692,7 +1033,7 @@ function HomePage({ user }) {
             <div className="section-card">
               <div className="section-header">
                 <h3>Recent Activity</h3>
-                <button className="view-all-btn">View All</button>
+                <button className="view-all-btn" onClick={handleViewAllActivity}>View All</button>
               </div>
               <div className="activity-list">
                 {profileActivity.length > 0 ? (
@@ -717,12 +1058,17 @@ function HomePage({ user }) {
             <div className="section-card">
               <div className="section-header">
                 <h3>Your Playlists</h3>
-                <button className="view-all-btn">See All</button>
+                <button className="view-all-btn" onClick={handleViewAllPlaylists}>See All</button>
               </div>
               <div className="playlist-mini-grid">
                 {profilePlaylists.length > 0 ? (
                   profilePlaylists.map((playlist, idx) => (
-                    <div key={playlist._id || idx} className="playlist-mini-card" style={{ background: `linear-gradient(135deg, #7c3aed22, #7c3aed11)` }}>
+                    <div 
+                      key={playlist._id || idx} 
+                      className="playlist-mini-card" 
+                      style={{ background: `linear-gradient(135deg, #7c3aed22, #7c3aed11)` }}
+                      onClick={() => handlePlaylistClick(playlist)}
+                    >
                       <div className="playlist-mini-cover" style={{ background: '#7c3aed' }}>
                         🎵
                       </div>
@@ -737,12 +1083,70 @@ function HomePage({ user }) {
                 )}
               </div>
             </div>
-          </div>
+            </>
+          )}
+        </div>
         )}
 
         {/* Friends */}
         {currentPage === "friends" && (
           <FriendsPage user={user} sidebarExpanded={sidebarExpanded} />
+        )}
+
+        {/* Notifications */}
+        {currentPage === "notifications" && (
+          <div className="page-content active">
+            <div className="page-header">
+              <h1 className="page-title">Notifications</h1>
+              <p className="page-subtitle">
+                Stay updated with your latest activity
+              </p>
+              {unreadCount > 0 && (
+                <button className="btn-secondary" onClick={handleMarkAllAsRead}>
+                  Mark All as Read
+                </button>
+              )}
+            </div>
+            
+            <div className="notifications-list">
+              {notifications.length > 0 ? (
+                notifications.map((notification) => (
+                  <div
+                    key={notification._id}
+                    className={`notification-item ${!notification.isRead ? 'unread' : ''}`}
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    <div 
+                      className="notification-icon"
+                      style={{ background: getNotificationColor(notification.type) }}
+                    >
+                      {getNotificationIcon(notification.type)}
+                    </div>
+                    <div className="notification-content">
+                      <p className="notification-message">{notification.message}</p>
+                      <div className="notification-meta">
+                        <span className="notification-sender">
+                          {notification.sender?.username || 'System'}
+                        </span>
+                        <span className="notification-time">
+                          {getRelativeTime(notification.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+                    {!notification.isRead && (
+                      <div className="notification-indicator" />
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="empty-state">
+                  <div className="empty-icon">🔔</div>
+                  <h3>No notifications yet</h3>
+                  <p>When someone interacts with your content, you'll see it here!</p>
+                </div>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Create */}
@@ -934,65 +1338,293 @@ function HomePage({ user }) {
             <div className="page-header">
               <h1 className="page-title">Settings</h1>
               <p className="page-subtitle">
-                Customize your VibeSync experience
+                Manage your account and notification preferences
               </p>
             </div>
+            
+            {settingsMessage && (
+              <div className={`settings-message ${settingsMessage.includes('success') ? 'success' : 'error'}`}>
+                {settingsMessage}
+              </div>
+            )}
+            
             <div className="settings-layout">
               <div className="settings-nav">
-                <button className="settings-nav-item active">Account</button>
-                <button className="settings-nav-item">Notifications</button>
-                <button className="settings-nav-item">Privacy</button>
-                <button className="settings-nav-item">Audio Quality</button>
-                <button className="settings-nav-item">Appearance</button>
-                <button className="settings-nav-item">Connected Apps</button>
+                <button 
+                  className={`settings-nav-item ${settingsSection === 'account' ? 'active' : ''}`}
+                  onClick={() => handleSettingsNavClick('account')}
+                >
+                  Account
+                </button>
+                <button 
+                  className={`settings-nav-item ${settingsSection === 'notifications' ? 'active' : ''}`}
+                  onClick={() => handleSettingsNavClick('notifications')}
+                >
+                  Notifications
+                </button>
               </div>
+              
               <div className="settings-content">
-                <div className="settings-card">
-                  <h3 className="settings-section-title">Profile Information</h3>
-                  <div className="settings-form">
-                    <div className="settings-form-group">
-                      <label className="settings-label">Display Name</label>
-                      <input type="text" className="settings-input" defaultValue={user?.username || "adi"} />
+                {settingsSection === 'account' && (
+                  <>
+                    <div className="settings-card">
+                      <h3 className="settings-section-title">Profile Information</h3>
+                      <div className="settings-form">
+                        <div className="settings-form-group">
+                          <label className="settings-label">Username</label>
+                          <input 
+                            type="text" 
+                            className="settings-input" 
+                            value={accountSettings.username}
+                            onChange={(e) => handleAccountSettingsChange('username', e.target.value)}
+                          />
+                        </div>
+                        <div className="settings-form-group">
+                          <label className="settings-label">Email</label>
+                          <input 
+                            type="email" 
+                            className="settings-input" 
+                            value={accountSettings.email}
+                            onChange={(e) => handleAccountSettingsChange('email', e.target.value)}
+                          />
+                        </div>
+                        <div className="settings-form-group">
+                          <label className="settings-label">Bio</label>
+                          <textarea 
+                            className="settings-input form-textarea" 
+                            rows="3" 
+                            placeholder="Tell us about yourself..."
+                            value={accountSettings.bio}
+                            onChange={(e) => handleAccountSettingsChange('bio', e.target.value)}
+                          />
+                        </div>
+                        <div className="settings-form-group">
+                          <label className="settings-label">Location</label>
+                          <input 
+                            type="text" 
+                            className="settings-input" 
+                            placeholder="City, Country"
+                            value={accountSettings.location}
+                            onChange={(e) => handleAccountSettingsChange('location', e.target.value)}
+                          />
+                        </div>
+                        <div className="settings-form-group">
+                          <label className="settings-label">Website</label>
+                          <input 
+                            type="text" 
+                            className="settings-input" 
+                            placeholder="https://yourwebsite.com"
+                            value={accountSettings.website}
+                            onChange={(e) => handleAccountSettingsChange('website', e.target.value)}
+                          />
+                        </div>
+                        <button 
+                          className="btn-save" 
+                          onClick={handleSaveAccountSettings}
+                          disabled={settingsLoading}
+                        >
+                          {settingsLoading ? 'Saving...' : 'Save Changes'}
+                        </button>
+                      </div>
                     </div>
-                    <div className="settings-form-group">
-                      <label className="settings-label">Email</label>
-                      <input type="email" className="settings-input" defaultValue={user?.email || "adi@gmail.com"} />
+                    
+                    <div className="settings-card">
+                      <h3 className="settings-section-title">Change Password</h3>
+                      <div className="settings-form">
+                        <div className="settings-form-group">
+                          <label className="settings-label">Current Password</label>
+                          <input 
+                            type="password" 
+                            className="settings-input" 
+                            placeholder="Enter current password"
+                            value={passwordSettings.currentPassword}
+                            onChange={(e) => handlePasswordSettingsChange('currentPassword', e.target.value)}
+                          />
+                        </div>
+                        <div className="settings-form-group">
+                          <label className="settings-label">New Password</label>
+                          <input 
+                            type="password" 
+                            className="settings-input" 
+                            placeholder="Enter new password"
+                            value={passwordSettings.newPassword}
+                            onChange={(e) => handlePasswordSettingsChange('newPassword', e.target.value)}
+                          />
+                        </div>
+                        <div className="settings-form-group">
+                          <label className="settings-label">Confirm New Password</label>
+                          <input 
+                            type="password" 
+                            className="settings-input" 
+                            placeholder="Confirm new password"
+                            value={passwordSettings.confirmPassword}
+                            onChange={(e) => handlePasswordSettingsChange('confirmPassword', e.target.value)}
+                          />
+                        </div>
+                        <button 
+                          className="btn-save" 
+                          onClick={handlePasswordChange}
+                          disabled={settingsLoading}
+                        >
+                          {settingsLoading ? 'Updating...' : 'Update Password'}
+                        </button>
+                      </div>
                     </div>
-                    <div className="settings-form-group">
-                      <label className="settings-label">Bio</label>
-                      <textarea className="settings-input" rows="3" placeholder="Tell us about yourself..."></textarea>
+                    
+                    <div className="settings-card danger-zone">
+                      <h3 className="settings-section-title">Danger Zone</h3>
+                      <div className="danger-item">
+                        <div>
+                          <div className="danger-title">Delete Account</div>
+                          <div className="danger-desc">Once you delete your account, there is no going back. Please be certain.</div>
+                        </div>
+                        <button 
+                          className="btn-danger" 
+                          onClick={handleDeleteAccount}
+                          disabled={settingsLoading}
+                        >
+                          Delete Account
+                        </button>
+                      </div>
                     </div>
-                    <button className="btn-save">Save Changes</button>
+                  </>
+                )}
+                
+                {settingsSection === 'notifications' && (
+                  <div className="settings-card">
+                    <h3 className="settings-section-title">Notification Preferences</h3>
+                    <div className="notification-settings">
+                      <div className="notification-group">
+                        <h4>👥 Social Notifications</h4>
+                        
+                        <div className="notification-item">
+                          <div className="notification-info">
+                            <label className="notification-label">Follow Requests</label>
+                            <p className="notification-desc">When someone wants to follow you</p>
+                          </div>
+                          <label className="toggle-switch">
+                            <input 
+                              type="checkbox" 
+                              checked={notificationSettings.followRequests}
+                              onChange={(e) => handleNotificationSettingsChange('followRequests', e.target.checked)}
+                            />
+                            <span className="toggle-slider"></span>
+                          </label>
+                        </div>
+                        
+                        <div className="notification-item">
+                          <div className="notification-info">
+                            <label className="notification-label">New Followers</label>
+                            <p className="notification-desc">When someone follows you</p>
+                          </div>
+                          <label className="toggle-switch">
+                            <input 
+                              type="checkbox" 
+                              checked={notificationSettings.newFollowers}
+                              onChange={(e) => handleNotificationSettingsChange('newFollowers', e.target.checked)}
+                            />
+                            <span className="toggle-slider"></span>
+                          </label>
+                        </div>
+                        
+                        <div className="notification-item">
+                          <div className="notification-info">
+                            <label className="notification-label">Playlist Shares</label>
+                            <p className="notification-desc">When someone shares a playlist with you</p>
+                          </div>
+                          <label className="toggle-switch">
+                            <input 
+                              type="checkbox" 
+                              checked={notificationSettings.playlistShares}
+                              onChange={(e) => handleNotificationSettingsChange('playlistShares', e.target.checked)}
+                            />
+                            <span className="toggle-slider"></span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div className="notification-group">
+                        <h4>🎵 Music Notifications</h4>
+                        
+                        <div className="notification-item">
+                          <div className="notification-info">
+                            <label className="notification-label">Track Likes</label>
+                            <p className="notification-desc">When someone likes your tracks</p>
+                          </div>
+                          <label className="toggle-switch">
+                            <input 
+                              type="checkbox" 
+                              checked={notificationSettings.trackLikes}
+                              onChange={(e) => handleNotificationSettingsChange('trackLikes', e.target.checked)}
+                            />
+                            <span className="toggle-slider"></span>
+                          </label>
+                        </div>
+                        
+                        <div className="notification-item">
+                          <div className="notification-info">
+                            <label className="notification-label">Comments</label>
+                            <p className="notification-desc">When someone comments on your content</p>
+                          </div>
+                          <label className="toggle-switch">
+                            <input 
+                              type="checkbox" 
+                              checked={notificationSettings.comments}
+                              onChange={(e) => handleNotificationSettingsChange('comments', e.target.checked)}
+                            />
+                            <span className="toggle-slider"></span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div className="notification-group">
+                        <h4>💬 Communication</h4>
+                        
+                        <div className="notification-item">
+                          <div className="notification-info">
+                            <label className="notification-label">New Messages</label>
+                            <p className="notification-desc">When you receive a new message</p>
+                          </div>
+                          <label className="toggle-switch">
+                            <input 
+                              type="checkbox" 
+                              checked={notificationSettings.newMessages}
+                              onChange={(e) => handleNotificationSettingsChange('newMessages', e.target.checked)}
+                            />
+                            <span className="toggle-slider"></span>
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div className="notification-group">
+                        <h4>⚙️ System</h4>
+                        
+                        <div className="notification-item">
+                          <div className="notification-info">
+                            <label className="notification-label">System Updates</label>
+                            <p className="notification-desc">Important updates and announcements</p>
+                          </div>
+                          <label className="toggle-switch">
+                            <input 
+                              type="checkbox" 
+                              checked={notificationSettings.systemUpdates}
+                              onChange={(e) => handleNotificationSettingsChange('systemUpdates', e.target.checked)}
+                            />
+                            <span className="toggle-slider"></span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <button 
+                      className="btn-save" 
+                      onClick={handleSaveNotificationSettings}
+                      disabled={settingsLoading}
+                    >
+                      {settingsLoading ? 'Saving...' : 'Save Notification Preferences'}
+                    </button>
                   </div>
-                </div>
-                <div className="settings-card">
-                  <h3 className="settings-section-title">Change Password</h3>
-                  <div className="settings-form">
-                    <div className="settings-form-group">
-                      <label className="settings-label">Current Password</label>
-                      <input type="password" className="settings-input" placeholder="Enter current password" />
-                    </div>
-                    <div className="settings-form-group">
-                      <label className="settings-label">New Password</label>
-                      <input type="password" className="settings-input" placeholder="Enter new password" />
-                    </div>
-                    <div className="settings-form-group">
-                      <label className="settings-label">Confirm New Password</label>
-                      <input type="password" className="settings-input" placeholder="Confirm new password" />
-                    </div>
-                    <button className="btn-save">Update Password</button>
-                  </div>
-                </div>
-                <div className="settings-card danger-zone">
-                  <h3 className="settings-section-title">Danger Zone</h3>
-                  <div className="danger-item">
-                    <div>
-                      <div className="danger-title">Delete Account</div>
-                      <div className="danger-desc">Once you delete your account, there is no going back. Please be certain.</div>
-                    </div>
-                    <button className="btn-danger">Delete Account</button>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           </div>

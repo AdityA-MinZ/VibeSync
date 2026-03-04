@@ -4,6 +4,40 @@ const User = require('../models/User');
 const Playlist = require('../models/Playlist');
 const auth = require('../middleware/auth');
 const mongoose = require('mongoose');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Configure multer for profile image uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, '../uploads/profile-images');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, req.user.id + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed'), false);
+  }
+};
+
+const upload = multer({ 
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
 
 router.get('/me', auth, async (req, res) => {
   try {
@@ -165,6 +199,124 @@ router.get('/me/activity', auth, async (req, res) => {
     res.json(result);
   } catch (error) {
     console.log('Get user activity error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+function getRelativeTime(date) {
+  const now = new Date();
+  const then = new Date(date);
+  const diffMs = now - then;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return `${diffMins} minutes ago`;
+  if (diffHours < 24) return `${diffHours} hours ago`;
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return then.toLocaleDateString();
+}
+
+// Profile image upload route
+router.post('/me/profile-image', auth, upload.single('profileImage'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Delete old profile image if exists
+    if (user.profileImage) {
+      const oldImagePath = path.join(__dirname, '..', user.profileImage);
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
+      }
+    }
+
+    // Update user profile with new image path
+    user.profileImage = `/uploads/profile-images/${req.file.filename}`;
+    await user.save();
+
+    res.json({ 
+      message: 'Profile image uploaded successfully',
+      profileImage: user.profileImage 
+    });
+  } catch (error) {
+    console.log('Profile image upload error:', error.message);
+    
+    // Delete uploaded file if there was an error
+    if (req.file) {
+      const filePath = path.join(__dirname, '..', req.file.path);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+    
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'File size too large. Maximum size is 5MB.' });
+    }
+    
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// PUT /api/users/me/notification-settings
+router.put('/me/notification-settings', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Add notification settings to user schema if not exists
+    if (!user.notificationSettings) {
+      user.notificationSettings = {};
+    }
+
+    // Update notification settings
+    Object.assign(user.notificationSettings, req.body);
+    await user.save();
+
+    res.json({ 
+      message: 'Notification settings updated successfully',
+      notificationSettings: user.notificationSettings
+    });
+  } catch (error) {
+    console.log('Update notification settings error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/users/me/delete-account
+router.delete('/me/delete-account', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Delete user's playlists
+    await Playlist.deleteMany({ owner: req.user.id });
+
+    // Delete user's profile image if exists
+    if (user.profileImage) {
+      const imagePath = path.join(__dirname, '..', user.profileImage);
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+    }
+
+    // Delete the user
+    await User.findByIdAndDelete(req.user.id);
+
+    res.json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    console.log('Delete account error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });

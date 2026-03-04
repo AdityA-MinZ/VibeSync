@@ -1,7 +1,7 @@
 // frontend/src/components/Sidebar.jsx
 import React from "react";
 
-function Sidebar({ currentPage, onNavigate, expanded, onToggle, unreadCount = 0 }) {
+function Sidebar({ currentPage, onNavigate, expanded, onToggle, unreadCount = 0, onLogout }) {
   const navItems = [
     { id: "home", icon: "🏠", label: "Home" },
     { id: "profile", icon: "👤", label: "Profile" },
@@ -41,6 +41,14 @@ function Sidebar({ currentPage, onNavigate, expanded, onToggle, unreadCount = 0 
         >
           <span className="nav-icon">⚙️</span>
           <span>Settings</span>
+        </button>
+        <button
+          className="nav-btn logout-btn"
+          onClick={onLogout}
+          title="Logout"
+        >
+          <span className="nav-icon">🚪</span>
+          <span>Logout</span>
         </button>
       </div>
     </aside>
