@@ -63,7 +63,7 @@ function App() {
           <div className="top-nav-brand">VibeSync</div>
           <div className="top-nav-actions">
             <button
-              className="btn-link"
+              className="btn-primary"
               onClick={() => setCurrentPage("login")}
             >
               Login

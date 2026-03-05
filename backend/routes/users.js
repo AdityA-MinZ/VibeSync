@@ -94,7 +94,7 @@ router.get('/:id', auth, async (req, res) => {
 
 router.put('/me', auth, async (req, res) => {
   try {
-    const { username, bio, location, website } = req.body;
+    const { username, bio, location } = req.body;
     
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -111,7 +111,6 @@ router.put('/me', auth, async (req, res) => {
 
     if (bio !== undefined) user.bio = bio;
     if (location !== undefined) user.location = location;
-    if (website !== undefined) user.website = website;
 
     await user.save();
 
@@ -120,8 +119,7 @@ router.put('/me', auth, async (req, res) => {
       username: user.username,
       email: user.email,
       bio: user.bio,
-      location: user.location,
-      website: user.website
+      location: user.location
     });
   } catch (error) {
     console.log('Update user error:', error.message);
@@ -146,7 +144,8 @@ router.get('/me/stats', auth, async (req, res) => {
       followingCount: user.followings?.length || 0,
       totalListeningTime: user.spotifyStats?.totalListeningTime || 0,
       currentStreak: user.streak?.currentStreak || 0,
-      longestStreak: user.streak?.longestStreak || 0
+      longestStreak: user.streak?.longestStreak || 0,
+      topGenres: user.spotifyStats?.topGenres || []
     });
   } catch (error) {
     console.log('Get user stats error:', error.message);

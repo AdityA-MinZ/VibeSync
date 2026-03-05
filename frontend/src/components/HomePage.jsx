@@ -7,7 +7,8 @@ import LikeButton from "./LikeButton";
 import CommentSection from "./CommentSection";
 import SaveToBoard from "./SaveToBoard";
 import EditProfileModal from "./EditProfileModal";
-import { getUserProfile, getUserPlaylists, getUserStats, getUserActivity, updateUserProfile, importSpotifyPlaylist, importYouTubePlaylist, searchTracks, createPlaylist } from "../services/userService";
+import ImageCropper from "./ImageCropper";
+import { getUserProfile, getUserPlaylists, getUserStats, getUserActivity, updateUserProfile, updateStreak, importSpotifyPlaylist, importYouTubePlaylist, searchTracks, createPlaylist } from "../services/userService";
 import { getNotifications, markAsRead, markAllAsRead, getUnreadCount } from "../services/notificationService";
 
 const musicData = [
@@ -192,6 +193,9 @@ function HomePage({ user, onLogout }) {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState(null);
+  const [showImageCropper, setShowImageCropper] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState(null);
+  const [userTopGenres, setUserTopGenres] = useState([]);
 
   // Notifications state
   const [notifications, setNotifications] = useState([]);
@@ -201,6 +205,7 @@ function HomePage({ user, onLogout }) {
   const [settingsSection, setSettingsSection] = useState('account');
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState('');
+  const [spotifyConnected, setSpotifyConnected] = useState(false);
   const [notificationSettings, setNotificationSettings] = useState({
     followRequests: true,
     newFollowers: true,
@@ -214,8 +219,7 @@ function HomePage({ user, onLogout }) {
     username: '',
     email: '',
     bio: '',
-    location: '',
-    website: ''
+    location: ''
   });
   const [passwordSettings, setPasswordSettings] = useState({
     currentPassword: '',
@@ -227,6 +231,7 @@ function HomePage({ user, onLogout }) {
   const [homePlaylists, setHomePlaylists] = useState([]);
   const [homeLoading, setHomeLoading] = useState(false);
   const [homeError, setHomeError] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const handleViewAllActivity = () => {
     // Navigate to a dedicated activity page or expand the current section
@@ -254,9 +259,22 @@ function HomePage({ user, onLogout }) {
       return;
     }
 
+    // Create a preview URL and show cropper
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImageToCrop(e.target.result);
+      setShowImageCropper(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedFile) => {
+    setShowImageCropper(false);
+    setImageToCrop(null);
+
     try {
       const formData = new FormData();
-      formData.append('profileImage', file);
+      formData.append('profileImage', croppedFile);
 
       const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:4000/api/users/me/profile-image', {
@@ -274,9 +292,10 @@ function HomePage({ user, onLogout }) {
       const result = await response.json();
       
       // Update profile data with new image
+      const imageUrl = result.profileImage.startsWith('http') ? result.profileImage : `http://localhost:4000${result.profileImage}`;
       setProfileData(prev => ({
         ...prev,
-        profileImage: result.profileImage
+        profileImage: imageUrl
       }));
 
       alert('Profile picture updated successfully!');
@@ -284,6 +303,11 @@ function HomePage({ user, onLogout }) {
       console.error('Error uploading profile picture:', error);
       alert('Failed to upload profile picture. Please try again.');
     }
+  };
+
+  const handleCropCancel = () => {
+    setShowImageCropper(false);
+    setImageToCrop(null);
   };
 
   const handlePlaylistClick = (playlist) => {
@@ -491,11 +515,17 @@ function HomePage({ user, onLogout }) {
         username: profileData.username || '',
         email: profileData.email || '',
         bio: profileData.bio || '',
-        location: profileData.location || '',
-        website: profileData.website || ''
+        location: profileData.location || ''
       });
     }
   }, [profileData]);
+
+  // Check Spotify status when settings page is opened
+  useEffect(() => {
+    if (currentPage === 'settings') {
+      checkSpotifyStatus();
+    }
+  }, [currentPage]);
 
   // Fetch home page playlists
   const fetchHomePlaylists = async () => {
@@ -503,13 +533,73 @@ function HomePage({ user, onLogout }) {
     setHomeError(null);
     
     try {
-      const playlists = await getUserPlaylists();
+      const [playlists, stats] = await Promise.all([
+        getUserPlaylists(),
+        getUserStats()
+      ]);
       setHomePlaylists(playlists || []);
+      setUserTopGenres(stats?.topGenres || []);
     } catch (error) {
       console.error('Error fetching home playlists:', error);
       setHomeError('Failed to load playlists. Please try again.');
     } finally {
       setHomeLoading(false);
+    }
+  };
+
+  const checkSpotifyStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:4000/api/spotify/status', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setSpotifyConnected(data.connected || false);
+    } catch (error) {
+      console.error('Error checking Spotify status:', error);
+      setSpotifyConnected(false);
+    }
+  };
+
+  const connectSpotify = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:4000/api/spotify/login', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to connect to Spotify');
+        return;
+      }
+      
+      const data = await response.json();
+      
+      if (data.authUrl) {
+        // Redirect to Spotify auth
+        window.location.href = data.authUrl;
+      } else if (data.error) {
+        alert(data.error);
+      }
+    } catch (error) {
+      console.error('Error connecting Spotify:', error);
+      alert('Failed to connect to Spotify');
+    }
+  };
+
+  const disconnectSpotify = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await fetch('http://localhost:4000/api/spotify/disconnect', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSpotifyConnected(false);
+      alert('Spotify disconnected successfully');
+    } catch (error) {
+      console.error('Error disconnecting Spotify:', error);
+      alert('Failed to disconnect Spotify');
     }
   };
 
@@ -607,7 +697,12 @@ function HomePage({ user, onLogout }) {
       }
     } catch (error) {
       console.error('Import error:', error);
-      alert('Failed to import playlist. Please check the URL and try again.');
+      const errorMessage = error.response?.data?.error || '';
+      if (errorMessage.includes('not connected') || error.response?.status === 401) {
+        alert('Please connect Spotify in Settings first before importing playlists.');
+      } else {
+        alert('Failed to import playlist. Please check the URL and try again.');
+      }
     }
   };
 
@@ -761,6 +856,18 @@ function HomePage({ user, onLogout }) {
         setProfileError(null);
         
         try {
+          // Update streak when visiting profile (once per day)
+          const lastStreakUpdate = localStorage.getItem('lastStreakUpdate');
+          const today = new Date().toDateString();
+          if (lastStreakUpdate !== today) {
+            try {
+              await updateStreak();
+              localStorage.setItem('lastStreakUpdate', today);
+            } catch (streakError) {
+              console.log('Streak update skipped:', streakError.message);
+            }
+          }
+
           const [profile, stats, playlists, activity] = await Promise.all([
             getUserProfile(),
             getUserStats(),
@@ -839,13 +946,13 @@ function HomePage({ user, onLogout }) {
   const getNotificationColor = (type) => {
     switch (type) {
       case 'like': return '#ec4899';
-      case 'comment': return '#8b5cf6';
+      case 'comment': return '#9f14a9';
       case 'follow': return '#06b6d4';
-      case 'playlist_share': return '#7c3aed';
+      case 'playlist_share': return '#9f14a9';
       case 'track_added': return '#f59e0b';
       case 'achievement': return '#10b981';
       case 'friend_request': return '#3b82f6';
-      default: return '#6b7280';
+      default: return '#b8b4b3';
     }
   };
 
@@ -923,6 +1030,12 @@ function HomePage({ user, onLogout }) {
         {/* Home feed */}
         {currentPage === "home" && (
           <div className="page-content active">
+            <div className="page-header">
+              <h1 className="page-title">Discover Music</h1>
+              <p className="page-subtitle">
+                Explore playlists and discover new music
+              </p>
+            </div>
             {homeLoading && (
               <div className="loading-state">
                 <div className="loading-spinner">Loading playlists...</div>
@@ -940,6 +1053,53 @@ function HomePage({ user, onLogout }) {
             
             {!homeLoading && !homeError && (
               <>
+                {/* Filter Section */}
+                <div className="filter-section">
+                  <div className="filter-pills">
+                    {userTopGenres.length > 0 ? (
+                      <>
+                        {userTopGenres.slice(0, 4).map((genre) => (
+                          <button
+                            key={genre}
+                            className={`filter-pill ${currentFilter === genre.toLowerCase() ? 'active' : ''}`}
+                            onClick={() => setCurrentFilter(genre.toLowerCase())}
+                          >
+                            {genre.charAt(0).toUpperCase() + genre.slice(1)}
+                          </button>
+                        ))}
+                        <button
+                          key="all"
+                          className={`filter-pill ${currentFilter === 'all' ? 'active' : ''}`}
+                          onClick={() => setCurrentFilter('all')}
+                        >
+                          All
+                        </button>
+                        {['electronic', 'pop', 'rock', 'hiphop', 'jazz', 'classical'].filter(g => !userTopGenres.slice(0, 4).map(g => g.toLowerCase()).includes(g)).slice(0, 3).map((genre) => (
+                          <button
+                            key={genre}
+                            className={`filter-pill ${currentFilter === genre ? 'active' : ''}`}
+                            onClick={() => setCurrentFilter(genre)}
+                          >
+                            {genre.charAt(0).toUpperCase() + genre.slice(1)}
+                          </button>
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        {['all', 'electronic', 'pop', 'rock', 'hiphop', 'jazz', 'classical'].map((genre) => (
+                          <button
+                            key={genre}
+                            className={`filter-pill ${currentFilter === genre ? 'active' : ''}`}
+                            onClick={() => setCurrentFilter(genre)}
+                          >
+                            {genre.charAt(0).toUpperCase() + genre.slice(1)}
+                          </button>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </div>
+                
                 {filteredData.length === 0 ? (
                   <div className="empty-state">
                     <div className="empty-icon">🎵</div>
@@ -951,7 +1111,7 @@ function HomePage({ user, onLogout }) {
                       }
                     </p>
                     {!searchTerm.trim() && (
-                      <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
+                      <button className="btn-primary" onClick={() => setCurrentPage('create')}>
                         Create Playlist
                       </button>
                     )}
@@ -1060,13 +1220,12 @@ function HomePage({ user, onLogout }) {
               <>
                 {/* Profile Hero Card */}
                 <div className="profile-hero-card">
-              <div className="profile-cover-image" />
               <div className="profile-info-section">
                 <div className="profile-avatar-wrapper">
                   <div className="profile-avatar-large">
                     {profileData?.profileImage ? (
                       <img 
-                        src={profileData.profileImage} 
+                        src={profileData.profileImage.startsWith('http') ? profileData.profileImage : `http://localhost:4000${profileData.profileImage}`}
                         alt="Profile" 
                         className="profile-avatar-img"
                       />
@@ -1096,7 +1255,6 @@ function HomePage({ user, onLogout }) {
                   <div className="profile-meta">
                     <span className="meta-item">📅 Joined {profileData?.createdAt ? new Date(profileData.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : "Recently"}</span>
                     {profileData?.location && <span className="meta-item">📍 {profileData.location}</span>}
-                    {profileData?.website && <span className="meta-item">🔗 {profileData.website}</span>}
                   </div>
                 </div>
                 <div className="profile-actions">
@@ -1269,14 +1427,22 @@ function HomePage({ user, onLogout }) {
             <div className="create-options">
               {/* Import from Spotify */}
               <div className="create-option-card" onClick={() => handleImportFromSpotify()}>
-                <div className="option-icon" style={{ background: '#1DB954' }}>🎵</div>
+                <img 
+                  src="https://static.vecteezy.com/system/resources/previews/042/148/631/non_2x/spotify-logo-spotify-social-media-icon-free-png.png" 
+                  alt="Spotify" 
+                  className="option-icon-img spotify"
+                />
                 <h3>Import from Spotify</h3>
                 <p>Enter a Spotify playlist URL to import</p>
               </div>
 
               {/* Import from YouTube */}
               <div className="create-option-card" onClick={() => handleImportFromYouTube()}>
-                <div className="option-icon" style={{ background: '#FF0000' }}>▶️</div>
+                <img 
+                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Youtube_Music_icon.svg/960px-Youtube_Music_icon.svg.png" 
+                  alt="YouTube" 
+                  className="option-icon-img youtube"
+                />
                 <h3>Import from YouTube</h3>
                 <p>Enter a YouTube playlist URL to import</p>
               </div>
@@ -1471,6 +1637,15 @@ function HomePage({ user, onLogout }) {
                 >
                   Notifications
                 </button>
+                <button 
+                  className={`settings-nav-item ${settingsSection === 'spotify' ? 'active' : ''}`}
+                  onClick={() => {
+                    handleSettingsNavClick('spotify');
+                    checkSpotifyStatus();
+                  }}
+                >
+                  Spotify
+                </button>
               </div>
               
               <div className="settings-content">
@@ -1515,16 +1690,6 @@ function HomePage({ user, onLogout }) {
                             placeholder="City, Country"
                             value={accountSettings.location}
                             onChange={(e) => handleAccountSettingsChange('location', e.target.value)}
-                          />
-                        </div>
-                        <div className="settings-form-group">
-                          <label className="settings-label">Website</label>
-                          <input 
-                            type="text" 
-                            className="settings-input" 
-                            placeholder="https://yourwebsite.com"
-                            value={accountSettings.website}
-                            onChange={(e) => handleAccountSettingsChange('website', e.target.value)}
                           />
                         </div>
                         <button 
@@ -1734,6 +1899,42 @@ function HomePage({ user, onLogout }) {
                     </button>
                   </div>
                 )}
+
+                {settingsSection === 'spotify' && (
+                  <div className="settings-card">
+                    <h3 className="settings-section-title">Spotify Connection</h3>
+                    <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem' }}>
+                      Connect your Spotify account to import playlists and track your listening activity.
+                    </p>
+                    
+                    {spotifyConnected ? (
+                      <div className="spotify-status">
+                        <div className="connected-status">
+                          <span style={{ color: '#1DB954', fontSize: '1.5rem' }}>✓</span>
+                          <span>Spotify Connected</span>
+                        </div>
+                        <button 
+                          className="spotify-btn disconnect"
+                          onClick={disconnectSpotify}
+                        >
+                          Disconnect Spotify
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="spotify-status">
+                        <div className="disconnected-status">
+                          <span style={{ color: 'var(--color-text-secondary)' }}>Spotify not connected</span>
+                        </div>
+                        <button 
+                          className="spotify-btn connect"
+                          onClick={connectSpotify}
+                        >
+                          Connect Spotify
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1844,6 +2045,16 @@ function HomePage({ user, onLogout }) {
               alert('Failed to update profile. Please try again.');
             }
           }}
+        />
+      )}
+
+      {/* Image Cropper Modal */}
+      {showImageCropper && imageToCrop && (
+        <ImageCropper
+          image={imageToCrop}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          aspect={1}
         />
       )}
     </>

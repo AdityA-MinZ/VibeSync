@@ -2,6 +2,21 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:4000/api';
 
+export const updateStreak = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.post(
+      `${API_URL}/streaks/update`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Update streak error:', error);
+    throw error;
+  }
+};
+
 export const getUserProfile = async (userId) => {
   try {
     const token = localStorage.getItem('token');

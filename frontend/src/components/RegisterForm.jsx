@@ -25,7 +25,7 @@ function RegisterForm({ onRegister, onBack }) {
 
   return (
     <div className="auth-container">
-      <h2>Create Account</h2>
+      <h2>Register</h2>
       {error && <div className="error-message">{error}</div>}
       <form onSubmit={handleSubmit}>
         <div className="form-group">
@@ -67,12 +67,12 @@ function RegisterForm({ onRegister, onBack }) {
         <button type="submit" className="btn-submit" disabled={loading}>
           {loading ? 'Creating account...' : 'Register'}
         </button>
-        {onBack && (
-          <button type="button" className="btn-link" onClick={onBack}>
-            Back
-          </button>
-        )}
       </form>
+      {onBack && (
+        <button type="button" className="btn-submit btn-back" onClick={onBack}>
+          Back
+        </button>
+      )}
     </div>
   );
 }

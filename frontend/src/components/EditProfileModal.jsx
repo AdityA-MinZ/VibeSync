@@ -4,8 +4,7 @@ function EditProfileModal({ user, onClose, onSave }) {
   const [formData, setFormData] = useState({
     username: user?.username || '',
     bio: user?.bio || '',
-    location: user?.location || '',
-    website: user?.website || ''
+    location: user?.location || ''
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -65,18 +64,6 @@ function EditProfileModal({ user, onClose, onSave }) {
               value={formData.location}
               onChange={handleChange}
               placeholder="City, Country"
-            />
-          </div>
-
-          <div className="form-group-modern">
-            <label className="form-label">Website</label>
-            <input
-              type="text"
-              name="website"
-              className="form-input-modern"
-              value={formData.website}
-              onChange={handleChange}
-              placeholder="https://yourwebsite.com"
             />
           </div>
 

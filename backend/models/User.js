@@ -6,7 +6,6 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   bio: { type: String, default: '' },
   location: { type: String, default: '' },
-  website: { type: String, default: '' },
   profileImage: { type: String, default: '' },
   followings: [{
     type: mongoose.Schema.Types.ObjectId,
