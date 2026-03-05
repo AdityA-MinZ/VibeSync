@@ -98,7 +98,7 @@ function App() {
             ) : (
               <LoginForm 
                 onLogin={handleLogin} 
-                onBack={() => setCurrentPage("landing")} 
+                onBack={() => window.location.href = '/'} 
               />
             )
           } />
@@ -110,7 +110,7 @@ function App() {
             ) : (
               <RegisterForm
                 onRegister={handleRegister}
-                onBack={() => setCurrentPage("landing")}
+                onBack={() => window.location.href = '/'}
               />
             )
           } />
