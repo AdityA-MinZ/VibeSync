@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { SOCIAL_API_URL } from '../config';
 
-const API_URL = 'http://localhost:4000/api/social';
+const SOCIAL_SOCIAL_API_URL = SOCIAL_API_URL + '/social';
 
 // ========== LIKES ==========
 
@@ -8,7 +9,7 @@ export const toggleLike = async (targetType, targetId) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_URL}/likes/toggle`,
+      `${SOCIAL_API_URL}/likes/toggle`,
       { targetType, targetId },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -22,7 +23,7 @@ export const toggleLike = async (targetType, targetId) => {
 export const checkLike = async (targetType, targetId) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/likes/check`, {
+    const response = await axios.get(`${SOCIAL_API_URL}/likes/check`, {
       params: { targetType, targetId },
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -36,7 +37,7 @@ export const checkLike = async (targetType, targetId) => {
 export const getLikeCount = async (targetType, targetId) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/likes/count`, {
+    const response = await axios.get(`${SOCIAL_API_URL}/likes/count`, {
       params: { targetType, targetId },
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -51,7 +52,7 @@ export const getMultipleLikeCounts = async (targets) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_URL}/likes/counts`,
+      `${SOCIAL_API_URL}/likes/counts`,
       { targets },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -65,7 +66,7 @@ export const getMultipleLikeCounts = async (targets) => {
 export const getMyLikes = async (targetType, limit = 20, skip = 0) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/likes/me`, {
+    const response = await axios.get(`${SOCIAL_API_URL}/likes/me`, {
       params: { targetType, limit, skip },
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -82,7 +83,7 @@ export const followUser = async (userId) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_URL}/follow/${userId}`,
+      `${SOCIAL_API_URL}/follow/${userId}`,
       {},
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -97,7 +98,7 @@ export const unfollowUser = async (userId) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_URL}/unfollow/${userId}`,
+      `${SOCIAL_API_URL}/unfollow/${userId}`,
       {},
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -111,7 +112,7 @@ export const unfollowUser = async (userId) => {
 export const checkFollowStatus = async (userId) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/follow/status/${userId}`, {
+    const response = await axios.get(`${SOCIAL_API_URL}/follow/status/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -125,8 +126,8 @@ export const getFollowers = async (userId, limit = 20, skip = 0) => {
   try {
     const token = localStorage.getItem('token');
     const url = userId 
-      ? `${API_URL}/followers/${userId}` 
-      : `${API_URL}/followers`;
+      ? `${SOCIAL_API_URL}/followers/${userId}` 
+      : `${SOCIAL_API_URL}/followers`;
     const response = await axios.get(url, {
       params: { limit, skip },
       headers: { Authorization: `Bearer ${token}` }
@@ -142,8 +143,8 @@ export const getFollowing = async (userId, limit = 20, skip = 0) => {
   try {
     const token = localStorage.getItem('token');
     const url = userId 
-      ? `${API_URL}/following/${userId}` 
-      : `${API_URL}/following`;
+      ? `${SOCIAL_API_URL}/following/${userId}` 
+      : `${SOCIAL_API_URL}/following`;
     const response = await axios.get(url, {
       params: { limit, skip },
       headers: { Authorization: `Bearer ${token}` }
@@ -159,8 +160,8 @@ export const getFollowCounts = async (userId) => {
   try {
     const token = localStorage.getItem('token');
     const url = userId 
-      ? `${API_URL}/follow/counts/${userId}` 
-      : `${API_URL}/follow/counts`;
+      ? `${SOCIAL_API_URL}/follow/counts/${userId}` 
+      : `${SOCIAL_API_URL}/follow/counts`;
     const response = await axios.get(url, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -174,7 +175,7 @@ export const getFollowCounts = async (userId) => {
 export const getFollowSuggestions = async (limit = 10) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/follow/suggestions`, {
+    const response = await axios.get(`${SOCIAL_API_URL}/follow/suggestions`, {
       params: { limit },
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -188,7 +189,7 @@ export const getFollowSuggestions = async (limit = 10) => {
 export const searchUsers = async (query, limit = 20, skip = 0) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/users/search`, {
+    const response = await axios.get(`${SOCIAL_API_URL}/users/search`, {
       params: { q: query, limit, skip },
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -205,7 +206,7 @@ export const addComment = async (targetType, targetId, content, parentCommentId 
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_URL}/comments`,
+      `${SOCIAL_API_URL}/comments`,
       { targetType, targetId, content, parentCommentId },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -219,7 +220,7 @@ export const addComment = async (targetType, targetId, content, parentCommentId 
 export const getComments = async (targetType, targetId, limit = 20, skip = 0, sortBy = 'newest') => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/comments`, {
+    const response = await axios.get(`${SOCIAL_API_URL}/comments`, {
       params: { targetType, targetId, limit, skip, sortBy },
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -233,7 +234,7 @@ export const getComments = async (targetType, targetId, limit = 20, skip = 0, so
 export const getComment = async (commentId) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/comments/${commentId}`, {
+    const response = await axios.get(`${SOCIAL_API_URL}/comments/${commentId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -247,7 +248,7 @@ export const editComment = async (commentId, content) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.put(
-      `${API_URL}/comments/${commentId}`,
+      `${SOCIAL_API_URL}/comments/${commentId}`,
       { content },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -261,7 +262,7 @@ export const editComment = async (commentId, content) => {
 export const deleteComment = async (commentId) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.delete(`${API_URL}/comments/${commentId}`, {
+    const response = await axios.delete(`${SOCIAL_API_URL}/comments/${commentId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -275,8 +276,8 @@ export const getUserComments = async (userId, limit = 20, skip = 0) => {
   try {
     const token = localStorage.getItem('token');
     const url = userId 
-      ? `${API_URL}/comments/user/${userId}` 
-      : `${API_URL}/comments/user`;
+      ? `${SOCIAL_API_URL}/comments/user/${userId}` 
+      : `${SOCIAL_API_URL}/comments/user`;
     const response = await axios.get(url, {
       params: { limit, skip },
       headers: { Authorization: `Bearer ${token}` }
@@ -292,7 +293,7 @@ export const likeComment = async (commentId) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_URL}/comments/${commentId}/like`,
+      `${SOCIAL_API_URL}/comments/${commentId}/like`,
       {},
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -307,7 +308,7 @@ export const unlikeComment = async (commentId) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_URL}/comments/${commentId}/unlike`,
+      `${SOCIAL_API_URL}/comments/${commentId}/unlike`,
       {},
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -324,7 +325,7 @@ export const createBoard = async (boardData) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_URL}/boards`,
+      `${SOCIAL_API_URL}/boards`,
       boardData,
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -338,7 +339,7 @@ export const createBoard = async (boardData) => {
 export const getPublicBoards = async (limit = 20, skip = 0, tag, sortBy = 'newest') => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/boards`, {
+    const response = await axios.get(`${SOCIAL_API_URL}/boards`, {
       params: { limit, skip, tag, sortBy },
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -353,8 +354,8 @@ export const getUserBoards = async (userId) => {
   try {
     const token = localStorage.getItem('token');
     const url = userId 
-      ? `${API_URL}/boards/user/${userId}` 
-      : `${API_URL}/boards/user`;
+      ? `${SOCIAL_API_URL}/boards/user/${userId}` 
+      : `${SOCIAL_API_URL}/boards/user`;
     const response = await axios.get(url, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -368,7 +369,7 @@ export const getUserBoards = async (userId) => {
 export const getBoard = async (boardId) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/boards/${boardId}`, {
+    const response = await axios.get(`${SOCIAL_API_URL}/boards/${boardId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -382,7 +383,7 @@ export const updateBoard = async (boardId, boardData) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.put(
-      `${API_URL}/boards/${boardId}`,
+      `${SOCIAL_API_URL}/boards/${boardId}`,
       boardData,
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -396,7 +397,7 @@ export const updateBoard = async (boardId, boardData) => {
 export const deleteBoard = async (boardId) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.delete(`${API_URL}/boards/${boardId}`, {
+    const response = await axios.delete(`${SOCIAL_API_URL}/boards/${boardId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -410,7 +411,7 @@ export const addItemToBoard = async (boardId, itemData) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_URL}/boards/${boardId}/items`,
+      `${SOCIAL_API_URL}/boards/${boardId}/items`,
       itemData,
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -425,7 +426,7 @@ export const removeItemFromBoard = async (boardId, itemId) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.delete(
-      `${API_URL}/boards/${boardId}/items/${itemId}`,
+      `${SOCIAL_API_URL}/boards/${boardId}/items/${itemId}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
     return response.data;
@@ -439,7 +440,7 @@ export const addCollaborator = async (boardId, userId) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_URL}/boards/${boardId}/collaborators`,
+      `${SOCIAL_API_URL}/boards/${boardId}/collaborators`,
       { userId },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -454,7 +455,7 @@ export const removeCollaborator = async (boardId, userId) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.delete(
-      `${API_URL}/boards/${boardId}/collaborators/${userId}`,
+      `${SOCIAL_API_URL}/boards/${boardId}/collaborators/${userId}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
     return response.data;
@@ -468,7 +469,7 @@ export const followBoard = async (boardId) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_URL}/boards/${boardId}/follow`,
+      `${SOCIAL_API_URL}/boards/${boardId}/follow`,
       {},
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -483,7 +484,7 @@ export const unfollowBoard = async (boardId) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_URL}/boards/${boardId}/unfollow`,
+      `${SOCIAL_API_URL}/boards/${boardId}/unfollow`,
       {},
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -497,7 +498,7 @@ export const unfollowBoard = async (boardId) => {
 export const searchBoards = async (query, limit = 20, skip = 0) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/boards/search`, {
+    const response = await axios.get(`${SOCIAL_API_URL}/boards/search`, {
       params: { q: query, limit, skip },
       headers: { Authorization: `Bearer ${token}` }
     });

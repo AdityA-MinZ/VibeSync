@@ -1,6 +1,7 @@
 import axios from 'axios';
+import SPOTIFY_API_URL from '../config';
 
-const API_URL = 'http://localhost:4000/api/spotify';
+const SPOTIFY_SPOTIFY_API_URL = SPOTIFY_API_URL + '/spotify';
 
 // Get auth headers
 const getAuthHeaders = () => {
@@ -15,21 +16,21 @@ const getAuthHeaders = () => {
 // ============================================
 
 export const getSpotifyLoginUrl = async () => {
-  const response = await axios.get(`${API_URL}/login`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/login`, {
     headers: getAuthHeaders()
   });
   return response.data;
 };
 
 export const getSpotifyStatus = async () => {
-  const response = await axios.get(`${API_URL}/status`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/status`, {
     headers: getAuthHeaders()
   });
   return response.data;
 };
 
 export const disconnectSpotify = async () => {
-  const response = await axios.post(`${API_URL}/disconnect`, {}, {
+  const response = await axios.post(`${SPOTIFY_API_URL}/disconnect`, {}, {
     headers: getAuthHeaders()
   });
   return response.data;
@@ -40,7 +41,7 @@ export const disconnectSpotify = async () => {
 // ============================================
 
 export const searchSpotify = async (query, types = ['track', 'artist', 'album', 'playlist'], limit = 20) => {
-  const response = await axios.get(`${API_URL}/search`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/search`, {
     params: { 
       q: query, 
       types: types.join(','), 
@@ -56,14 +57,14 @@ export const searchSpotify = async (query, types = ['track', 'artist', 'album', 
 // ============================================
 
 export const getSpotifyTrack = async (trackId) => {
-  const response = await axios.get(`${API_URL}/tracks/${trackId}`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/tracks/${trackId}`, {
     headers: getAuthHeaders()
   });
   return response.data;
 };
 
 export const getSpotifyTracks = async (trackIds) => {
-  const response = await axios.get(`${API_URL}/tracks`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/tracks`, {
     params: { ids: trackIds.join(',') },
     headers: getAuthHeaders()
   });
@@ -75,14 +76,14 @@ export const getSpotifyTracks = async (trackIds) => {
 // ============================================
 
 export const getSpotifyArtist = async (artistId) => {
-  const response = await axios.get(`${API_URL}/artists/${artistId}`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/artists/${artistId}`, {
     headers: getAuthHeaders()
   });
   return response.data;
 };
 
 export const getSpotifyArtistTopTracks = async (artistId) => {
-  const response = await axios.get(`${API_URL}/artists/${artistId}/top-tracks`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/artists/${artistId}/top-tracks`, {
     headers: getAuthHeaders()
   });
   return response.data;
@@ -93,7 +94,7 @@ export const getSpotifyArtistTopTracks = async (artistId) => {
 // ============================================
 
 export const getSpotifyAlbum = async (albumId) => {
-  const response = await axios.get(`${API_URL}/albums/${albumId}`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/albums/${albumId}`, {
     headers: getAuthHeaders()
   });
   return response.data;
@@ -104,14 +105,14 @@ export const getSpotifyAlbum = async (albumId) => {
 // ============================================
 
 export const getSpotifyProfile = async () => {
-  const response = await axios.get(`${API_URL}/me`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/me`, {
     headers: getAuthHeaders()
   });
   return response.data;
 };
 
 export const getSpotifyPlaylists = async (limit = 20, offset = 0) => {
-  const response = await axios.get(`${API_URL}/me/playlists`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/me/playlists`, {
     params: { limit, offset },
     headers: getAuthHeaders()
   });
@@ -119,7 +120,7 @@ export const getSpotifyPlaylists = async (limit = 20, offset = 0) => {
 };
 
 export const getSpotifyTopTracks = async (timeRange = 'medium_term', limit = 20) => {
-  const response = await axios.get(`${API_URL}/me/top/tracks`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/me/top/tracks`, {
     params: { time_range: timeRange, limit },
     headers: getAuthHeaders()
   });
@@ -127,7 +128,7 @@ export const getSpotifyTopTracks = async (timeRange = 'medium_term', limit = 20)
 };
 
 export const getSpotifyTopArtists = async (timeRange = 'medium_term', limit = 20) => {
-  const response = await axios.get(`${API_URL}/me/top/artists`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/me/top/artists`, {
     params: { time_range: timeRange, limit },
     headers: getAuthHeaders()
   });
@@ -135,7 +136,7 @@ export const getSpotifyTopArtists = async (timeRange = 'medium_term', limit = 20
 };
 
 export const getSpotifyRecentlyPlayed = async (limit = 20) => {
-  const response = await axios.get(`${API_URL}/me/recently-played`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/me/recently-played`, {
     params: { limit },
     headers: getAuthHeaders()
   });
@@ -147,14 +148,14 @@ export const getSpotifyRecentlyPlayed = async (limit = 20) => {
 // ============================================
 
 export const getSpotifyPlaylist = async (playlistId) => {
-  const response = await axios.get(`${API_URL}/playlists/${playlistId}`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/playlists/${playlistId}`, {
     headers: getAuthHeaders()
   });
   return response.data;
 };
 
 export const getSpotifyPlaylistTracks = async (playlistId, limit = 100, offset = 0) => {
-  const response = await axios.get(`${API_URL}/playlists/${playlistId}/tracks`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/playlists/${playlistId}/tracks`, {
     params: { limit, offset },
     headers: getAuthHeaders()
   });
@@ -166,7 +167,7 @@ export const getSpotifyPlaylistTracks = async (playlistId, limit = 100, offset =
 // ============================================
 
 export const getSpotifyFeaturedPlaylists = async (limit = 20, offset = 0, country = 'US') => {
-  const response = await axios.get(`${API_URL}/browse/featured-playlists`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/browse/featured-playlists`, {
     params: { limit, offset, country },
     headers: getAuthHeaders()
   });
@@ -174,7 +175,7 @@ export const getSpotifyFeaturedPlaylists = async (limit = 20, offset = 0, countr
 };
 
 export const getSpotifyNewReleases = async (limit = 20, offset = 0, country = 'US') => {
-  const response = await axios.get(`${API_URL}/browse/new-releases`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/browse/new-releases`, {
     params: { limit, offset, country },
     headers: getAuthHeaders()
   });
@@ -182,7 +183,7 @@ export const getSpotifyNewReleases = async (limit = 20, offset = 0, country = 'U
 };
 
 export const getSpotifyCategories = async (limit = 20, offset = 0, country = 'US') => {
-  const response = await axios.get(`${API_URL}/browse/categories`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/browse/categories`, {
     params: { limit, offset, country },
     headers: getAuthHeaders()
   });
@@ -201,7 +202,7 @@ export const getSpotifyRecommendations = async (options = {}) => {
   if (seed_artists) params.seed_artists = seed_artists;
   if (seed_genres) params.seed_genres = seed_genres;
   
-  const response = await axios.get(`${API_URL}/recommendations`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/recommendations`, {
     params,
     headers: getAuthHeaders()
   });
@@ -209,7 +210,7 @@ export const getSpotifyRecommendations = async (options = {}) => {
 };
 
 export const getSpotifyAvailableGenres = async () => {
-  const response = await axios.get(`${API_URL}/recommendations/available-genre-seeds`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/recommendations/available-genre-seeds`, {
     headers: getAuthHeaders()
   });
   return response.data;
@@ -220,7 +221,7 @@ export const getSpotifyAvailableGenres = async () => {
 // ============================================
 
 export const getSpotifyPlaybackState = async () => {
-  const response = await axios.get(`${API_URL}/me/player`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/me/player`, {
     headers: getAuthHeaders()
   });
   return response.data;

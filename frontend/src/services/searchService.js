@@ -1,12 +1,13 @@
 import axios from 'axios';
+import { SEARCH_API_URL } from '../config';
 
-const API_URL = 'http://localhost:4000/api/search';
+const SEARCH_API_URL = SEARCH_API_URL + '/search';
 
 // Search all content types
 export const searchAll = async (query, type = 'all', limit = 20) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(API_URL, {
+    const response = await axios.get(SEARCH_API_URL, {
       params: { q: query, type, limit },
       headers: {
         Authorization: `Bearer ${token}`
@@ -23,7 +24,7 @@ export const searchAll = async (query, type = 'all', limit = 20) => {
 export const advancedSearch = async (params) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.post(`${API_URL}/advanced`, params, {
+    const response = await axios.post(`${SEARCH_API_URL}/advanced`, params, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -39,7 +40,7 @@ export const advancedSearch = async (params) => {
 export const getSuggestions = async (query) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/suggestions`, {
+    const response = await axios.get(`${SEARCH_API_URL}/suggestions`, {
       params: { q: query },
       headers: {
         Authorization: `Bearer ${token}`
@@ -56,7 +57,7 @@ export const getSuggestions = async (query) => {
 export const getTrendingSearches = async () => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/trending`, {
+    const response = await axios.get(`${SEARCH_API_URL}/trending`, {
       headers: {
         Authorization: `Bearer ${token}`
       }

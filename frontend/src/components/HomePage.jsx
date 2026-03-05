@@ -10,6 +10,7 @@ import EditProfileModal from "./EditProfileModal";
 import ImageCropper from "./ImageCropper";
 import { getUserProfile, getUserPlaylists, getUserStats, getUserActivity, updateUserProfile, updateStreak, importSpotifyPlaylist, importYouTubePlaylist, searchTracks, createPlaylist } from "../services/userService";
 import { getNotifications, markAsRead, markAllAsRead, getUnreadCount } from "../services/notificationService";
+import API_URL from '../config';
 
 const musicData = [
   {
@@ -277,7 +278,7 @@ function HomePage({ user, onLogout }) {
       formData.append('profileImage', croppedFile);
 
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:4000/api/users/me/profile-image', {
+      const response = await fetch(`${API_URL}/users/me/profile-image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -292,7 +293,7 @@ function HomePage({ user, onLogout }) {
       const result = await response.json();
       
       // Update profile data with new image
-      const imageUrl = result.profileImage.startsWith('http') ? result.profileImage : `http://localhost:4000${result.profileImage}`;
+      const imageUrl = result.profileImage.startsWith('http') ? result.profileImage : `${API_URL.replace('/api', '')}${result.profileImage}`;
       setProfileData(prev => ({
         ...prev,
         profileImage: imageUrl
@@ -397,7 +398,7 @@ function HomePage({ user, onLogout }) {
     try {
       // Save notification preferences to backend
       const token = localStorage.getItem('token');
-      await fetch('http://localhost:4000/api/users/me/notification-settings', {
+      await fetch(`${API_URL}/users/me/notification-settings`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -438,7 +439,7 @@ function HomePage({ user, onLogout }) {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:4000/api/auth/change-password', {
+      const response = await fetch(`${API_URL}/auth/change-password`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -483,7 +484,7 @@ function HomePage({ user, onLogout }) {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:4000/api/users/me/delete-account', {
+      const response = await fetch(`${API_URL}/users/me/delete-account`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -550,7 +551,7 @@ function HomePage({ user, onLogout }) {
   const checkSpotifyStatus = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:4000/api/spotify/status', {
+      const response = await fetch(`${API_URL}/spotify/status`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await response.json();
@@ -564,7 +565,7 @@ function HomePage({ user, onLogout }) {
   const connectSpotify = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:4000/api/spotify/login', {
+      const response = await fetch(`${API_URL}/spotify/login`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -591,7 +592,7 @@ function HomePage({ user, onLogout }) {
   const disconnectSpotify = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch('http://localhost:4000/api/spotify/disconnect', {
+      await fetch(`${API_URL}/spotify/disconnect`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -1225,7 +1226,7 @@ function HomePage({ user, onLogout }) {
                   <div className="profile-avatar-large">
                     {profileData?.profileImage ? (
                       <img 
-                        src={profileData.profileImage.startsWith('http') ? profileData.profileImage : `http://localhost:4000${profileData.profileImage}`}
+                        src={profileData.profileImage.startsWith('http') ? profileData.profileImage : `${API_URL.replace('/api', '')}${profileData.profileImage}`}
                         alt="Profile" 
                         className="profile-avatar-img"
                       />
