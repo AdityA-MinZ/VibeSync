@@ -1,6 +1,6 @@
 // frontend/src/App.js
 import React, { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate } from "react-router-dom";
 import HomePage from "./components/HomePage";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
@@ -8,6 +8,8 @@ import { getCurrentUser, isAuthenticated, logout } from "./services/authService"
 import "./App.css";
 
 function App() {
+  console.log('App component rendering'); // Debug log
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState("landing"); // 'landing' | 'login' | 'register' | 'dashboard'
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -98,7 +100,7 @@ function App() {
             ) : (
               <LoginForm 
                 onLogin={handleLogin} 
-                onBack={() => window.location.href = '/'} 
+                onBack={() => navigate('/')} 
               />
             )
           } />
@@ -110,7 +112,7 @@ function App() {
             ) : (
               <RegisterForm
                 onRegister={handleRegister}
-                onBack={() => window.location.href = '/'}
+                onBack={() => navigate('/')}
               />
             )
           } />
