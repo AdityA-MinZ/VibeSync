@@ -1252,7 +1252,7 @@ function HomePage({ user, onLogout }) {
                 <div className="profile-details">
                   <h2 className="profile-name">{profileData?.username || user?.username || "User"}</h2>
                   <p className="profile-handle">@{(profileData?.username || user?.username || "user").toLowerCase()}</p>
-                  <p className="profile-bio">{profileData?.bio || "Music lover 🎵 | Creating vibes"}</p>
+                  <p className="profile-bio">{profileData?.bio || "add your bio"}</p>
                   <div className="profile-meta">
                     <span className="meta-item">📅 Joined {profileData?.createdAt ? new Date(profileData.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : "Recently"}</span>
                     {profileData?.location && <span className="meta-item">📍 {profileData.location}</span>}
@@ -1678,7 +1678,7 @@ function HomePage({ user, onLogout }) {
                           <textarea 
                             className="settings-input form-textarea" 
                             rows="3" 
-                            placeholder="Tell us about yourself..."
+                            placeholder="add your bio"
                             value={accountSettings.bio}
                             onChange={(e) => handleAccountSettingsChange('bio', e.target.value)}
                           />
