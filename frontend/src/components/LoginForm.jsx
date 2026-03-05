@@ -25,23 +25,30 @@ function LoginForm({ onLogin, onBack }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Login form submitted'); // Debug log
+    console.log('Email:', email); // Debug email
+    console.log('Password:', password); // Debug password
     setError('');
+    setLoading(true);
 
     if (!validateEmail(email)) {
       setEmailError('Please enter a valid email address');
+      console.log('Email validation failed'); // Debug log
       return;
     }
 
-    setLoading(true);
-    setError('');
-
     try {
+      console.log('Attempting login...'); // Debug log
       const result = await login(email, password);
+      console.log('Login result:', result); // Debug result
       onLogin(result.user);
+      console.log('Login successful'); // Debug success
     } catch (error) {
+      console.log('Login error:', error); // Debug error
       setError(error.response?.data?.error || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
+      console.log('Login process completed'); // Debug completion
     }
   };
 
@@ -80,7 +87,7 @@ function LoginForm({ onLogin, onBack }) {
         </button>
       </form>
       {onBack && (
-        <button type="button" className="btn-submit btn-back" onClick={onBack}>
+        <button type="button" className="btn-submit btn-back" onClick={() => {console.log('Back button clicked'); onBack();}}>
           Back
         </button>
       )}

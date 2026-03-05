@@ -1,5 +1,6 @@
 // frontend/src/App.js
 import React, { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
 import HomePage from "./components/HomePage";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
@@ -18,7 +19,8 @@ function App() {
         const user = getCurrentUser();
         if (user) {
           setCurrentUser(user);
-          setCurrentPage("dashboard");
+          // Redirect to home page (which contains the dashboard)
+          setCurrentPage("landing");
         }
       }
       setAuthLoading(false);
@@ -29,12 +31,18 @@ function App() {
 
   const handleLogin = (user) => {
     setCurrentUser(user);
-    setCurrentPage("dashboard");
+    setCurrentPage("landing");
+    // Navigate to home page after successful login
+    window.location.hash = '#/';
+    // Navigate to dashboard after successful login
+    window.location.hash = '#/dashboard';
   };
 
   const handleRegister = (user) => {
     setCurrentUser(user);
     setCurrentPage("dashboard");
+    // Navigate to dashboard after successful registration
+    window.location.hash = '#/dashboard';
   };
 
   const handleLogout = () => {
@@ -54,66 +62,70 @@ function App() {
   }
 
   return (
-    <div className="app-root">
-      {/* Simple top nav for auth pages */}
-      {(currentPage === "landing" ||
-        currentPage === "login" ||
-        currentPage === "register") && (
-        <nav className="top-nav">
-          <div className="top-nav-brand">VibeSync</div>
-          <div className="top-nav-actions">
-            <button
-              className="btn-primary"
-              onClick={() => setCurrentPage("login")}
-            >
-              Login
-            </button>
-            <button
-              className="btn-primary"
-              onClick={() => setCurrentPage("register")}
-            >
-              Sign Up
-            </button>
-          </div>
-        </nav>
-      )}
-
-      {/* Pages */}
-      {currentPage === "landing" && (
-        <div className="hero">
-          <h1>Connect, Share, Discover</h1>
-          <p>
-            Join VibeSync and immerse yourself in a world of music. Share your
-            playlists, connect with friends, and discover new sounds tailored
-            just for you.
-          </p>
-          <button
-            className="btn-primary"
-            onClick={() => setCurrentPage("register")}
-          >
-            Get Started
-          </button>
-        </div>
-      )}
-
-      {currentPage === "login" && (
-        <LoginForm 
-          onLogin={handleLogin} 
-          onBack={() => setCurrentPage("landing")} 
-        />
-      )}
-
-      {currentPage === "register" && (
-        <RegisterForm
-          onRegister={handleRegister}
-          onBack={() => setCurrentPage("landing")}
-        />
-      )}
-
-      {currentPage === "dashboard" && currentUser && (
-        <HomePage user={currentUser} onLogout={handleLogout} />
-      )}
-    </div>
+    <BrowserRouter>
+      <div className="app">
+        {/* Routes */}
+        <Routes>
+          {/* Landing/Home */}
+          <Route path="/" element={
+            isAuthenticated() ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <div className="hero">
+                <h1>Connect, Share, Discover</h1>
+                <p>
+                  Join VibeSync and immerse yourself in a world of music. Share your
+                  playlists, connect with friends, and discover new sounds tailored
+                  just for you.
+                </p>
+                <div className="hero-actions">
+                  <Link to="/login" className="btn-primary">
+                    Login
+                  </Link>
+                  <span style={{ margin: '0 1rem' }}></span>
+                  <Link to="/register" className="btn-primary">
+                    Sign Up
+                  </Link>
+                </div>
+              </div>
+            )
+          } />
+          
+          {/* Login */}
+          <Route path="/login" element={
+            isAuthenticated() ? (
+              <Navigate to="/" replace />
+            ) : (
+              <LoginForm 
+                onLogin={handleLogin} 
+                onBack={() => setCurrentPage("landing")} 
+              />
+            )
+          } />
+          
+          {/* Register */}
+          <Route path="/register" element={
+            isAuthenticated() ? (
+              <Navigate to="/" replace />
+            ) : (
+              <RegisterForm
+                onRegister={handleRegister}
+                onBack={() => setCurrentPage("landing")}
+              />
+            )
+          } />
+          
+          {/* Dashboard/Home */}
+          <Route path="/dashboard" element={
+            isAuthenticated() ? (
+              <HomePage user={currentUser} onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } />
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 }
 
