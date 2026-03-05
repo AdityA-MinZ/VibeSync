@@ -1,8 +1,6 @@
 import axios from 'axios';
 import { SOCIAL_API_URL } from '../config';
 
-const SOCIAL_SOCIAL_API_URL = SOCIAL_API_URL + '/social';
-
 // ========== LIKES ==========
 
 export const toggleLike = async (targetType, targetId) => {

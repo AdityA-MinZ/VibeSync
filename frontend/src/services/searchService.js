@@ -1,8 +1,6 @@
 import axios from 'axios';
 import { SEARCH_API_URL } from '../config';
 
-const SEARCH_API_URL = SEARCH_API_URL + '/search';
-
 // Search all content types
 export const searchAll = async (query, type = 'all', limit = 20) => {
   try {
