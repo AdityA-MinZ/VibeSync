@@ -27,10 +27,32 @@ router.get('/user/:userId', auth, async (req, res) => {
 
 // POST create (protected)
 router.post('/', auth, async (req, res) => {
-  const playlist = new Playlist({ ...req.body, owner: req.user.id });
-  await playlist.save();
-  await playlist.populate('owner', 'username');
-  res.json(playlist);
+  try {
+    const { name, title, description, tracks, visibility, genre, tags } = req.body;
+    
+    // Map frontend format to backend format
+    const playlistData = {
+      title: title || name || 'Untitled Playlist',
+      description: description || '',
+      owner: req.user.id,
+      isPublic: visibility === 'public' || visibility === true,
+      tracks: (tracks || []).map(track => ({
+        trackId: track.id || track.trackId,
+        title: track.title || track.name,
+        artist: track.artist,
+        previewUrl: track.image || track.previewUrl || track.spotifyUrl,
+        source: track.source || 'spotify'
+      }))
+    };
+    
+    const playlist = new Playlist(playlistData);
+    await playlist.save();
+    await playlist.populate('owner', 'username');
+    res.json(playlist);
+  } catch (error) {
+    console.error('Create playlist error:', error.message);
+    res.status(500).json({ error: 'Failed to create playlist' });
+  }
 });
 
 // PUT update (owner only)
