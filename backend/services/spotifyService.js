@@ -22,6 +22,8 @@ class SpotifyService {
       'streaming',
       'playlist-read-private',
       'playlist-read-collaborative',
+      'playlist-modify-public',
+      'playlist-modify-private',
       'user-library-read',
       'user-top-read',
       'user-read-recently-played'
