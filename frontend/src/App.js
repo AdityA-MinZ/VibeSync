@@ -1,6 +1,7 @@
 // frontend/src/App.js
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import HomePage from "./components/HomePage";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
@@ -125,6 +126,7 @@ function App() {
             )
           } />
         </Routes>
+        <SpeedInsights />
       </div>
     </BrowserRouter>
   );
