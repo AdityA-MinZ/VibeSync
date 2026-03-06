@@ -609,15 +609,27 @@ router.post('/import-playlist', auth, async (req, res) => {
     const userPlaylists = await spotifyService.getUserPlaylists(accessToken, 5, 0);
     console.log('User has', userPlaylists.total, 'playlists');
     
-    // Get a FRESH access token (in case the one we have is stale)
-    const freshAccessToken = await getValidAccessToken(req.user.id);
-    console.log('Fresh token obtained');
+    // Force refresh token to get a fresh one from Spotify
+    const user = await User.findById(req.user.id);
+    if (!user.spotify.refreshToken) {
+      throw new Error('No refresh token available');
+    }
+    
+    console.log('Refreshing token for playlist import...');
+    const refreshed = await spotifyService.refreshToken(user.spotify.refreshToken);
+    await user.updateSpotifyTokens(
+      refreshed.access_token,
+      refreshed.refresh_token,
+      refreshed.expires_in
+    );
+    const freshAccessToken = refreshed.access_token;
+    console.log('Fresh token obtained:', freshAccessToken.slice(0, 20) + '...');
     
     // Get playlist details
     const playlist = await spotifyService.getPlaylist(freshAccessToken, playlistId);
     console.log('Got playlist:', playlist.name, 'Owner:', playlist.owner?.id, 'Public:', playlist.public);
     
-    // Get playlist tracks with fresh token
+    // Get playlist tracks with FRESH token
     const tracksData = await spotifyService.getPlaylistTracks(freshAccessToken, playlistId, 100, 0);
     console.log('Got tracks count:', tracksData.items?.length || 0);
     
