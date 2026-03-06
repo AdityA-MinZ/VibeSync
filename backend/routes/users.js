@@ -63,11 +63,6 @@ router.get('/me', auth, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-  } catch (error) {
-    console.log('Get current user error:', error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
 
 router.get('/:id', auth, async (req, res) => {
   try {
