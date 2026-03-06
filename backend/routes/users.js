@@ -41,6 +41,7 @@ const upload = multer({
 
 router.get('/me', auth, async (req, res) => {
   try {
+    console.log('Fetching user profile for:', req.user.id);
     const user = await User.findById(req.user.id)
       .select('-password -spotify.accessToken -spotify.refreshToken');
     
@@ -57,6 +58,11 @@ router.get('/me', auth, async (req, res) => {
       followingCount: user.followings?.length || 0,
       createdAt: user.createdAt
     });
+  } catch (error) {
+    console.error('Get user error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
   } catch (error) {
     console.log('Get current user error:', error.message);
     res.status(500).json({ error: error.message });
@@ -129,6 +135,7 @@ router.put('/me', auth, async (req, res) => {
 
 router.get('/me/stats', auth, async (req, res) => {
   try {
+    console.log('Fetching stats for user:', req.user.id);
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });

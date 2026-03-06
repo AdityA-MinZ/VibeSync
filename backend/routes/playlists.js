@@ -11,10 +11,17 @@ router.get('/', async (req, res) => {
 
 // GET user's playlists (protected)
 router.get('/me', auth, async (req, res) => {
-  const playlists = await Playlist.find({ owner: req.user.id })
-    .populate('owner', 'username')
-    .sort({ createdAt: -1 });
-  res.json(playlists);
+  try {
+    console.log('Fetching playlists for user:', req.user.id);
+    const playlists = await Playlist.find({ owner: req.user.id })
+      .populate('owner', 'username')
+      .sort({ createdAt: -1 });
+    console.log('Found playlists:', playlists.length);
+    res.json(playlists);
+  } catch (error) {
+    console.error('Get playlists error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // GET playlists by user ID
