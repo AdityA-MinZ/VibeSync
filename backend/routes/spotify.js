@@ -609,12 +609,16 @@ router.post('/import-playlist', auth, async (req, res) => {
     const userPlaylists = await spotifyService.getUserPlaylists(accessToken, 5, 0);
     console.log('User has', userPlaylists.total, 'playlists');
     
+    // Get a FRESH access token (in case the one we have is stale)
+    const freshAccessToken = await getValidAccessToken(req.user.id);
+    console.log('Fresh token obtained');
+    
     // Get playlist details
-    const playlist = await spotifyService.getPlaylist(accessToken, playlistId);
+    const playlist = await spotifyService.getPlaylist(freshAccessToken, playlistId);
     console.log('Got playlist:', playlist.name, 'Owner:', playlist.owner?.id, 'Public:', playlist.public);
     
-    // Get playlist tracks
-    const tracksData = await spotifyService.getPlaylistTracks(accessToken, playlistId, 100, 0);
+    // Get playlist tracks with fresh token
+    const tracksData = await spotifyService.getPlaylistTracks(freshAccessToken, playlistId, 100, 0);
     console.log('Got tracks count:', tracksData.items?.length || 0);
     
     const tracks = tracksData.items.map(item => ({

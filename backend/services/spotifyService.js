@@ -249,16 +249,27 @@ class SpotifyService {
   // Get playlist tracks
   async getPlaylistTracks(accessToken, playlistId, limit = 100, offset = 0) {
     try {
-      const response = await axios.get(`${this.baseUrl}/playlists/${playlistId}/tracks`, {
+      const url = `${this.baseUrl}/playlists/${playlistId}/tracks`;
+      console.log('Making request to:', url);
+      console.log('With params:', { limit, offset });
+      
+      const response = await axios.get(url, {
         headers: {
-          'Authorization': `Bearer ${accessToken}`
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
         },
-        params: { limit, offset }
+        params: { 
+          limit, 
+          offset,
+          fields: 'items(track(id,name,artists,album,duration_ms,external_urls))'
+        }
       });
 
       return response.data;
     } catch (error) {
-      console.error('Spotify get playlist tracks error:', error.response?.data || error.message);
+      console.error('Spotify get playlist tracks error:', error.response?.status);
+      console.error('Response headers:', error.response?.headers);
+      console.error('Response data:', error.response?.data);
       throw new Error('Failed to get playlist tracks');
     }
   }
