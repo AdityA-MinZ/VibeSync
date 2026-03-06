@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_URL, SOCIAL_API_URL } from '../config';
+import { SOCIAL_API_URL } from '../config';
 
 // ========== LIKES ==========
 

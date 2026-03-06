@@ -9,7 +9,7 @@ import "./App.css";
 
 function App() {
   console.log('App component rendering'); // Debug log
-  const [currentPage, setCurrentPage] = useState("landing"); // 'landing' | 'login' | 'register' | 'dashboard'
+  const [, setCurrentPage] = useState("landing");
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 

@@ -12,148 +12,6 @@ import { getUserProfile, getUserPlaylists, getUserStats, getUserActivity, update
 import { getNotifications, markAsRead, markAllAsRead, getUnreadCount } from "../services/notificationService";
 import API_URL from '../config';
 
-const musicData = [
-  {
-    id: 1,
-    title: "Midnight Dreams",
-    artist: "Luna Eclipse",
-    genre: "electronic",
-    image: "https://picsum.photos/400/500?random=1",
-    likes: 1234,
-    plays: 45678,
-    comments: 89,
-    description:
-      "An ambient electronic journey through the night. Perfect for late-night coding sessions or deep contemplation.",
-  },
-  {
-    id: 2,
-    title: "Summer Vibes",
-    artist: "The Waves",
-    genre: "pop",
-    image: "https://picsum.photos/400/600?random=2",
-    likes: 2341,
-    plays: 78901,
-    comments: 156,
-    description:
-      "Feel-good summer anthem that'll make you want to dance all day long.",
-  },
-  {
-    id: 3,
-    title: "Urban Beats",
-    artist: "Street Sound",
-    genre: "hiphop",
-    image: "https://picsum.photos/400/450?random=3",
-    likes: 3456,
-    plays: 123456,
-    comments: 234,
-    description:
-      "Hard-hitting hip hop track with powerful lyrics and infectious rhythm.",
-  },
-  {
-    id: 4,
-    title: "Jazz at Midnight",
-    artist: "The Blue Notes",
-    genre: "jazz",
-    image: "https://picsum.photos/400/550?random=4",
-    likes: 987,
-    plays: 34567,
-    comments: 67,
-    description:
-      "Smooth jazz saxophone melodies perfect for a relaxing evening.",
-  },
-  {
-    id: 5,
-    title: "Electric Storm",
-    artist: "Neon Knights",
-    genre: "rock",
-    image: "https://picsum.photos/400/480?random=5",
-    likes: 4567,
-    plays: 234567,
-    comments: 345,
-    description: "High-energy rock anthem with electrifying guitar solos.",
-  },
-  {
-    id: 6,
-    title: "Morning Coffee",
-    artist: "Acoustic Soul",
-    genre: "pop",
-    image: "https://picsum.photos/400/520?random=6",
-    likes: 2345,
-    plays: 89012,
-    comments: 123,
-    description: "Gentle acoustic melodies to start your day right.",
-  },
-  {
-    id: 7,
-    title: "Synth Wave",
-    artist: "Retro Future",
-    genre: "electronic",
-    image: "https://picsum.photos/400/580?random=7",
-    likes: 5678,
-    plays: 345678,
-    comments: 456,
-    description: "80s-inspired synthwave with modern production.",
-  },
-  {
-    id: 8,
-    title: "Classical Beauty",
-    artist: "Orchestra Divine",
-    genre: "classical",
-    image: "https://picsum.photos/400/460?random=8",
-    likes: 1567,
-    plays: 56789,
-    comments: 78,
-    description: "Timeless classical composition that stirs the soul.",
-  },
-  {
-    id: 9,
-    title: "Bass Drop",
-    artist: "DJ Thunder",
-    genre: "electronic",
-    image: "https://picsum.photos/400/540?random=9",
-    likes: 6789,
-    plays: 456789,
-    comments: 567,
-    description: "Massive bass drops and energetic EDM vibes.",
-  },
-  {
-    id: 10,
-    title: "Indie Dreams",
-    artist: "The Wanderers",
-    genre: "rock",
-    image: "https://picsum.photos/400/490?random=10",
-    likes: 3456,
-    plays: 123456,
-    comments: 234,
-    description:
-      "Indie rock with introspective lyrics and catchy hooks.",
-  },
-  {
-    id: 11,
-    title: "Hip Hop Nation",
-    artist: "MC Flow",
-    genre: "hiphop",
-    image: "https://picsum.photos/400/530?random=11",
-    likes: 7890,
-    plays: 567890,
-    comments: 678,
-    description:
-      "Conscious hip hop with meaningful message and great flow.",
-  },
-  {
-    id: 12,
-    title: "Piano Serenity",
-    artist: "Grace Notes",
-    genre: "classical",
-    image: "https://picsum.photos/400/510?random=12",
-    likes: 2345,
-    plays: 89012,
-    comments: 123,
-    description:
-      "Beautiful piano compositions for meditation and focus.",
-  },
-];
-
 function formatNumber(num) {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
   if (num >= 1000) return (num / 1000).toFixed(1) + "K";
@@ -178,10 +36,13 @@ function HomePage({ user, onLogout }) {
   const [playlistTracks, setPlaylistTracks] = useState([]);
   const [trackSearchQuery, setTrackSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [visibility, setVisibility] = useState("public");
+  // eslint-disable-next-line no-unused-vars
   const [isPlaying, setIsPlaying] = useState(false);
 
   // Legacy track state (for backward compatibility)
+  // eslint-disable-next-line no-unused-vars
   const [trackTitle, setTrackTitle] = useState("");
   const [trackTags, setTrackTags] = useState([]);
   const [tagInput, setTagInput] = useState("");
@@ -228,10 +89,10 @@ function HomePage({ user, onLogout }) {
     confirmPassword: ''
   });
 
-  // Home page state
   const [homePlaylists, setHomePlaylists] = useState([]);
   const [homeLoading, setHomeLoading] = useState(false);
   const [homeError, setHomeError] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const handleViewAllActivity = () => {
@@ -972,7 +833,8 @@ function HomePage({ user, onLogout }) {
     return then.toLocaleDateString();
   };
 
-  const openModal = (track) => {
+  // eslint-disable-next-line no-unused-vars
+  const _openModal = (track) => {
     setModalTrack(track);
     document.body.style.overflow = "hidden";
   };

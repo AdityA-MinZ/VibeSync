@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getComments, addComment, deleteComment, likeComment, unlikeComment } from '../services/socialService';
 import './CommentSection.css';
 
@@ -10,11 +10,7 @@ function CommentSection({ targetType, targetId, currentUser }) {
   const [replyingTo, setReplyingTo] = useState(null);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetchComments();
-  }, [targetType, targetId]);
-
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       setLoading(true);
       const result = await getComments(targetType, targetId, 50, 0, 'newest');
@@ -26,7 +22,11 @@ function CommentSection({ targetType, targetId, currentUser }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [targetType, targetId]);
+
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

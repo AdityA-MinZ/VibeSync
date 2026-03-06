@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { searchAll, getSuggestions, getTrendingSearches } from '../services/searchService';
 import './SearchResults.css';
 
@@ -15,20 +15,7 @@ function SearchResults({ query, onClose, onTrackSelect }) {
   const [trending, setTrending] = useState([]);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    performSearch();
-    loadTrending();
-  }, [query]);
-
-  useEffect(() => {
-    if (query.length >= 2) {
-      loadSuggestions();
-    } else {
-      setSuggestions([]);
-    }
-  }, [query]);
-
-  const performSearch = async () => {
+  const performSearch = useCallback(async () => {
     if (!query.trim()) return;
     
     setLoading(true);
@@ -43,16 +30,29 @@ function SearchResults({ query, onClose, onTrackSelect }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [query, activeTab]);
 
-  const loadSuggestions = async () => {
+  const loadSuggestions = useCallback(async () => {
     try {
       const data = await getSuggestions(query);
       setSuggestions(data.suggestions);
     } catch (err) {
       console.error('Suggestions error:', err);
     }
-  };
+  }, [query]);
+
+  useEffect(() => {
+    performSearch();
+    loadTrending();
+  }, [performSearch]);
+
+  useEffect(() => {
+    if (query.length >= 2) {
+      loadSuggestions();
+    } else {
+      setSuggestions([]);
+    }
+  }, [query, loadSuggestions]);
 
   const loadTrending = async () => {
     try {

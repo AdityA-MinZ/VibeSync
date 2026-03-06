@@ -1,5 +1,5 @@
 // frontend/src/components/FriendsPage.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../api';
 import './FriendsPage.css';
 
@@ -12,27 +12,10 @@ function FriendsPage({ user, sidebarExpanded }) {
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [sessionSongName, setSessionSongName] = useState('');
   const [sessionSongUrl, setSessionSongUrl] = useState('');
-  const [activeSession, setActiveSession] = useState(null);
+  const [, setActiveSession] = useState(null);
   const messagesEndRef = useRef(null);
 
-  // Fetch friends list
-  useEffect(() => {
-    fetchFriends();
-  }, []);
-
-  // Fetch messages when friend is selected
-  useEffect(() => {
-    if (selectedFriend) {
-      fetchMessages(selectedFriend._id);
-    }
-  }, [selectedFriend]);
-
-  // Scroll to bottom of messages
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const fetchFriends = async () => {
+  const fetchFriends = useCallback(async () => {
     try {
       const response = await api.get('/friends');
       const acceptedFriends = response.data
@@ -47,7 +30,12 @@ function FriendsPage({ user, sidebarExpanded }) {
       console.log('Error fetching friends:', error.message);
       setLoading(false);
     }
-  };
+  }, [user.id]);
+
+  // Fetch friends list
+  useEffect(() => {
+    fetchFriends();
+  }, [fetchFriends]);
 
   const fetchMessages = async (friendId) => {
     try {
