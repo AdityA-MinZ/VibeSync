@@ -603,11 +603,19 @@ router.post('/import-playlist', auth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid Spotify playlist URL' });
     }
 
+    console.log('Importing playlist ID:', playlistId);
+
+    // First, let's verify the token works by getting user's playlists
+    const userPlaylists = await spotifyService.getUserPlaylists(accessToken, 5, 0);
+    console.log('User has', userPlaylists.total, 'playlists');
+    
     // Get playlist details
     const playlist = await spotifyService.getPlaylist(accessToken, playlistId);
+    console.log('Got playlist:', playlist.name, 'Owner:', playlist.owner?.id, 'Public:', playlist.public);
     
     // Get playlist tracks
     const tracksData = await spotifyService.getPlaylistTracks(accessToken, playlistId, 100, 0);
+    console.log('Got tracks count:', tracksData.items?.length || 0);
     
     const tracks = tracksData.items.map(item => ({
       id: item.track.id,
