@@ -8,6 +8,12 @@ const spotifyService = require('../services/spotifyService');
 async function getValidAccessToken(userId) {
   const user = await User.findById(userId);
   
+  console.log('Getting Spotify token for user:', userId);
+  console.log('Spotify connected:', user?.spotify?.connected);
+  console.log('Has access token:', !!user?.spotify?.accessToken);
+  console.log('Token expires at:', user?.spotify?.tokenExpiresAt);
+  console.log('Needs refresh:', user?.needsSpotifyTokenRefresh());
+  
   if (!user || !user.spotify.connected) {
     throw new Error('Spotify not connected');
   }
@@ -77,15 +83,18 @@ router.get('/callback', async (req, res) => {
     
     // Exchange code for tokens
     const tokens = await spotifyService.getTokens(code);
+    console.log('Got tokens:', { hasAccessToken: !!tokens.access_token, hasRefreshToken: !!tokens.refresh_token });
     
     // Get user ID from state
     const userId = state;
+    console.log('User ID from state:', userId);
     
     // Get Spotify profile to store additional info
     const spotifyProfile = await spotifyService.getUserProfile(tokens.access_token);
+    console.log('Spotify profile:', spotifyProfile.id);
     
     // Update user with Spotify tokens and info
-    await User.findByIdAndUpdate(userId, {
+    const updatedUser = await User.findByIdAndUpdate(userId, {
       'spotify.connected': true,
       'spotify.connectedAt': new Date(),
       'spotify.spotifyId': spotifyProfile.id,
@@ -94,7 +103,9 @@ router.get('/callback', async (req, res) => {
       'spotify.accessToken': tokens.access_token,
       'spotify.refreshToken': tokens.refresh_token,
       'spotify.tokenExpiresAt': new Date(Date.now() + (tokens.expires_in * 1000))
-    });
+    }, { new: true });
+    
+    console.log('Updated user spotify:', updatedUser?.spotify);
     
     console.log('Spotify connected for user:', userId);
     
@@ -616,10 +627,14 @@ router.post('/import-playlist', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Import playlist error:', error.message);
+    console.error('Full error:', error.response?.data || error);
     if (error.message.includes('Spotify not connected')) {
       return res.status(401).json({ error: 'Spotify not connected', needsAuth: true });
     }
-    res.status(500).json({ error: error.message });
+    if (error.response?.status === 401) {
+      return res.status(401).json({ error: 'Spotify token expired', needsAuth: true });
+    }
+    res.status(500).json({ error: error.message || 'Failed to import playlist' });
   }
 });
 
