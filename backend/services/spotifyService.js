@@ -246,12 +246,12 @@ class SpotifyService {
     }
   }
 
-  // Get playlist tracks
+  // Get playlist tracks - try alternative method
   async getPlaylistTracks(accessToken, playlistId, limit = 100, offset = 0) {
     try {
-      const url = `${this.baseUrl}/playlists/${playlistId}/tracks`;
-      console.log('Making request to:', url);
-      console.log('With params:', { limit, offset });
+      // Try getting playlist with embedded tracks
+      const url = `${this.baseUrl}/playlists/${playlistId}`;
+      console.log('Getting playlist with tracks from:', url);
       
       const response = await axios.get(url, {
         headers: {
@@ -259,18 +259,33 @@ class SpotifyService {
           'Content-Type': 'application/json'
         },
         params: { 
-          limit, 
-          offset,
-          fields: 'items(track(id,name,artists,album,duration_ms,external_urls))'
+          fields: 'tracks.items(track(id,name,artists,album(images,duration_ms,external_urls),duration_ms,external_urls)),total'
         }
       });
 
-      return response.data;
+      console.log('Playlist response received, tracks count:', response.data.tracks?.items?.length || 0);
+      return response.data.tracks || { items: [] };
     } catch (error) {
-      console.error('Spotify get playlist tracks error:', error.response?.status);
-      console.error('Response headers:', error.response?.headers);
-      console.error('Response data:', error.response?.data);
-      throw new Error('Failed to get playlist tracks');
+      console.error('Method 1 failed:', error.response?.status, error.response?.data);
+      
+      // Fallback to original method
+      try {
+        const url2 = `${this.baseUrl}/playlists/${playlistId}/tracks`;
+        console.log('Fallback to:', url2);
+        
+        const response = await axios.get(url2, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          params: { limit, offset }
+        });
+        return response.data;
+      } catch (error2) {
+        console.error('Spotify get playlist tracks error:', error2.response?.status);
+        console.error('Response data:', error2.response?.data);
+        throw new Error('Failed to get playlist tracks');
+      }
     }
   }
 
