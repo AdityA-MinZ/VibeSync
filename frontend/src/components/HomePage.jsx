@@ -399,10 +399,13 @@ function HomePage({ user, onLogout }) {
         getUserPlaylists(),
         getUserStats()
       ]);
+      console.log('Playlists loaded:', playlists);
+      console.log('Stats loaded:', stats);
       setHomePlaylists(playlists || []);
       setUserTopGenres(stats?.topGenres || []);
     } catch (error) {
       console.error('Error fetching home playlists:', error);
+      console.error('Error response:', error.response?.data);
       setHomeError('Failed to load playlists. Please try again.');
     } finally {
       setHomeLoading(false);
@@ -736,12 +739,16 @@ function HomePage({ user, onLogout }) {
             getUserPlaylists(),
             getUserActivity()
           ]);
+          console.log('Profile loaded:', profile);
+          console.log('Stats loaded:', stats);
+          console.log('Playlists loaded:', playlists);
           setProfileData(profile);
           setProfileStats(stats);
           setProfilePlaylists(playlists);
           setProfileActivity(activity);
         } catch (error) {
           console.error('Error fetching profile data:', error);
+          console.error('Error response:', error.response?.data);
           setProfileError('Failed to load profile data. Please try again.');
         } finally {
           setProfileLoading(false);
