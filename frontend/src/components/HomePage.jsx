@@ -92,6 +92,7 @@ function HomePage({ user, onLogout }) {
   const [homePlaylists, setHomePlaylists] = useState([]);
   const [homeLoading, setHomeLoading] = useState(false);
   const [homeError, setHomeError] = useState(null);
+  const [expandedPlaylist, setExpandedPlaylist] = useState(null);
   // eslint-disable-next-line no-unused-vars
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -173,8 +174,7 @@ function HomePage({ user, onLogout }) {
   };
 
   const handlePlaylistClick = (playlist) => {
-    // Navigate to playlist details page
-    alert(`Opening playlist: ${playlist.name || playlist.title}`);
+    setExpandedPlaylist(expandedPlaylist?._id === playlist._id ? null : playlist);
   };
 
   const handleShareProfile = async () => {
@@ -1049,9 +1049,34 @@ function HomePage({ user, onLogout }) {
                               handlePlaylistClick(playlist);
                             }}
                           >
-                            View
+                            {expandedPlaylist?._id === playlist._id ? 'Close' : 'View'}
                           </button>
                         </div>
+                        {expandedPlaylist?._id === playlist._id && (
+                          <div className="playlist-tracks-expanded">
+                            <h4>Tracks</h4>
+                            {playlist.tracks && playlist.tracks.length > 0 ? (
+                              <ul className="tracks-list">
+                                {playlist.tracks.map((track, idx) => (
+                                  <li key={track.id || idx} className="track-item">
+                                    <span className="track-number">{idx + 1}</span>
+                                    <div className="track-info">
+                                      <span className="track-name">{track.name || track.title}</span>
+                                      {track.artist && (
+                                        <span className="track-artist">{track.artist}</span>
+                                      )}
+                                    </div>
+                                    {track.duration && (
+                                      <span className="track-duration">{track.duration}</span>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="no-tracks">No tracks in this playlist</p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
