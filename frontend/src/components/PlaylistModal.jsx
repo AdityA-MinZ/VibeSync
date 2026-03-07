@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toggleLike } from '../services/socialService';
+import LikeButton from './LikeButton';
 import './PlaylistModal.css';
 
 function PlaylistModal({ playlist, onClose }) {
@@ -10,6 +11,7 @@ function PlaylistModal({ playlist, onClose }) {
   const [comments, setComments] = useState([]);
   const [loadingComment, setLoadingComment] = useState(false);
   const tracksRef = useRef(null);
+  const youtubePlayerRef = useRef(null);
 
   useEffect(() => {
     if (playlist?.tracks) {
@@ -34,10 +36,6 @@ function PlaylistModal({ playlist, onClose }) {
     setIsPlaying(true);
   };
 
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
-  };
-
   const handleNextTrack = () => {
     if (!currentTrack || !playlist?.tracks) return;
     const nextIndex = (currentTrack.index + 1) % playlist.tracks.length;
@@ -48,6 +46,23 @@ function PlaylistModal({ playlist, onClose }) {
     if (!currentTrack || !playlist?.tracks) return;
     const prevIndex = currentTrack.index === 0 ? playlist.tracks.length - 1 : currentTrack.index - 1;
     handlePlayTrack(playlist.tracks[prevIndex], prevIndex);
+  };
+
+  const handlePlayPause = () => {
+    if (youtubePlayerRef.current) {
+      const command = isPlaying ? 'pauseVideo' : 'playVideo';
+      youtubePlayerRef.current.contentWindow.postMessage(
+        `{"event":"command","func":"${command}","args":""}`,
+        '*'
+      );
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const getYoutubeVideoId = (url) => {
+    if (!url) return null;
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    return match ? match[1] : null;
   };
 
   const handleTrackLike = async (trackIdx) => {
@@ -123,6 +138,13 @@ function PlaylistModal({ playlist, onClose }) {
               <span>{playlist.likes || 0} likes</span>
             </div>
             <div className="playlist-modal-actions">
+              <LikeButton
+                targetType="playlist"
+                targetId={playlist._id || playlist.id}
+                initialCount={playlist.likes || 0}
+                showCount={true}
+                size="medium"
+              />
               <button className="play-all-btn" onClick={() => playlist.tracks?.length && handlePlayTrack(playlist.tracks[0], 0)}>
                 ▶ Play All
               </button>
@@ -207,6 +229,21 @@ function PlaylistModal({ playlist, onClose }) {
             </ul>
           </div>
         </div>
+
+        {currentTrack && (
+          getYoutubeVideoId(currentTrack.youtubeUrl) && (
+            <div className="youtube-player-container">
+              <iframe
+                ref={youtubePlayerRef}
+                src={`https://www.youtube.com/embed/${getYoutubeVideoId(currentTrack.youtubeUrl)}?enablejsapi=1&autoplay=1`}
+                title="YouTube video player"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            </div>
+          )
+        )}
 
         {currentTrack && (
           <div className="music-player-bar">
