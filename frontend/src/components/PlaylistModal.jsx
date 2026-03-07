@@ -163,10 +163,13 @@ function PlaylistModal({ playlist, onClose }) {
     console.log('Track source:', source);
     
     if (source === 'spotify') {
+      console.log('Playing Spotify track');
       await playSpotifyTrack(track);
     } else if (source === 'youtube') {
+      console.log('Playing YouTube track');
       setIsPlaying(true);
     } else {
+      console.log('Track cannot be played directly:', track);
       alert('This track cannot be played directly. Try importing from YouTube or Spotify.');
     }
   };
@@ -212,7 +215,22 @@ function PlaylistModal({ playlist, onClose }) {
 
       const trackUri = track.spotifyUri || `spotify:track:${track.trackId || track.id}`;
       console.log('Playing track URI:', trackUri);
+      console.log('Track object structure:', track);
+      console.log('Track ID fields:', { 
+        trackId: track.trackId, 
+        id: track.id, 
+        spotifyId: track.spotifyId,
+        spotifyUri: track.spotifyUri,
+        source: track.source 
+      });
       console.log('Using device ID:', spotifyDeviceId);
+
+      // Validate track URI before making request
+      if (!trackUri.startsWith('spotify:track:')) {
+        console.error('Invalid Spotify track URI:', trackUri);
+        alert('This track is not available on Spotify or has an invalid Spotify ID.');
+        return;
+      }
 
       const playResponse = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${spotifyDeviceId}`, {
         method: 'PUT',
@@ -266,9 +284,21 @@ function PlaylistModal({ playlist, onClose }) {
   };
 
   const isSpotifyTrack = (track) => {
-    const hasSpotifyUri = track.spotifyUri || (track.spotifyUri && track.spotifyUri.startsWith('spotify:'));
-    const hasLongId = track.trackId && track.trackId.length === 22 && /^[a-zA-Z0-9]+$/.test(track.trackId);
-    return hasSpotifyUri || hasLongId || track.source === 'spotify';
+    const hasSpotifyUri = track.spotifyUri && track.spotifyUri.startsWith('spotify:track:');
+    const hasValidSpotifyId = track.spotifyId && track.spotifyId.length === 22 && /^[a-zA-Z0-9]+$/.test(track.spotifyId);
+    const hasValidTrackId = track.trackId && track.trackId.length === 22 && /^[a-zA-Z0-9]+$/.test(track.trackId);
+    
+    console.log('isSpotifyTrack check:', {
+      hasSpotifyUri,
+      hasValidSpotifyId,
+      hasValidTrackId,
+      source: track.source,
+      spotifyUri: track.spotifyUri,
+      spotifyId: track.spotifyId,
+      trackId: track.trackId
+    });
+    
+    return hasSpotifyUri || hasValidSpotifyId || hasValidTrackId;
   };
 
   const handlePlayPause = async () => {
