@@ -8,8 +8,16 @@ const playlistSchema = new mongoose.Schema({
     trackId: String,
     title: String,
     artist: String,
-    previewUrl: String,
-    source: String
+    album: String,
+    image: String,
+    duration: Number,
+    durationMs: Number,
+    source: String,
+    sourceUrl: String,
+    spotifyUri: String,
+    youtubeUrl: String,
+    youtubeId: String,
+    previewUrl: String
   }],
   isPublic: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }

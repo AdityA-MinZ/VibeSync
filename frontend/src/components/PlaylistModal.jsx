@@ -93,44 +93,24 @@ function PlaylistModal({ playlist, onClose }) {
     return `${minutes}:${seconds.padStart(2, '0')}`;
   };
 
+  const getTrackDuration = (track) => {
+    return track.durationMs || track.duration_ms || track.duration || 0;
+  };
+
   const handlePlayTrack = async (track, index) => {
+    console.log('Playing track:', track);
     setCurrentTrack({ ...track, index });
     
-    if (isSpotifyTrack(track)) {
+    const source = getTrackSource(track);
+    console.log('Track source:', source);
+    
+    if (source === 'spotify') {
       await playSpotifyTrack(track);
-    } else {
+    } else if (source === 'youtube') {
       setIsPlaying(true);
-    }
-  };
-
-  const handleNextTrack = async () => {
-    if (!currentTrack || !playlist?.tracks) return;
-    const nextIndex = (currentTrack.index + 1) % playlist.tracks.length;
-    const nextTrack = playlist.tracks[nextIndex];
-    setCurrentTrack({ ...nextTrack, index: nextIndex });
-    
-    if (isSpotifyTrack(nextTrack)) {
-      await playSpotifyTrack(nextTrack);
     } else {
-      setIsPlaying(true);
+      alert('This track cannot be played directly. Try importing from YouTube or Spotify.');
     }
-  };
-
-  const handlePrevTrack = async () => {
-    if (!currentTrack || !playlist?.tracks) return;
-    const prevIndex = currentTrack.index === 0 ? playlist.tracks.length - 1 : currentTrack.index - 1;
-    const prevTrack = playlist.tracks[prevIndex];
-    setCurrentTrack({ ...prevTrack, index: prevIndex });
-    
-    if (isSpotifyTrack(prevTrack)) {
-      await playSpotifyTrack(prevTrack);
-    } else {
-      setIsPlaying(true);
-    }
-  };
-
-  const isSpotifyTrack = (track) => {
-    return track.spotifyUri || (track.id && track.id.length === 22 && /^[a-zA-Z0-9]+$/.test(track.id));
   };
 
   const playSpotifyTrack = async (track) => {
@@ -153,7 +133,7 @@ function PlaylistModal({ playlist, onClose }) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          uris: [track.spotifyUri || `spotify:track:${track.id}`]
+          uris: [track.spotifyUri || `spotify:track:${track.trackId || track.id}`]
         })
       });
       setIsPlaying(true);
@@ -161,6 +141,24 @@ function PlaylistModal({ playlist, onClose }) {
       console.error('Error playing Spotify track:', error);
       alert('Failed to play track on Spotify. Please try again.');
     }
+  };
+
+  const handleNextTrack = async () => {
+    if (!currentTrack || !playlist?.tracks) return;
+    const nextIndex = (currentTrack.index + 1) % playlist.tracks.length;
+    handlePlayTrack(playlist.tracks[nextIndex], nextIndex);
+  };
+
+  const handlePrevTrack = async () => {
+    if (!currentTrack || !playlist?.tracks) return;
+    const prevIndex = currentTrack.index === 0 ? playlist.tracks.length - 1 : currentTrack.index - 1;
+    handlePlayTrack(playlist.tracks[prevIndex], prevIndex);
+  };
+
+  const isSpotifyTrack = (track) => {
+    const hasSpotifyUri = track.spotifyUri || (track.spotifyUri && track.spotifyUri.startsWith('spotify:'));
+    const hasLongId = track.trackId && track.trackId.length === 22 && /^[a-zA-Z0-9]+$/.test(track.trackId);
+    return hasSpotifyUri || hasLongId || track.source === 'spotify';
   };
 
   const handlePlayPause = async () => {
@@ -299,17 +297,17 @@ function PlaylistModal({ playlist, onClose }) {
                 >
                   <span className="track-num">{idx + 1}</span>
                   <div className="track-img">
-                    {track.album?.images?.[0]?.url || track.image ? (
-                      <img src={track.album?.images?.[0]?.url || track.image} alt="" />
+                    {track.image || track.album?.images?.[0]?.url ? (
+                      <img src={track.image || track.album?.images?.[0]?.url} alt="" />
                     ) : (
                       <div className="track-placeholder">🎵</div>
                     )}
                     <div className="track-play-overlay">▶</div>
                   </div>
                   <div className="track-details">
-                    <span className="track-title">{track.name || track.title}</span>
+                    <span className="track-title">{track.title || track.name || track.title}</span>
                     <span className="track-artist">
-                      {track.artists?.map(a => a.name).join(', ') || track.artist || 'Unknown Artist'}
+                      {track.artist || (track.artists && track.artists.map(a => a.name).join(', ')) || 'Unknown Artist'}
                     </span>
                   </div>
                   {getTrackSource(track) === 'spotify' ? (
@@ -321,8 +319,10 @@ function PlaylistModal({ playlist, onClose }) {
                     >
                       YouTube
                     </button>
-                  ) : null}
-                  <span className="track-time">{formatDuration(track.duration_ms || track.duration)}</span>
+                  ) : (
+                    <span className="track-source">No Source</span>
+                  )}
+                  <span className="track-time">{formatDuration(getTrackDuration(track))}</span>
                   <button 
                     className={`track-like-btn ${trackLikes[idx]?.liked ? 'liked' : ''}`}
                     onClick={(e) => { e.stopPropagation(); handleTrackLike(idx); }}
@@ -403,14 +403,14 @@ function PlaylistModal({ playlist, onClose }) {
           <div className="music-player-bar">
             <div className="player-track-info">
               <img 
-                src={currentTrack.album?.images?.[2]?.url || currentTrack.image || 'https://picsum.photos/50/50'} 
+                src={currentTrack.image || currentTrack.album?.images?.[2]?.url || 'https://picsum.photos/50/50'} 
                 alt="" 
                 className="player-track-img"
               />
               <div>
-                <div className="player-track-name">{currentTrack.name || currentTrack.title}</div>
+                <div className="player-track-name">{currentTrack.title || currentTrack.name}</div>
                 <div className="player-track-artist">
-                  {currentTrack.artists?.map(a => a.name).join(', ') || currentTrack.artist}
+                  {currentTrack.artist || (currentTrack.artists && currentTrack.artists.map(a => a.name).join(', '))}
                 </div>
               </div>
             </div>
@@ -426,7 +426,7 @@ function PlaylistModal({ playlist, onClose }) {
               <div className="progress-bar">
                 <div className="progress-fill" style={{ width: '0%' }}></div>
               </div>
-              <span>{formatDuration(currentTrack.duration_ms || currentTrack.duration)}</span>
+              <span>{formatDuration(getTrackDuration(currentTrack))}</span>
             </div>
           </div>
         )}
