@@ -180,10 +180,21 @@ function PlaylistModal({ playlist, onClose }) {
     }
   };
 
+  const getTrackSource = (track) => {
+    if (isSpotifyTrack(track)) return 'spotify';
+    if (track.youtubeUrl || track.youtubeId) return 'youtube';
+    return null;
+  };
+
   const getYoutubeVideoId = (url) => {
     if (!url) return null;
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
     return match ? match[1] : null;
+  };
+
+  const openYouTubeExternal = (track) => {
+    const url = track.youtubeUrl || `https://www.youtube.com/watch?v=${track.youtubeId}`;
+    window.open(url, '_blank');
   };
 
   const handleTrackLike = async (trackIdx) => {
@@ -301,10 +312,15 @@ function PlaylistModal({ playlist, onClose }) {
                       {track.artists?.map(a => a.name).join(', ') || track.artist || 'Unknown Artist'}
                     </span>
                   </div>
-                  {isSpotifyTrack(track) ? (
+                  {getTrackSource(track) === 'spotify' ? (
                     <span className="track-source spotify">Spotify</span>
-                  ) : track.youtubeUrl ? (
-                    <span className="track-source youtube">YouTube</span>
+                  ) : getTrackSource(track) === 'youtube' ? (
+                    <button 
+                      className="track-source-btn youtube"
+                      onClick={(e) => { e.stopPropagation(); openYouTubeExternal(track); }}
+                    >
+                      YouTube
+                    </button>
                   ) : null}
                   <span className="track-time">{formatDuration(track.duration_ms || track.duration)}</span>
                   <button 
@@ -356,19 +372,31 @@ function PlaylistModal({ playlist, onClose }) {
           </div>
         </div>
 
-        {currentTrack && (
-          getYoutubeVideoId(currentTrack.youtubeUrl) && (
+        {currentTrack && getTrackSource(currentTrack) === 'youtube' && (
+          <div className="youtube-player-section">
             <div className="youtube-player-container">
-              <iframe
-                ref={youtubePlayerRef}
-                src={`https://www.youtube.com/embed/${getYoutubeVideoId(currentTrack.youtubeUrl)}?enablejsapi=1&autoplay=1`}
-                title="YouTube video player"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
+              {getYoutubeVideoId(currentTrack.youtubeUrl) ? (
+                <iframe
+                  ref={youtubePlayerRef}
+                  src={`https://www.youtube.com/embed/${getYoutubeVideoId(currentTrack.youtubeUrl)}?enablejsapi=1&autoplay=1&playsinline=1`}
+                  title="YouTube video player"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                ></iframe>
+              ) : (
+                <div className="youtube-fallback">
+                  <p>Unable to embed YouTube video</p>
+                  <button onClick={() => openYouTubeExternal(currentTrack)}>
+                    Open in YouTube
+                  </button>
+                </div>
+              )}
             </div>
-          )
+            <button className="youtube-external-btn" onClick={() => openYouTubeExternal(currentTrack)}>
+              Open in YouTube ↗
+            </button>
+          </div>
         )}
 
         {currentTrack && (
