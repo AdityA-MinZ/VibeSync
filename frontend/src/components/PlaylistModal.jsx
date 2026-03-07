@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { toggleLike } from '../services/socialService';
 import { getSpotifyStatus } from '../services/spotifyService';
 import LikeButton from './LikeButton';
+import API_URL from '../config';
 import './PlaylistModal.css';
 
 function PlaylistModal({ playlist, onClose }) {
@@ -49,33 +50,72 @@ function PlaylistModal({ playlist, onClose }) {
     script.async = true;
     document.body.appendChild(script);
 
-    window.onSpotifyWebPlaybackSDKReady = () => {
-      const player = new window.Spotify.Player({
-        name: 'VibeSync Web Player',
-        getOAuthToken: cb => {
-          const token = localStorage.getItem('spotifyToken');
-          if (token) cb(token);
-        },
-        volume: 0.5
-      });
-
-      player.addListener('ready', ({ device_id }) => {
-        console.log('Spotify Player Ready with Device ID:', device_id);
-        setSpotifyDeviceId(device_id);
-        playerReadyRef.current = true;
-      });
-
-      player.addListener('player_state_changed', state => {
-        if (!state) return;
-        setIsPlaying(!state.paused);
-        
-        if (state.position === 0 && state.duration > 0 && !state.paused) {
-          handleNextTrack();
+    window.onSpotifyWebPlaybackSDKReady = async () => {
+      try {
+        // Get fresh Spotify access token from API
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('No auth token found');
+          return;
         }
-      });
 
-      player.connect();
-      setSpotifyPlayer(player);
+        const response = await fetch(`${API_URL}/spotify/token`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to get Spotify access token');
+        }
+
+        const { accessToken } = await response.json();
+
+        if (!accessToken) {
+          console.error('No Spotify access token available');
+          return;
+        }
+
+        const player = new window.Spotify.Player({
+          name: 'VibeSync Web Player',
+          getOAuthToken: cb => { cb(accessToken); },
+          volume: 0.5
+        });
+
+        player.addListener('ready', ({ device_id }) => {
+          console.log('Spotify Player Ready with Device ID:', device_id);
+          setSpotifyDeviceId(device_id);
+          playerReadyRef.current = true;
+        });
+
+        player.addListener('initialization_error', ({ message }) => {
+          console.error('Spotify Player initialization error:', message);
+          alert('Spotify Player initialization failed. Please ensure you have Spotify Premium and try reconnecting.');
+        });
+
+        player.addListener('authentication_error', ({ message }) => {
+          console.error('Spotify Player authentication error:', message);
+          alert('Spotify authentication failed. Please reconnect Spotify in Settings.');
+        });
+
+        player.addListener('account_error', ({ message }) => {
+          console.error('Spotify Player account error:', message);
+          alert('Spotify Premium is required for playback. Please upgrade your Spotify account to Premium.');
+        });
+
+        player.addListener('player_state_changed', state => {
+          if (!state) return;
+          setIsPlaying(!state.paused);
+          
+          if (state.position === 0 && state.duration > 0 && !state.paused) {
+            handleNextTrack();
+          }
+        });
+
+        player.connect();
+        setSpotifyPlayer(player);
+      } catch (error) {
+        console.error('Error initializing Spotify player:', error);
+        alert('Failed to initialize Spotify player. Please ensure you have Spotify Premium and try reconnecting.');
+      }
     };
 
     return () => {
@@ -119,17 +159,33 @@ function PlaylistModal({ playlist, onClose }) {
       return;
     }
 
-    const spotifyToken = localStorage.getItem('spotifyToken');
-    if (!spotifyToken) {
-      alert('Please reconnect Spotify in Settings to play this track.');
-      return;
-    }
-
     try {
+      // Get fresh Spotify access token from API
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please log in to play Spotify tracks.');
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/spotify/token`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get Spotify access token');
+      }
+
+      const { accessToken } = await response.json();
+
+      if (!accessToken) {
+        alert('Please reconnect Spotify in Settings to play this track.');
+        return;
+      }
+
       await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${spotifyDeviceId}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${spotifyToken}`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -139,7 +195,11 @@ function PlaylistModal({ playlist, onClose }) {
       setIsPlaying(true);
     } catch (error) {
       console.error('Error playing Spotify track:', error);
-      alert('Failed to play track on Spotify. Please try again.');
+      if (error.message.includes('Premium')) {
+        alert('Spotify Premium is required for playback. Please upgrade your Spotify account.');
+      } else {
+        alert('Failed to play track on Spotify. Please try again.');
+      }
     }
   };
 

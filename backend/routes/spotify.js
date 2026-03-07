@@ -124,6 +124,18 @@ router.get('/callback', async (req, res) => {
   }
 });
 
+// Get current Spotify access token
+// GET /api/spotify/token
+router.get('/token', auth, async (req, res) => {
+  try {
+    const accessToken = await getValidAccessToken(req.user.id);
+    res.json({ accessToken });
+  } catch (error) {
+    console.error('Get Spotify token error:', error.message);
+    res.status(401).json({ error: error.message });
+  }
+});
+
 // Check if user has connected Spotify
 // GET /api/spotify/status
 router.get('/status', auth, async (req, res) => {
