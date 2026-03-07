@@ -185,7 +185,7 @@ function HomePage({ user, onLogout }) {
 
   const handleDeletePlaylist = async (playlistId, e) => {
     e.stopPropagation();
-    if (!confirm('Are you sure you want to delete this playlist?')) return;
+    if (!window.confirm('Are you sure you want to delete this playlist?')) return;
     
     try {
       await deletePlaylist(playlistId);
