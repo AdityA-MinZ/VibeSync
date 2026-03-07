@@ -153,3 +153,17 @@ export const createPlaylist = async (playlistData) => {
     throw error;
   }
 };
+
+export const deletePlaylist = async (playlistId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.delete(
+      `${API_URL}/playlists/${playlistId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Delete playlist error:', error);
+    throw error;
+  }
+};

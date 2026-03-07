@@ -172,7 +172,7 @@ router.get('/me/activity', auth, async (req, res) => {
       activities.push({
         type: 'playlist_created',
         icon: '🎵',
-        text: `Created playlist '${playlist.name}'`,
+        text: `Created playlist '${playlist.title}'`,
         time: playlist.createdAt,
         color: '#7c3aed'
       });

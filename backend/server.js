@@ -56,6 +56,7 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/listening-sessions', require('./routes/listeningSessions'));
+app.use('/api/upload', require('./routes/upload'));
 
 // Production: Serve React frontend (if you have client/build folder)
 if (process.env.NODE_ENV === 'production') {

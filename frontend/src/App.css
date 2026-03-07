@@ -698,6 +698,20 @@ body {
   flex: 1;
 }
 
+.playlist-card-actions .delete-btn {
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.playlist-card-actions .delete-btn:hover {
+  background: #c0392b;
+}
+
 .playlist-tracks-expanded {
   padding: 1rem;
   border-top: 1px solid var(--color-border);
@@ -1320,6 +1334,67 @@ body {
 
 .form-group-modern {
   margin-bottom: 1.25rem;
+}
+
+.cover-image-upload {
+  margin-top: 0.5rem;
+}
+
+.cover-preview {
+  position: relative;
+  display: inline-block;
+}
+
+.cover-preview-img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid var(--color-border);
+}
+
+.remove-cover-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--color-error, #e74c3c);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-cover-btn:hover {
+  background: #c0392b;
+}
+
+.cover-upload-placeholder {
+  border: 2px dashed var(--color-border);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  transition: border-color 0.3s ease;
+}
+
+.cover-upload-placeholder:hover {
+  border-color: var(--color-accent);
+}
+
+.cover-upload-btn {
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  transition: color 0.3s ease;
+}
+
+.cover-upload-btn:hover {
+  color: var(--color-accent);
 }
 
 .form-label {

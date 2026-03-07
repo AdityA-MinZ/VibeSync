@@ -9,7 +9,7 @@ import SaveToBoard from "./SaveToBoard";
 import EditProfileModal from "./EditProfileModal";
 import PlaylistModal from "./PlaylistModal";
 import ImageCropper from "./ImageCropper";
-import { getUserProfile, getUserPlaylists, getUserStats, getUserActivity, updateUserProfile, updateStreak, importSpotifyPlaylist, importYouTubePlaylist, searchTracks, createPlaylist } from "../services/userService";
+import { getUserProfile, getUserPlaylists, getUserStats, getUserActivity, updateUserProfile, updateStreak, importSpotifyPlaylist, importYouTubePlaylist, searchTracks, createPlaylist, deletePlaylist } from "../services/userService";
 import { getNotifications, markAsRead, markAllAsRead, getUnreadCount } from "../services/notificationService";
 import API_URL from '../config';
 
@@ -33,6 +33,7 @@ function HomePage({ user, onLogout }) {
   const [importUrl, setImportUrl] = useState("");
   const [playlistName, setPlaylistName] = useState("");
   const [playlistDescription, setPlaylistDescription] = useState("");
+  const [playlistCoverImage, setPlaylistCoverImage] = useState("");
   const [playlistGenre, setPlaylistGenre] = useState("");
   const [playlistTracks, setPlaylistTracks] = useState([]);
   const [trackSearchQuery, setTrackSearchQuery] = useState("");
@@ -180,6 +181,21 @@ function HomePage({ user, onLogout }) {
 
   const handleClosePlaylistModal = () => {
     setSelectedPlaylist(null);
+  };
+
+  const handleDeletePlaylist = async (playlistId, e) => {
+    e.stopPropagation();
+    if (!confirm('Are you sure you want to delete this playlist?')) return;
+    
+    try {
+      await deletePlaylist(playlistId);
+      setHomePlaylists(homePlaylists.filter(p => p._id !== playlistId));
+      setProfilePlaylists(profilePlaylists.filter(p => p._id !== playlistId));
+      alert('Playlist deleted successfully');
+    } catch (error) {
+      console.error('Delete playlist error:', error);
+      alert('Failed to delete playlist');
+    }
   };
 
   const handleShareProfile = async () => {
@@ -599,6 +615,34 @@ function HomePage({ user, onLogout }) {
     setPlaylistTracks(playlistTracks.filter((_, i) => i !== index));
   };
 
+  const handlePlaylistCoverImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch(`${API_URL}/upload/playlist-cover`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPlaylistCoverImage(data.imageUrl);
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Cover image upload error:', error);
+      alert('Failed to upload cover image');
+    }
+  };
+
   const handleCreatePlaylist = async () => {
     if (!playlistName.trim()) {
       alert('Please enter a playlist name');
@@ -609,6 +653,7 @@ function HomePage({ user, onLogout }) {
       const playlistData = {
         name: playlistName,
         description: playlistDescription,
+        coverImage: playlistCoverImage,
         genre: playlistGenre,
         tags: trackTags,
         tracks: playlistTracks,
@@ -622,6 +667,7 @@ function HomePage({ user, onLogout }) {
       setImportMode(null);
       setPlaylistName('');
       setPlaylistDescription('');
+      setPlaylistCoverImage('');
       setPlaylistGenre('');
       setPlaylistTracks([]);
       setTrackTags([]);
@@ -1056,6 +1102,14 @@ function HomePage({ user, onLogout }) {
                           >
                             View
                           </button>
+                          {profileData?._id === playlist.owner?._id && (
+                            <button
+                              className="action-btn delete-btn"
+                              onClick={(e) => handleDeletePlaylist(playlist._id, e)}
+                            >
+                              Delete
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -1370,6 +1424,37 @@ function HomePage({ user, onLogout }) {
                         value={playlistName}
                         onChange={(e) => setPlaylistName(e.target.value)}
                       />
+                    </div>
+
+                    <div className="form-group-modern">
+                      <label className="form-label">Cover Image</label>
+                      <div className="cover-image-upload">
+                        {playlistCoverImage ? (
+                          <div className="cover-preview">
+                            <img src={playlistCoverImage} alt="Cover preview" className="cover-preview-img" />
+                            <button
+                              type="button"
+                              className="remove-cover-btn"
+                              onClick={() => setPlaylistCoverImage('')}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="cover-upload-placeholder">
+                            <input
+                              type="file"
+                              id="playlist-cover-upload"
+                              accept="image/*"
+                              onChange={handlePlaylistCoverImageUpload}
+                              style={{ display: 'none' }}
+                            />
+                            <label htmlFor="playlist-cover-upload" className="cover-upload-btn">
+                              📷 Add Cover Image
+                            </label>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="form-group-modern">

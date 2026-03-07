@@ -35,12 +35,13 @@ router.get('/user/:userId', auth, async (req, res) => {
 // POST create (protected)
 router.post('/', auth, async (req, res) => {
   try {
-    const { name, title, description, tracks, visibility, genre, tags } = req.body;
+    const { name, title, description, tracks, visibility, genre, tags, coverImage } = req.body;
     
     // Map frontend format to backend format
     const playlistData = {
       title: title || name || 'Untitled Playlist',
       description: description || '',
+      coverImage: coverImage || null,
       owner: req.user.id,
       isPublic: visibility === 'public' || visibility === true,
       tracks: (tracks || []).map(track => ({

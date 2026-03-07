@@ -9,7 +9,7 @@ import "./App.css";
 
 function App() {
   console.log('App component rendering'); // Debug log
-  const [, setCurrentPage] = useState("landing");
+  const [currentPage, setCurrentPage] = useState("landing"); // 'landing' | 'login' | 'register' | 'dashboard'
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -111,7 +111,7 @@ function App() {
             ) : (
               <RegisterForm
                 onRegister={handleRegister}
-                onBack={() => window.location.href = '/'}
+                onBack={() => navigate('/')}
               />
             )
           } />
