@@ -100,7 +100,7 @@ function App() {
             ) : (
               <LoginForm 
                 onLogin={handleLogin} 
-                onBack={() => window.location.href = '/'} 
+                onBack={() => navigate('/')} 
               />
             )
           } />
