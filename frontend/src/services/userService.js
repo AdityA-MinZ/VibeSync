@@ -19,6 +19,12 @@ export const updateStreak = async () => {
 export const getUserProfile = async (userId) => {
   try {
     const token = localStorage.getItem('token');
+    
+    // If no token, return null profile
+    if (!token) {
+      return null;
+    }
+    
     const url = userId ? `${API_URL}/users/${userId}` : `${API_URL}/users/me`;
     const response = await axios.get(url, {
       headers: { Authorization: `Bearer ${token}` }
@@ -26,7 +32,8 @@ export const getUserProfile = async (userId) => {
     return response.data;
   } catch (error) {
     console.error('Get user profile error:', error);
-    throw error;
+    // Return null on error
+    return null;
   }
 };
 
@@ -118,6 +125,12 @@ export const getUserStats = async (userId) => {
 export const getUserActivity = async (userId, limit = 10) => {
   try {
     const token = localStorage.getItem('token');
+    
+    // If no token, return empty activity
+    if (!token) {
+      return [];
+    }
+    
     const url = userId 
       ? `${API_URL}/users/${userId}/activity` 
       : `${API_URL}/users/me/activity`;
@@ -128,7 +141,8 @@ export const getUserActivity = async (userId, limit = 10) => {
     return response.data;
   } catch (error) {
     console.error('Get user activity error:', error);
-    throw error;
+    // Return empty activity on error
+    return [];
   }
 };
 

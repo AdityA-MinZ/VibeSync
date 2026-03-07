@@ -9,12 +9,19 @@ async function getValidAccessToken(userId) {
   const user = await User.findById(userId);
   
   console.log('Getting Spotify token for user:', userId);
+  console.log('User exists:', !!user);
   console.log('Spotify connected:', user?.spotify?.connected);
   console.log('Has access token:', !!user?.spotify?.accessToken);
   console.log('Token expires at:', user?.spotify?.tokenExpiresAt);
-  console.log('Needs refresh:', user?.needsSpotifyTokenRefresh());
+  console.log('Needs refresh:', user?.needsSpotifyTokenRefresh?.());
   
-  if (!user || !user.spotify.connected) {
+  if (!user) {
+    console.log('User not found:', userId);
+    throw new Error('User not found');
+  }
+  
+  if (!user.spotify?.connected) {
+    console.log('Spotify not connected for user:', userId);
     throw new Error('Spotify not connected');
   }
 
@@ -23,6 +30,7 @@ async function getValidAccessToken(userId) {
     console.log('Refreshing Spotify token for user:', userId);
     
     if (!user.spotify.refreshToken) {
+      console.log('No refresh token available for user:', userId);
       throw new Error('No refresh token available');
     }
     
@@ -35,16 +43,15 @@ async function getValidAccessToken(userId) {
         refreshed.expires_in
       );
       
+      console.log('Token refreshed successfully for user:', userId);
       return refreshed.access_token;
     } catch (error) {
-      console.error('Token refresh failed:', error.message);
-      // Mark as disconnected if refresh fails
-      user.spotify.connected = false;
-      await user.save();
-      throw new Error('Spotify connection expired. Please reconnect.');
+      console.error('Token refresh failed for user:', userId, error.message);
+      throw new Error('Failed to refresh Spotify token');
     }
   }
   
+  console.log('Returning existing token for user:', userId);
   return user.spotify.accessToken;
 }
 
