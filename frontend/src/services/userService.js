@@ -48,6 +48,15 @@ export const updateUserProfile = async (userData) => {
 export const getUserPlaylists = async (userId, limit = 20, skip = 0) => {
   try {
     const token = localStorage.getItem('token');
+    
+    // If no token, try to get public playlists
+    if (!token) {
+      const response = await axios.get(`${API_URL}/playlists`, {
+        params: { limit, skip }
+      });
+      return response.data;
+    }
+    
     const url = userId 
       ? `${API_URL}/playlists/user/${userId}` 
       : `${API_URL}/playlists/me`;
@@ -58,13 +67,34 @@ export const getUserPlaylists = async (userId, limit = 20, skip = 0) => {
     return response.data;
   } catch (error) {
     console.error('Get user playlists error:', error);
-    throw error;
+    // Fallback to public playlists if auth fails
+    try {
+      const response = await axios.get(`${API_URL}/playlists`, {
+        params: { limit, skip }
+      });
+      return response.data;
+    } catch (fallbackError) {
+      console.error('Fallback playlists error:', fallbackError);
+      throw fallbackError;
+    }
   }
 };
 
 export const getUserStats = async (userId) => {
   try {
     const token = localStorage.getItem('token');
+    
+    // If no token, return default stats
+    if (!token) {
+      return {
+        totalPlaylists: 0,
+        totalTracks: 0,
+        totalLikes: 0,
+        topGenres: [],
+        recentActivity: []
+      };
+    }
+    
     const url = userId 
       ? `${API_URL}/users/${userId}/stats` 
       : `${API_URL}/users/me/stats`;
@@ -74,7 +104,14 @@ export const getUserStats = async (userId) => {
     return response.data;
   } catch (error) {
     console.error('Get user stats error:', error);
-    throw error;
+    // Return default stats on error
+    return {
+      totalPlaylists: 0,
+      totalTracks: 0,
+      totalLikes: 0,
+      topGenres: [],
+      recentActivity: []
+    };
   }
 };
 
