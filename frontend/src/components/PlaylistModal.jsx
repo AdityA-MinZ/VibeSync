@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toggleLike } from '../services/socialService';
+import { getSpotifyStatus } from '../services/spotifyService';
 import LikeButton from './LikeButton';
 import './PlaylistModal.css';
 
@@ -10,8 +11,12 @@ function PlaylistModal({ playlist, onClose }) {
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState([]);
   const [loadingComment, setLoadingComment] = useState(false);
+  const [spotifyConnected, setSpotifyConnected] = useState(false);
+  const [spotifyPlayer, setSpotifyPlayer] = useState(null);
+  const [spotifyDeviceId, setSpotifyDeviceId] = useState(null);
   const tracksRef = useRef(null);
   const youtubePlayerRef = useRef(null);
+  const playerReadyRef = useRef(false);
 
   useEffect(() => {
     if (playlist?.tracks) {
@@ -24,6 +29,63 @@ function PlaylistModal({ playlist, onClose }) {
     }
   }, [playlist]);
 
+  useEffect(() => {
+    const checkSpotifyConnection = async () => {
+      try {
+        const status = await getSpotifyStatus();
+        setSpotifyConnected(status.connected);
+      } catch (error) {
+        console.error('Failed to check Spotify status:', error);
+      }
+    };
+    checkSpotifyConnection();
+  }, []);
+
+  useEffect(() => {
+    if (!spotifyConnected) return;
+
+    const script = document.createElement('script');
+    script.src = 'https://sdk.scdn.co/spotify-player.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    window.onSpotifyWebPlaybackSDKReady = () => {
+      const player = new window.Spotify.Player({
+        name: 'VibeSync Web Player',
+        getOAuthToken: cb => {
+          const token = localStorage.getItem('spotifyToken');
+          if (token) cb(token);
+        },
+        volume: 0.5
+      });
+
+      player.addListener('ready', ({ device_id }) => {
+        console.log('Spotify Player Ready with Device ID:', device_id);
+        setSpotifyDeviceId(device_id);
+        playerReadyRef.current = true;
+      });
+
+      player.addListener('player_state_changed', state => {
+        if (!state) return;
+        setIsPlaying(!state.paused);
+        
+        if (state.position === 0 && state.duration > 0 && !state.paused) {
+          handleNextTrack();
+        }
+      });
+
+      player.connect();
+      setSpotifyPlayer(player);
+    };
+
+    return () => {
+      if (spotifyPlayer) {
+        spotifyPlayer.disconnect();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spotifyConnected]);
+
   const formatDuration = (ms) => {
     if (!ms) return '0:00';
     const minutes = Math.floor(ms / 60000);
@@ -31,32 +93,91 @@ function PlaylistModal({ playlist, onClose }) {
     return `${minutes}:${seconds.padStart(2, '0')}`;
   };
 
-  const handlePlayTrack = (track, index) => {
+  const handlePlayTrack = async (track, index) => {
     setCurrentTrack({ ...track, index });
-    setIsPlaying(true);
+    
+    if (isSpotifyTrack(track)) {
+      await playSpotifyTrack(track);
+    } else {
+      setIsPlaying(true);
+    }
   };
 
-  const handleNextTrack = () => {
+  const handleNextTrack = async () => {
     if (!currentTrack || !playlist?.tracks) return;
     const nextIndex = (currentTrack.index + 1) % playlist.tracks.length;
-    handlePlayTrack(playlist.tracks[nextIndex], nextIndex);
+    const nextTrack = playlist.tracks[nextIndex];
+    setCurrentTrack({ ...nextTrack, index: nextIndex });
+    
+    if (isSpotifyTrack(nextTrack)) {
+      await playSpotifyTrack(nextTrack);
+    } else {
+      setIsPlaying(true);
+    }
   };
 
-  const handlePrevTrack = () => {
+  const handlePrevTrack = async () => {
     if (!currentTrack || !playlist?.tracks) return;
     const prevIndex = currentTrack.index === 0 ? playlist.tracks.length - 1 : currentTrack.index - 1;
-    handlePlayTrack(playlist.tracks[prevIndex], prevIndex);
+    const prevTrack = playlist.tracks[prevIndex];
+    setCurrentTrack({ ...prevTrack, index: prevIndex });
+    
+    if (isSpotifyTrack(prevTrack)) {
+      await playSpotifyTrack(prevTrack);
+    } else {
+      setIsPlaying(true);
+    }
   };
 
-  const handlePlayPause = () => {
-    if (youtubePlayerRef.current) {
+  const isSpotifyTrack = (track) => {
+    return track.spotifyUri || (track.id && track.id.length === 22 && /^[a-zA-Z0-9]+$/.test(track.id));
+  };
+
+  const playSpotifyTrack = async (track) => {
+    if (!spotifyPlayer || !spotifyDeviceId || !playerReadyRef.current) {
+      alert('Spotify is not connected or player is not ready. Please connect Spotify in Settings.');
+      return;
+    }
+
+    const spotifyToken = localStorage.getItem('spotifyToken');
+    if (!spotifyToken) {
+      alert('Please reconnect Spotify in Settings to play this track.');
+      return;
+    }
+
+    try {
+      await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${spotifyDeviceId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${spotifyToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          uris: [track.spotifyUri || `spotify:track:${track.id}`]
+        })
+      });
+      setIsPlaying(true);
+    } catch (error) {
+      console.error('Error playing Spotify track:', error);
+      alert('Failed to play track on Spotify. Please try again.');
+    }
+  };
+
+  const handlePlayPause = async () => {
+    if (!currentTrack) return;
+
+    if (isSpotifyTrack(currentTrack)) {
+      if (spotifyPlayer) {
+        await spotifyPlayer.togglePlay();
+      }
+    } else if (youtubePlayerRef.current) {
       const command = isPlaying ? 'pauseVideo' : 'playVideo';
       youtubePlayerRef.current.contentWindow.postMessage(
         `{"event":"command","func":"${command}","args":""}`,
         '*'
       );
+      setIsPlaying(!isPlaying);
     }
-    setIsPlaying(!isPlaying);
   };
 
   const getYoutubeVideoId = (url) => {
@@ -180,6 +301,11 @@ function PlaylistModal({ playlist, onClose }) {
                       {track.artists?.map(a => a.name).join(', ') || track.artist || 'Unknown Artist'}
                     </span>
                   </div>
+                  {isSpotifyTrack(track) ? (
+                    <span className="track-source spotify">Spotify</span>
+                  ) : track.youtubeUrl ? (
+                    <span className="track-source youtube">YouTube</span>
+                  ) : null}
                   <span className="track-time">{formatDuration(track.duration_ms || track.duration)}</span>
                   <button 
                     className={`track-like-btn ${trackLikes[idx]?.liked ? 'liked' : ''}`}
