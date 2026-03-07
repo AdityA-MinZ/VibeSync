@@ -436,6 +436,13 @@ function HomePage({ user, onLogout }) {
   const checkSpotifyStatus = async () => {
     try {
       const token = localStorage.getItem('token');
+      
+      // Check if user is logged in
+      if (!token) {
+        setSpotifyConnected(false);
+        return;
+      }
+      
       const response = await fetch(`${API_URL}/spotify/status`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -450,6 +457,13 @@ function HomePage({ user, onLogout }) {
   const connectSpotify = async () => {
     try {
       const token = localStorage.getItem('token');
+      
+      // Check if user is logged in
+      if (!token) {
+        alert('Please log in to connect Spotify');
+        return;
+      }
+      
       const response = await fetch(`${API_URL}/spotify/login`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -477,6 +491,13 @@ function HomePage({ user, onLogout }) {
   const disconnectSpotify = async () => {
     try {
       const token = localStorage.getItem('token');
+      
+      // Check if user is logged in
+      if (!token) {
+        alert('Please log in to disconnect Spotify');
+        return;
+      }
+      
       await fetch(`${API_URL}/spotify/disconnect`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
