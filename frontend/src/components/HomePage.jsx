@@ -458,23 +458,33 @@ function HomePage({ user, onLogout }) {
     try {
       const token = localStorage.getItem('token');
       
+      console.log('Spotify connection attempt - token exists:', !!token);
+      console.log('Spotify connection attempt - token value:', token?.slice(0, 20) + '...');
+      
       // Check if user is logged in
       if (!token) {
         alert('Please log in to connect Spotify');
         return;
       }
       
+      console.log('Making request to:', `${API_URL}/spotify/login`);
+      console.log('Auth header:', `Bearer ${token?.slice(0, 20)}...`);
+      
       const response = await fetch(`${API_URL}/spotify/login`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
+      console.log('Spotify login response status:', response.status);
+      
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Spotify login error:', errorData);
         alert(errorData.error || 'Failed to connect to Spotify');
         return;
       }
       
       const data = await response.json();
+      console.log('Spotify login response data:', data);
       
       if (data.authUrl) {
         // Redirect to Spotify auth

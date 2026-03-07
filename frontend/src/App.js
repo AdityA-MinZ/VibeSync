@@ -16,9 +16,16 @@ function App() {
   // Check for existing authentication on app load
   useEffect(() => {
     const checkAuth = () => {
+      console.log('App.js - checkAuth called');
+      const token = localStorage.getItem('token');
+      const user = localStorage.getItem('user');
+      console.log('App.js - token in localStorage:', !!token);
+      console.log('App.js - user in localStorage:', !!user);
+      
       if (isAuthenticated()) {
         const user = getCurrentUser();
         if (user) {
+          console.log('App.js - setting current user:', user);
           setCurrentUser(user);
         }
       }
@@ -29,12 +36,16 @@ function App() {
   }, []);
 
   const handleLogin = (user) => {
+    console.log('App.js - handleLogin called with user:', user);
+    console.log('App.js - storing token:', !!user.token);
     setCurrentUser(user);
     localStorage.setItem('token', user.token);
     localStorage.setItem('user', JSON.stringify(user));
   };
 
   const handleRegister = (user) => {
+    console.log('App.js - handleRegister called with user:', user);
+    console.log('App.js - storing token:', !!user.token);
     setCurrentUser(user);
     localStorage.setItem('token', user.token);
     localStorage.setItem('user', JSON.stringify(user));
