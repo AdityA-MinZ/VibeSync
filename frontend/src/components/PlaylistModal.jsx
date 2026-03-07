@@ -1,0 +1,247 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { toggleLike } from '../services/socialService';
+import './PlaylistModal.css';
+
+function PlaylistModal({ playlist, onClose }) {
+  const [currentTrack, setCurrentTrack] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [trackLikes, setTrackLikes] = useState({});
+  const [commentText, setCommentText] = useState('');
+  const [comments, setComments] = useState([]);
+  const [loadingComment, setLoadingComment] = useState(false);
+  const tracksRef = useRef(null);
+
+  useEffect(() => {
+    if (playlist?.tracks) {
+      const initialLikes = {};
+      playlist.tracks.forEach((track, idx) => {
+        initialLikes[idx] = { liked: false, count: track.likes || 0 };
+      });
+      setTrackLikes(initialLikes);
+      setComments(playlist.comments || []);
+    }
+  }, [playlist]);
+
+  const formatDuration = (ms) => {
+    if (!ms) return '0:00';
+    const minutes = Math.floor(ms / 60000);
+    const seconds = ((ms % 60000) / 1000).toFixed(0);
+    return `${minutes}:${seconds.padStart(2, '0')}`;
+  };
+
+  const handlePlayTrack = (track, index) => {
+    setCurrentTrack({ ...track, index });
+    setIsPlaying(true);
+  };
+
+  const handlePlayPause = () => {
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleNextTrack = () => {
+    if (!currentTrack || !playlist?.tracks) return;
+    const nextIndex = (currentTrack.index + 1) % playlist.tracks.length;
+    handlePlayTrack(playlist.tracks[nextIndex], nextIndex);
+  };
+
+  const handlePrevTrack = () => {
+    if (!currentTrack || !playlist?.tracks) return;
+    const prevIndex = currentTrack.index === 0 ? playlist.tracks.length - 1 : currentTrack.index - 1;
+    handlePlayTrack(playlist.tracks[prevIndex], prevIndex);
+  };
+
+  const handleTrackLike = async (trackIdx) => {
+    const trackId = playlist.tracks[trackIdx].id || `track-${trackIdx}`;
+    try {
+      const result = await toggleLike('track', trackId);
+      setTrackLikes(prev => ({
+        ...prev,
+        [trackIdx]: { liked: result.liked, count: result.count }
+      }));
+    } catch (error) {
+      console.error('Failed to like track:', error);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!commentText.trim()) return;
+    setLoadingComment(true);
+    try {
+      const newComment = {
+        text: commentText,
+        user: { username: 'You' },
+        createdAt: new Date().toISOString()
+      };
+      setComments([newComment, ...comments]);
+      setCommentText('');
+    } catch (error) {
+      console.error('Failed to add comment:', error);
+    } finally {
+      setLoadingComment(false);
+    }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/playlist/${playlist._id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: playlist.title,
+          text: `Check out ${playlist.title} on VibeSync!`,
+          url: shareUrl
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        alert('Link copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Share failed:', error);
+    }
+  };
+
+  if (!playlist) return null;
+
+  return (
+    <div className="playlist-modal-overlay" onClick={onClose}>
+      <div className="playlist-modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close-btn" onClick={onClose}>&times;</button>
+        
+        <div className="playlist-modal-header">
+          <img 
+            src={playlist.coverImage || `https://picsum.photos/400/400?random=${playlist._id}`}
+            alt={playlist.title}
+            className="playlist-modal-cover"
+          />
+          <div className="playlist-modal-info">
+            <h2>{playlist.title}</h2>
+            <p className="playlist-modal-owner">By {playlist.owner?.username || 'Unknown'}</p>
+            {playlist.description && (
+              <p className="playlist-modal-description">{playlist.description}</p>
+            )}
+            <div className="playlist-modal-stats">
+              <span>{playlist.tracks?.length || 0} tracks</span>
+              <span>{playlist.likes || 0} likes</span>
+            </div>
+            <div className="playlist-modal-actions">
+              <button className="play-all-btn" onClick={() => playlist.tracks?.length && handlePlayTrack(playlist.tracks[0], 0)}>
+                ▶ Play All
+              </button>
+              <button className="share-btn" onClick={handleShare}>
+                🔗 Share
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="playlist-modal-content">
+          <div className="tracks-section">
+            <h3>Tracks</h3>
+            <ul className="modal-tracks-list" ref={tracksRef}>
+              {playlist.tracks?.map((track, idx) => (
+                <li 
+                  key={track.id || idx} 
+                  className={`modal-track-item ${currentTrack?.index === idx ? 'active' : ''}`}
+                  onClick={() => handlePlayTrack(track, idx)}
+                >
+                  <span className="track-num">{idx + 1}</span>
+                  <div className="track-img">
+                    {track.album?.images?.[0]?.url || track.image ? (
+                      <img src={track.album?.images?.[0]?.url || track.image} alt="" />
+                    ) : (
+                      <div className="track-placeholder">🎵</div>
+                    )}
+                    <div className="track-play-overlay">▶</div>
+                  </div>
+                  <div className="track-details">
+                    <span className="track-title">{track.name || track.title}</span>
+                    <span className="track-artist">
+                      {track.artists?.map(a => a.name).join(', ') || track.artist || 'Unknown Artist'}
+                    </span>
+                  </div>
+                  <span className="track-time">{formatDuration(track.duration_ms || track.duration)}</span>
+                  <button 
+                    className={`track-like-btn ${trackLikes[idx]?.liked ? 'liked' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); handleTrackLike(idx); }}
+                  >
+                    {trackLikes[idx]?.liked ? '❤️' : '🤍'}
+                    <span className="like-count">{trackLikes[idx]?.count || 0}</span>
+                  </button>
+                </li>
+              ))}
+              {(!playlist.tracks || playlist.tracks.length === 0) && (
+                <li className="no-tracks">No tracks in this playlist</li>
+              )}
+            </ul>
+          </div>
+
+          <div className="comments-section">
+            <h3>Comments</h3>
+            <div className="comment-input-wrapper">
+              <input
+                type="text"
+                placeholder="Add a comment..."
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
+              />
+              <button onClick={handleAddComment} disabled={loadingComment}>Post</button>
+            </div>
+            <ul className="comments-list">
+              {comments.map((comment, idx) => (
+                <li key={idx} className="comment-item">
+                  <div className="comment-avatar">
+                    {comment.user?.username?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                  <div className="comment-content">
+                    <span className="comment-user">{comment.user?.username || 'User'}</span>
+                    <span className="comment-text">{comment.text}</span>
+                    <span className="comment-time">
+                      {new Date(comment.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </li>
+              ))}
+              {comments.length === 0 && (
+                <li className="no-comments">No comments yet. Be the first!</li>
+              )}
+            </ul>
+          </div>
+        </div>
+
+        {currentTrack && (
+          <div className="music-player-bar">
+            <div className="player-track-info">
+              <img 
+                src={currentTrack.album?.images?.[2]?.url || currentTrack.image || 'https://picsum.photos/50/50'} 
+                alt="" 
+                className="player-track-img"
+              />
+              <div>
+                <div className="player-track-name">{currentTrack.name || currentTrack.title}</div>
+                <div className="player-track-artist">
+                  {currentTrack.artists?.map(a => a.name).join(', ') || currentTrack.artist}
+                </div>
+              </div>
+            </div>
+            <div className="player-controls">
+              <button onClick={handlePrevTrack}>⏮</button>
+              <button className="play-pause-btn" onClick={handlePlayPause}>
+                {isPlaying ? '⏸' : '▶'}
+              </button>
+              <button onClick={handleNextTrack}>⏭</button>
+            </div>
+            <div className="player-progress">
+              <span>0:00</span>
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: '0%' }}></div>
+              </div>
+              <span>{formatDuration(currentTrack.duration_ms || currentTrack.duration)}</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default PlaylistModal;

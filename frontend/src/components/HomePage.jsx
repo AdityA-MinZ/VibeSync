@@ -7,6 +7,7 @@ import LikeButton from "./LikeButton";
 import CommentSection from "./CommentSection";
 import SaveToBoard from "./SaveToBoard";
 import EditProfileModal from "./EditProfileModal";
+import PlaylistModal from "./PlaylistModal";
 import ImageCropper from "./ImageCropper";
 import { getUserProfile, getUserPlaylists, getUserStats, getUserActivity, updateUserProfile, updateStreak, importSpotifyPlaylist, importYouTubePlaylist, searchTracks, createPlaylist } from "../services/userService";
 import { getNotifications, markAsRead, markAllAsRead, getUnreadCount } from "../services/notificationService";
@@ -92,7 +93,7 @@ function HomePage({ user, onLogout }) {
   const [homePlaylists, setHomePlaylists] = useState([]);
   const [homeLoading, setHomeLoading] = useState(false);
   const [homeError, setHomeError] = useState(null);
-  const [expandedPlaylist, setExpandedPlaylist] = useState(null);
+  const [selectedPlaylist, setSelectedPlaylist] = useState(null);
   // eslint-disable-next-line no-unused-vars
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -174,7 +175,11 @@ function HomePage({ user, onLogout }) {
   };
 
   const handlePlaylistClick = (playlist) => {
-    setExpandedPlaylist(expandedPlaylist?._id === playlist._id ? null : playlist);
+    setSelectedPlaylist(playlist);
+  };
+
+  const handleClosePlaylistModal = () => {
+    setSelectedPlaylist(null);
   };
 
   const handleShareProfile = async () => {
@@ -1049,34 +1054,9 @@ function HomePage({ user, onLogout }) {
                               handlePlaylistClick(playlist);
                             }}
                           >
-                            {expandedPlaylist?._id === playlist._id ? 'Close' : 'View'}
+                            View
                           </button>
                         </div>
-                        {expandedPlaylist?._id === playlist._id && (
-                          <div className="playlist-tracks-expanded">
-                            <h4>Tracks</h4>
-                            {playlist.tracks && playlist.tracks.length > 0 ? (
-                              <ul className="tracks-list">
-                                {playlist.tracks.map((track, idx) => (
-                                  <li key={track.id || idx} className="track-item">
-                                    <span className="track-number">{idx + 1}</span>
-                                    <div className="track-info">
-                                      <span className="track-name">{track.name || track.title}</span>
-                                      {track.artist && (
-                                        <span className="track-artist">{track.artist}</span>
-                                      )}
-                                    </div>
-                                    {track.duration && (
-                                      <span className="track-duration">{track.duration}</span>
-                                    )}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p className="no-tracks">No tracks in this playlist</p>
-                            )}
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
@@ -1950,6 +1930,14 @@ function HomePage({ user, onLogout }) {
           onCropComplete={handleCropComplete}
           onCancel={handleCropCancel}
           aspect={1}
+        />
+      )}
+
+      {/* Playlist Modal */}
+      {selectedPlaylist && (
+        <PlaylistModal
+          playlist={selectedPlaylist}
+          onClose={handleClosePlaylistModal}
         />
       )}
     </>
