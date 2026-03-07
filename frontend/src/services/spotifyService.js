@@ -1,8 +1,6 @@
 import axios from 'axios';
 import SPOTIFY_API_URL from '../config';
 
-const SPOTIFY_API_BASE = SPOTIFY_API_URL + '/spotify';
-
 // Get auth headers
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
