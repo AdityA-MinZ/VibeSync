@@ -41,7 +41,7 @@ function LoginForm({ onLogin, onBack }) {
       console.log('Attempting login...'); // Debug log
       const result = await login(email, password);
       console.log('Login result:', result); // Debug result
-      onLogin(result.user);
+      onLogin(result); // Pass full result (includes token and user)
       console.log('Login successful'); // Debug success
     } catch (error) {
       console.log('Login error:', error); // Debug error

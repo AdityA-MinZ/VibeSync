@@ -22,7 +22,7 @@ function RegisterForm({ onRegister, onBack }) {
       console.log('Attempting registration...'); // Debug log
       const result = await register(username, email, password);
       console.log('Registration result:', result); // Debug result
-      onRegister(result.user);
+      onRegister(result); // Pass full result (includes token and user)
       console.log('Registration successful'); // Debug success
     } catch (error) {
       console.log('Registration error:', error); // Debug error

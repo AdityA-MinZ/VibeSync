@@ -46,36 +46,46 @@ function App() {
     checkAuth();
   }, []);
 
-  const handleLogin = (user) => {
-    console.log('App.js - handleLogin called with user:', user);
-    console.log('App.js - storing token:', !!user.token);
-    console.log('App.js - token value:', user.token?.slice(0, 20) + '...');
+  const handleLogin = (response) => {
+    console.log('App.js - handleLogin called with response:', response);
+    console.log('App.js - storing token:', !!response.token);
+    console.log('App.js - token value:', response.token?.slice(0, 20) + '...');
     
-    // Validate token before storing
-    if (!user || !user.token || user.token === 'undefined' || user.token === 'null') {
-      console.error('App.js - Invalid user or token in handleLogin');
+    // Validate token and user before storing
+    if (!response || !response.token || response.token === 'undefined' || response.token === 'null') {
+      console.error('App.js - Invalid response or token in handleLogin');
       return;
     }
     
-    setCurrentUser(user);
-    localStorage.setItem('token', user.token);
-    localStorage.setItem('user', JSON.stringify(user));
+    if (!response.user) {
+      console.error('App.js - No user data in login response');
+      return;
+    }
+    
+    setCurrentUser(response.user);
+    localStorage.setItem('token', response.token);
+    localStorage.setItem('user', JSON.stringify(response.user));
   };
 
-  const handleRegister = (user) => {
-    console.log('App.js - handleRegister called with user:', user);
-    console.log('App.js - storing token:', !!user.token);
-    console.log('App.js - token value:', user.token?.slice(0, 20) + '...');
+  const handleRegister = (response) => {
+    console.log('App.js - handleRegister called with response:', response);
+    console.log('App.js - storing token:', !!response.token);
+    console.log('App.js - token value:', response.token?.slice(0, 20) + '...');
     
-    // Validate token before storing
-    if (!user || !user.token || user.token === 'undefined' || user.token === 'null') {
-      console.error('App.js - Invalid user or token in handleRegister');
+    // Validate token and user before storing
+    if (!response || !response.token || response.token === 'undefined' || response.token === 'null') {
+      console.error('App.js - Invalid response or token in handleRegister');
       return;
     }
     
-    setCurrentUser(user);
-    localStorage.setItem('token', user.token);
-    localStorage.setItem('user', JSON.stringify(user));
+    if (!response.user) {
+      console.error('App.js - No user data in register response');
+      return;
+    }
+    
+    setCurrentUser(response.user);
+    localStorage.setItem('token', response.token);
+    localStorage.setItem('user', JSON.stringify(response.user));
   };
 
   const handleLogout = () => {
