@@ -516,20 +516,28 @@ function PlaylistModal({ playlist, onClose }) {
           <div className="youtube-player-section">
             <div className="youtube-player-container">
               {getYoutubeVideoId(currentTrack.youtubeUrl) ? (
-                <iframe
-                  ref={youtubePlayerRef}
-                  src={`https://www.youtube.com/embed/${getYoutubeVideoId(currentTrack.youtubeUrl)}?enablejsapi=1&autoplay=1&playsinline=1`}
-                  title="YouTube video player"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                ></iframe>
+                <div className="youtube-player-wrapper">
+                  <iframe
+                    ref={youtubePlayerRef}
+                    src={`https://www.youtube.com/embed/${getYoutubeVideoId(currentTrack.youtubeUrl)}?enablejsapi=1&playsinline=1&rel=0&modestbranding=1`}
+                    title="YouTube video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="youtube-iframe"
+                    onLoad={() => console.log('YouTube iframe loaded')}
+                    onError={() => console.error('YouTube iframe error')}
+                  />
+                  {!isPlaying && (
+                    <div className="youtube-play-overlay" onClick={() => setIsPlaying(true)}>
+                      <div className="youtube-play-button">▶</div>
+                    </div>
+                  )}
+                </div>
               ) : (
-                <div className="youtube-fallback">
-                  <p>Unable to embed YouTube video</p>
-                  <button onClick={() => openYouTubeExternal(currentTrack)}>
-                    Open in YouTube
-                  </button>
+                <div className="youtube-error">
+                  <p>YouTube video not available</p>
+                  <p>Please check the video URL or try a different track.</p>
                 </div>
               )}
             </div>
