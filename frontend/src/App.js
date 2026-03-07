@@ -21,6 +21,17 @@ function App() {
       const user = localStorage.getItem('user');
       console.log('App.js - token in localStorage:', !!token);
       console.log('App.js - user in localStorage:', !!user);
+      console.log('App.js - token value:', token?.slice(0, 20) + '...');
+      console.log('App.js - token type:', typeof token);
+      
+      // Clean up invalid tokens
+      if (token === 'undefined' || token === 'null' || !token) {
+        console.log('App.js - clearing invalid token');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setAuthLoading(false);
+        return;
+      }
       
       if (isAuthenticated()) {
         const user = getCurrentUser();
@@ -38,6 +49,14 @@ function App() {
   const handleLogin = (user) => {
     console.log('App.js - handleLogin called with user:', user);
     console.log('App.js - storing token:', !!user.token);
+    console.log('App.js - token value:', user.token?.slice(0, 20) + '...');
+    
+    // Validate token before storing
+    if (!user || !user.token || user.token === 'undefined' || user.token === 'null') {
+      console.error('App.js - Invalid user or token in handleLogin');
+      return;
+    }
+    
     setCurrentUser(user);
     localStorage.setItem('token', user.token);
     localStorage.setItem('user', JSON.stringify(user));
@@ -46,6 +65,14 @@ function App() {
   const handleRegister = (user) => {
     console.log('App.js - handleRegister called with user:', user);
     console.log('App.js - storing token:', !!user.token);
+    console.log('App.js - token value:', user.token?.slice(0, 20) + '...');
+    
+    // Validate token before storing
+    if (!user || !user.token || user.token === 'undefined' || user.token === 'null') {
+      console.error('App.js - Invalid user or token in handleRegister');
+      return;
+    }
+    
     setCurrentUser(user);
     localStorage.setItem('token', user.token);
     localStorage.setItem('user', JSON.stringify(user));

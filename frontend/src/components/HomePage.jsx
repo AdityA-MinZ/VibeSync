@@ -437,8 +437,11 @@ function HomePage({ user, onLogout }) {
     try {
       const token = localStorage.getItem('token');
       
-      // Check if user is logged in
-      if (!token) {
+      // Check if user is logged in with valid token
+      if (!token || token === 'undefined' || token === 'null') {
+        console.log('Invalid token in checkSpotifyStatus, clearing localStorage');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         setSpotifyConnected(false);
         return;
       }
@@ -460,9 +463,13 @@ function HomePage({ user, onLogout }) {
       
       console.log('Spotify connection attempt - token exists:', !!token);
       console.log('Spotify connection attempt - token value:', token?.slice(0, 20) + '...');
+      console.log('Spotify connection attempt - token type:', typeof token);
       
-      // Check if user is logged in
-      if (!token) {
+      // Check if user is logged in with valid token
+      if (!token || token === 'undefined' || token === 'null') {
+        console.log('Invalid token detected, clearing localStorage');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         alert('Please log in to connect Spotify');
         return;
       }
@@ -502,8 +509,11 @@ function HomePage({ user, onLogout }) {
     try {
       const token = localStorage.getItem('token');
       
-      // Check if user is logged in
-      if (!token) {
+      // Check if user is logged in with valid token
+      if (!token || token === 'undefined' || token === 'null') {
+        console.log('Invalid token in disconnectSpotify, clearing localStorage');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         alert('Please log in to disconnect Spotify');
         return;
       }
