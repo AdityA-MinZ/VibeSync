@@ -14,21 +14,21 @@ const getAuthHeaders = () => {
 // ============================================
 
 export const getSpotifyLoginUrl = async () => {
-  const response = await axios.get(`${SPOTIFY_API_URL}/login`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/spotify/login`, {
     headers: getAuthHeaders()
   });
   return response.data;
 };
 
 export const getSpotifyStatus = async () => {
-  const response = await axios.get(`${SPOTIFY_API_URL}/status`, {
+  const response = await axios.get(`${SPOTIFY_API_URL}/spotify/status`, {
     headers: getAuthHeaders()
   });
   return response.data;
 };
 
 export const disconnectSpotify = async () => {
-  const response = await axios.post(`${SPOTIFY_API_URL}/disconnect`, {}, {
+  const response = await axios.post(`${SPOTIFY_API_URL}/spotify/disconnect`, {}, {
     headers: getAuthHeaders()
   });
   return response.data;

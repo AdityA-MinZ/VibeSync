@@ -7,7 +7,7 @@ export const toggleLike = async (targetType, targetId) => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${SOCIAL_API_URL}/likes/toggle`,
+      `${SOCIAL_API_URL}/social/likes/toggle`,
       { targetType, targetId },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -21,7 +21,7 @@ export const toggleLike = async (targetType, targetId) => {
 export const checkLike = async (targetType, targetId) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${SOCIAL_API_URL}/likes/check`, {
+    const response = await axios.get(`${SOCIAL_API_URL}/social/likes/check`, {
       params: { targetType, targetId },
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -35,7 +35,7 @@ export const checkLike = async (targetType, targetId) => {
 export const getLikeCount = async (targetType, targetId) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${SOCIAL_API_URL}/likes/count`, {
+    const response = await axios.get(`${SOCIAL_API_URL}/social/likes/count`, {
       params: { targetType, targetId },
       headers: { Authorization: `Bearer ${token}` }
     });
