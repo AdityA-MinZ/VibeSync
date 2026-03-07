@@ -1,3 +1,7 @@
+process.on('warning', (warning) => {
+  if (warning.code === 'DEP0176') return;
+});
+
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');

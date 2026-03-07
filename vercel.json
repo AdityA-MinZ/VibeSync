@@ -11,8 +11,5 @@
       "src": "/api/(.*)",
       "dest": "backend/server.js"
     }
-  ],
-  "env": {
-    "NODE_OPTIONS": "--disable-warning=DEP0176"
-  }
+  ]
 }
