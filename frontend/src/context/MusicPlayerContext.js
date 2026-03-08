@@ -71,6 +71,32 @@ export function MusicPlayerProvider({ children }) {
     });
   }, []);
 
+  const initYouTubePlayer = useCallback(() => {
+    if (playerRef.current) return;
+    
+    loadYouTubeApi().then(() => {
+      playerRef.current = new window.YT.Player('youtube-player-hidden', {
+        height: '0',
+        width: '0',
+        playerVars: { autoplay: 0, controls: 0 },
+        events: {
+          onReady: (event) => {
+            ytPlayerRef.current = event.target;
+            // Auto-play current track if it's a YouTube track
+            if (currentTrack && getTrackSource(currentTrack) === 'youtube') {
+              const videoId = getYoutubeVideoId(currentTrack.youtubeUrl) || currentTrack.youtubeId;
+              if (videoId) {
+                ytPlayerRef.current.loadVideoById(videoId);
+                setIsPlaying(true);
+              }
+            }
+          },
+          onStateChange: handleYouTubeStateChange,
+        },
+      });
+    });
+  }, [loadYouTubeApi, currentTrack, getTrackSource, handleYouTubeStateChange]);
+
   const playTrack = useCallback((track, playlistData = null, index = 0) => {
     if (!track) return;
     
@@ -142,32 +168,6 @@ export function MusicPlayerProvider({ children }) {
       playNext();
     }
   }, [playNext]);
-
-  const initYouTubePlayer = useCallback(() => {
-    if (playerRef.current) return;
-    
-    loadYouTubeApi().then(() => {
-      playerRef.current = new window.YT.Player('youtube-player-hidden', {
-        height: '0',
-        width: '0',
-        playerVars: { autoplay: 0, controls: 0 },
-        events: {
-          onReady: (event) => {
-            ytPlayerRef.current = event.target;
-            // Auto-play current track if it's a YouTube track
-            if (currentTrack && getTrackSource(currentTrack) === 'youtube') {
-              const videoId = getYoutubeVideoId(currentTrack.youtubeUrl) || currentTrack.youtubeId;
-              if (videoId) {
-                ytPlayerRef.current.loadVideoById(videoId);
-                setIsPlaying(true);
-              }
-            }
-          },
-          onStateChange: handleYouTubeStateChange,
-        },
-      });
-    });
-  }, [loadYouTubeApi, currentTrack, getTrackSource, handleYouTubeStateChange]);
 
   const togglePlayPause = useCallback(() => {
     const source = currentTrack ? getTrackSource(currentTrack) : null;
