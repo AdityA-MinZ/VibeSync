@@ -56,7 +56,7 @@ function HomePage({ user, onLogout }) {
   // Profile state
   const [profileData, setProfileData] = useState(null);
   const [profileStats, setProfileStats] = useState(null);
-  const [profilePlaylists, setProfilePlaylists] = useState([]);
+  const [safeProfilePlaylists, setProfilePlaylists] = useState([]);
   const [profileActivity, setProfileActivity] = useState([]);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -193,7 +193,7 @@ function HomePage({ user, onLogout }) {
     try {
       await deletePlaylist(playlistId);
       setHomePlaylists(homePlaylists.filter(p => p._id !== playlistId));
-      setProfilePlaylists(profilePlaylists.filter(p => p._id !== playlistId));
+      setProfilePlaylists(safeProfilePlaylists.filter(p => p._id !== playlistId));
       alert('Playlist deleted successfully');
     } catch (error) {
       console.error('Delete playlist error:', error);
@@ -607,44 +607,46 @@ function HomePage({ user, onLogout }) {
   };
 
   const filteredData = useMemo(() => {
-  const base = homePlaylists;
-  
-  if (searchTerm.trim().length > 0) {
-    const s = searchTerm.toLowerCase();
-    return base.filter((playlist) => {
-      return (
-        playlist.title?.toLowerCase().includes(s) ||
-        playlist.description?.toLowerCase().includes(s) ||
-        playlist.owner?.username?.toLowerCase().includes(s)
-      );
-    });
-  }
-  
-  if (currentFilter !== 'all') {
-    return base.filter((playlist) => {
-      // For playlists, we'll use a simple categorization based on title/description
-      const playlistText = `${playlist.title || ''} ${playlist.description || ''}`.toLowerCase();
-      switch (currentFilter) {
-        case 'electronic':
-          return playlistText.includes('electronic') || playlistText.includes('edm') || playlistText.includes('techno') || playlistText.includes('synth');
-        case 'pop':
-          return playlistText.includes('pop') || playlistText.includes('hits') || playlistText.includes('top') || playlistText.includes('summer');
-        case 'rock':
-          return playlistText.includes('rock') || playlistText.includes('alternative') || playlistText.includes('metal') || playlistText.includes('classics');
-        case 'hiphop':
-          return playlistText.includes('hip') || playlistText.includes('rap') || playlistText.includes('hop');
-        case 'jazz':
-          return playlistText.includes('jazz') || playlistText.includes('blues') || playlistText.includes('swing');
-        case 'classical':
-          return playlistText.includes('classical') || playlistText.includes('orchestra') || playlistText.includes('symphony');
-        default:
-          return true;
-      }
-    });
-  }
-  
-  return base;
-}, [homePlaylists, currentFilter, searchTerm]);
+    const base = Array.isArray(homePlaylists) ? homePlaylists : [];
+    
+    if (searchTerm.trim().length > 0) {
+      const s = searchTerm.toLowerCase();
+      return base.filter((playlist) => {
+        return (
+          playlist.title?.toLowerCase().includes(s) ||
+          playlist.description?.toLowerCase().includes(s) ||
+          playlist.owner?.username?.toLowerCase().includes(s)
+        );
+      });
+    }
+    
+    if (currentFilter !== 'all') {
+      return base.filter((playlist) => {
+        const playlistText = `${playlist.title || ''} ${playlist.description || ''}`.toLowerCase();
+        switch (currentFilter) {
+          case 'electronic':
+            return playlistText.includes('electronic') || playlistText.includes('edm') || playlistText.includes('techno') || playlistText.includes('synth');
+          case 'pop':
+            return playlistText.includes('pop') || playlistText.includes('hits') || playlistText.includes('top') || playlistText.includes('summer');
+          case 'rock':
+            return playlistText.includes('rock') || playlistText.includes('alternative') || playlistText.includes('metal') || playlistText.includes('classics');
+          case 'hiphop':
+            return playlistText.includes('hip') || playlistText.includes('rap') || playlistText.includes('hop');
+          case 'jazz':
+            return playlistText.includes('jazz') || playlistText.includes('blues') || playlistText.includes('swing');
+          case 'classical':
+            return playlistText.includes('classical') || playlistText.includes('orchestra') || playlistText.includes('symphony');
+          default:
+            return true;
+        }
+      });
+    }
+    
+    return base;
+  }, [homePlaylists, currentFilter, searchTerm]);
+
+  const safeFilteredData = Array.isArray(filteredData) ? filteredData : [];
+  const safeProfilePlaylists = Array.isArray(safeProfilePlaylists) ? safeProfilePlaylists : [];
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -978,7 +980,7 @@ function HomePage({ user, onLogout }) {
                   </div>
                 </div>
                 
-                {filteredData.length === 0 ? (
+                {safeFilteredData.length === 0 ? (
                   <div className="empty-state">
                     <div className="empty-icon">🎵</div>
                     <h3>No playlists found</h3>
@@ -996,7 +998,7 @@ function HomePage({ user, onLogout }) {
                   </div>
                 ) : (
                   <div className="playlist-grid">
-                    {filteredData.map((playlist) => (
+                    {safeFilteredData.map((playlist) => (
                       <div
                         key={playlist._id || playlist.id}
                         className="playlist-card"
@@ -1197,8 +1199,8 @@ function HomePage({ user, onLogout }) {
                 <button className="view-all-btn" onClick={handleViewAllPlaylists}>See All</button>
               </div>
               <div className="playlist-mini-grid">
-                {profilePlaylists.length > 0 ? (
-                  profilePlaylists.map((playlist, idx) => (
+                {safeProfilePlaylists.length > 0 ? (
+                  safeProfilePlaylists.map((playlist, idx) => (
                     <div 
                       key={playlist._id || idx} 
                       className="playlist-mini-card" 
