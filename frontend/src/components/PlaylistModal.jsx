@@ -68,6 +68,18 @@ function PlaylistModal({ playlist, onClose }) {
     return null;
   };
 
+  const handlePlayPause = () => {
+    if (!currentTrack) return;
+    if (youtubePlayerRef.current) {
+      const command = isPlaying ? 'pauseVideo' : 'playVideo';
+      youtubePlayerRef.current.contentWindow.postMessage(
+        `{"event":"command","func":"${command}","args":""}`,
+        '*'
+      );
+      setIsPlaying(!isPlaying);
+    }
+  };
+
   const getYoutubeVideoId = (url) => {
     if (!url) return null;
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);

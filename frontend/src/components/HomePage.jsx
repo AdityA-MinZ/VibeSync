@@ -402,13 +402,6 @@ function HomePage({ user, onLogout }) {
     }
   }, [profileData]);
 
-  // Check Spotify status when settings page is opened
-  useEffect(() => {
-    if (currentPage === 'settings') {
-      checkSpotifyStatus();
-    }
-  }, [currentPage]);
-
   // Fetch home page playlists
   const fetchHomePlaylists = async () => {
     setHomeLoading(true);
