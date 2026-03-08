@@ -1019,23 +1019,6 @@ function HomePage({ user, onLogout }) {
                             showCount={true}
                             size="small"
                           />
-                          <button
-                            className="action-btn view-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePlaylistClick(playlist);
-                            }}
-                          >
-                            View
-                          </button>
-                          {profileData?._id === playlist.owner?._id && (
-                            <button
-                              className="action-btn delete-btn"
-                              onClick={(e) => handleDeletePlaylist(playlist._id, e)}
-                            >
-                              Delete
-                            </button>
-                          )}
                         </div>
                       </div>
                     ))}
@@ -1189,7 +1172,6 @@ function HomePage({ user, onLogout }) {
                       key={playlist._id || idx} 
                       className="playlist-mini-card" 
                       style={{ background: `linear-gradient(135deg, #7c3aed22, #7c3aed11)` }}
-                      onClick={() => handlePlaylistClick(playlist)}
                     >
                       <div className="playlist-mini-cover" style={{ background: '#7c3aed' }}>
                         🎵
@@ -1198,6 +1180,16 @@ function HomePage({ user, onLogout }) {
                         <h4>{playlist.name || playlist.title}</h4>
                         <span>{playlist.tracks?.length || 0} tracks</span>
                       </div>
+                      <button
+                        className="action-btn delete-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePlaylist(playlist._id, e);
+                        }}
+                        title="Delete playlist"
+                      >
+                        🗑️
+                      </button>
                     </div>
                   ))
                 ) : (

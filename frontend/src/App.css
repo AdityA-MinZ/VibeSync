@@ -457,6 +457,7 @@ opacity: 0.2;
 .sidebar-bottom {
   margin-top: auto;
   padding-top: 1rem;
+  padding-bottom: 80px;
   border-top: 1px solid var(--color-bg-card);
 }
 
