@@ -67,6 +67,37 @@ function PlaylistModal({ playlist, onClose }) {
     return track.duration_ms || track.duration || 0;
   };
 
+  const handlePlayTrack = useCallback(async (track, index) => {
+    console.log('Playing track:', track);
+    setCurrentTrack({ ...track, index });
+    setCurrentTime(0);
+    setDuration(0);
+    
+    const source = getTrackSource(track);
+    console.log('Track source:', source);
+    
+    if (source === 'youtube') {
+      console.log('Playing YouTube track');
+      if (ytPlayerRef.current) {
+        const videoId = getYoutubeVideoId(track.youtubeUrl) || track.youtubeId;
+        if (videoId) {
+          console.log('Loading YouTube video:', videoId);
+          ytPlayerRef.current.loadVideoById(videoId);
+          setIsPlaying(true); // Will be updated by YouTube state change
+        } else {
+          console.error('No YouTube video ID found');
+          alert('No YouTube video found for this track');
+        }
+      } else {
+        console.log('YouTube player not ready yet');
+        // Player will load the video when ready
+      }
+    } else {
+      console.log('Track cannot be played directly:', track);
+      alert('This track cannot be played directly. Try importing from YouTube.');
+    }
+  }, [getTrackSource, getYoutubeVideoId]);
+
   const handleNextTrack = useCallback(async () => {
     if (!currentTrack || !playlist?.tracks) return;
     const nextIndex = (currentTrack.index + 1) % playlist.tracks.length;
@@ -214,37 +245,6 @@ function PlaylistModal({ playlist, onClose }) {
       }
     };
   }, [onYouTubeReady, onYouTubeStateChange, onYouTubeError]);
-
-  const handlePlayTrack = useCallback(async (track, index) => {
-    console.log('Playing track:', track);
-    setCurrentTrack({ ...track, index });
-    setCurrentTime(0);
-    setDuration(0);
-    
-    const source = getTrackSource(track);
-    console.log('Track source:', source);
-    
-    if (source === 'youtube') {
-      console.log('Playing YouTube track');
-      if (ytPlayerRef.current) {
-        const videoId = getYoutubeVideoId(track.youtubeUrl) || track.youtubeId;
-        if (videoId) {
-          console.log('Loading YouTube video:', videoId);
-          ytPlayerRef.current.loadVideoById(videoId);
-          setIsPlaying(true); // Will be updated by YouTube state change
-        } else {
-          console.error('No YouTube video ID found');
-          alert('No YouTube video found for this track');
-        }
-      } else {
-        console.log('YouTube player not ready yet');
-        // Player will load the video when ready
-      }
-    } else {
-      console.log('Track cannot be played directly:', track);
-      alert('This track cannot be played directly. Try importing from YouTube.');
-    }
-  }, [getTrackSource, getYoutubeVideoId]);
 
   const handleTrackLike = async (trackIdx) => {
     const trackId = playlist.tracks[trackIdx].id || `track-${trackIdx}`;
