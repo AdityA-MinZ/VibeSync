@@ -284,6 +284,7 @@ export function MusicPlayerProvider({ children }) {
   return (
     <MusicPlayerContext.Provider value={value}>
       <audio ref={audioRef} preload="metadata" />
+      <div id="youtube-player-hidden" style={{ display: 'none' }}></div>
       {children}
     </MusicPlayerContext.Provider>
   );
