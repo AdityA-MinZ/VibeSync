@@ -75,7 +75,7 @@ const boardSchema = new mongoose.Schema({
     },
     source: {
       type: String,
-      enum: ['spotify', 'youtube', 'local'],
+      enum: ['youtube', 'local'],
       default: 'local'
     },
     addedBy: {

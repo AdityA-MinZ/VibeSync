@@ -57,7 +57,7 @@ const playbackSessionSchema = new mongoose.Schema({
     coverArt: String,
     source: {
       type: String,
-      enum: ['spotify', 'youtube', 'local'],
+      enum: ['youtube', 'local'],
       default: 'local'
     },
     addedBy: {
@@ -101,7 +101,7 @@ const playbackSessionSchema = new mongoose.Schema({
     coverArt: String,
     source: {
       type: String,
-      enum: ['spotify', 'youtube', 'local'],
+      enum: ['youtube', 'local'],
       default: 'local'
     },
     addedBy: {

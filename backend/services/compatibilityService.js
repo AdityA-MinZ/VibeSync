@@ -161,32 +161,11 @@ class CompatibilityService {
 
   async calculateGenreCompatibility(userId1, userId2) {
     try {
-      const [user1, user2] = await Promise.all([
-        User.findById(userId1).select('spotifyStats.topGenres'),
-        User.findById(userId2).select('spotifyStats.topGenres')
-      ]);
-
-      const genres1 = user1?.spotifyStats?.topGenres || [];
-      const genres2 = user2?.spotifyStats?.topGenres || [];
-
-      if (genres1.length === 0 || genres2.length === 0) {
-        return { score: 0.5, commonGenres: [] };
-      }
-
-      const commonGenres = genres1.filter(g => 
-        genres2.some(g2 => g2.toLowerCase() === g.toLowerCase())
-      );
-
-      const totalUniqueGenres = new Set([...genres1, ...genres2]).size;
-      const score = totalUniqueGenres > 0 ? (commonGenres.length / totalUniqueGenres) * 1.5 : 0;
-
-      return {
-        score: Math.min(1, score),
-        commonGenres: commonGenres.slice(0, 5)
-      };
-
+      return { score: 0.5, commonGenres: [] };
     } catch (error) {
       return { score: 0.5, commonGenres: [] };
+    }
+  }
     }
   }
 

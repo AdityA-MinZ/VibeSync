@@ -4,7 +4,7 @@ const schema = new mongoose.Schema({
   participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   songName: { type: String, required: true },
   songUrl: { type: String },
-  platform: { type: String, enum: ['youtube', 'spotify', 'local'], default: 'youtube' },
+  platform: { type: String, enum: ['youtube', 'local'], default: 'youtube' },
   status: { type: String, enum: ['active', 'ended'], default: 'active' },
   currentTime: { type: Number, default: 0 },
   isPlaying: { type: Boolean, default: false }

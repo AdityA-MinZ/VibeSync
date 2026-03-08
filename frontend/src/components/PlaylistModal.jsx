@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toggleLike } from '../services/socialService';
-import { getSpotifyStatus } from '../services/spotifyService';
 import LikeButton from './LikeButton';
-import API_URL from '../config';
 import './PlaylistModal.css';
 
 function PlaylistModal({ playlist, onClose }) {
@@ -12,12 +10,8 @@ function PlaylistModal({ playlist, onClose }) {
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState([]);
   const [loadingComment, setLoadingComment] = useState(false);
-  const [spotifyConnected, setSpotifyConnected] = useState(false);
-  const [spotifyPlayer, setSpotifyPlayer] = useState(null);
-  const [spotifyDeviceId, setSpotifyDeviceId] = useState(null);
   const tracksRef = useRef(null);
   const youtubePlayerRef = useRef(null);
-  const playerReadyRef = useRef(false);
 
   useEffect(() => {
     if (playlist?.tracks) {
@@ -29,120 +23,6 @@ function PlaylistModal({ playlist, onClose }) {
       setComments(playlist.comments || []);
     }
   }, [playlist]);
-
-  useEffect(() => {
-    const checkSpotifyConnection = async () => {
-      try {
-        const status = await getSpotifyStatus();
-        setSpotifyConnected(status.connected);
-      } catch (error) {
-        console.error('Failed to check Spotify status:', error);
-      }
-    };
-    checkSpotifyConnection();
-  }, []);
-
-  useEffect(() => {
-    console.log('Spotify player useEffect - spotifyConnected:', spotifyConnected);
-    if (!spotifyConnected) {
-      console.log('Spotify not connected, skipping player initialization');
-      return;
-    }
-
-    console.log('Initializing Spotify Web Playback SDK...');
-    const script = document.createElement('script');
-    script.src = 'https://sdk.scdn.co/spotify-player.js';
-    script.async = true;
-    document.body.appendChild(script);
-
-    window.onSpotifyWebPlaybackSDKReady = async () => {
-      console.log('Spotify Web Playback SDK ready');
-      try {
-        // Get fresh Spotify access token from API
-        const token = localStorage.getItem('token');
-        console.log('Auth token for Spotify SDK:', !!token);
-        if (!token) {
-          console.error('No auth token found for Spotify SDK');
-          return;
-        }
-
-        console.log('Fetching Spotify access token...');
-        const response = await fetch(`${API_URL}/spotify/token`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        console.log('Spotify token response status:', response.status);
-        if (!response.ok) {
-          throw new Error('Failed to get Spotify access token');
-        }
-
-        const { accessToken } = await response.json();
-        console.log('Spotify access token received:', !!accessToken);
-
-        if (!accessToken) {
-          console.error('No Spotify access token available');
-          return;
-        }
-
-        console.log('Creating Spotify Player...');
-        const player = new window.Spotify.Player({
-          name: 'VibeSync Web Player',
-          getOAuthToken: cb => { 
-            console.log('Providing OAuth token to Spotify player');
-            cb(accessToken); 
-          },
-          volume: 0.5
-        });
-
-        player.addListener('ready', ({ device_id }) => {
-          console.log('Spotify Player Ready with Device ID:', device_id);
-          setSpotifyDeviceId(device_id);
-          playerReadyRef.current = true;
-        });
-
-        player.addListener('initialization_error', ({ message }) => {
-          console.error('Spotify Player initialization error:', message);
-          alert('Spotify Player initialization failed. Please ensure you have Spotify Premium and try reconnecting.');
-        });
-
-        player.addListener('authentication_error', ({ message }) => {
-          console.error('Spotify Player authentication error:', message);
-          alert('Spotify authentication failed. Please reconnect Spotify in Settings.');
-        });
-
-        player.addListener('account_error', ({ message }) => {
-          console.error('Spotify Player account error:', message);
-          alert('Spotify Premium is required for playback. Please upgrade your Spotify account to Premium.');
-        });
-
-        player.addListener('player_state_changed', state => {
-          if (!state) return;
-          console.log('Spotify player state changed:', { paused: state.paused, position: state.position, duration: state.duration });
-          setIsPlaying(!state.paused);
-          
-          if (state.position === 0 && state.duration > 0 && !state.paused) {
-            handleNextTrack();
-          }
-        });
-
-        console.log('Connecting Spotify player...');
-        const connected = player.connect();
-        console.log('Spotify player connect result:', connected);
-        
-        setSpotifyPlayer(player);
-      } catch (error) {
-        console.error('Error initializing Spotify player:', error);
-        alert('Failed to initialize Spotify player. Please ensure you have Spotify Premium and try reconnecting.');
-      }
-    };
-
-    return () => {
-      if (spotifyPlayer) {
-        spotifyPlayer.disconnect();
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spotifyConnected]);
 
   const formatDuration = (ms) => {
     if (!ms) return '0:00';
@@ -162,112 +42,12 @@ function PlaylistModal({ playlist, onClose }) {
     const source = getTrackSource(track);
     console.log('Track source:', source);
     
-    if (source === 'spotify') {
-      console.log('Playing Spotify track');
-      await playSpotifyTrack(track);
-    } else if (source === 'youtube') {
+    if (source === 'youtube') {
       console.log('Playing YouTube track');
       setIsPlaying(true);
     } else {
       console.log('Track cannot be played directly:', track);
-      alert('This track cannot be played directly. Try importing from YouTube or Spotify.');
-    }
-  };
-
-  const playSpotifyTrack = async (track) => {
-    console.log('playSpotifyTrack called');
-    console.log('spotifyPlayer exists:', !!spotifyPlayer);
-    console.log('spotifyDeviceId:', spotifyDeviceId);
-    console.log('playerReadyRef.current:', playerReadyRef.current);
-    
-    if (!spotifyPlayer || !spotifyDeviceId || !playerReadyRef.current) {
-      console.log('Spotify player not ready - showing alert');
-      alert('Spotify is not connected or player is not ready. Please connect Spotify in Settings.');
-      return;
-    }
-
-    try {
-      console.log('Getting fresh Spotify access token for playback...');
-      // Get fresh Spotify access token from API
-      const token = localStorage.getItem('token');
-      console.log('Auth token for playback:', !!token);
-      if (!token) {
-        alert('Please log in to play Spotify tracks.');
-        return;
-      }
-
-      const response = await fetch(`${API_URL}/spotify/token`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      console.log('Spotify token response status for playback:', response.status);
-      if (!response.ok) {
-        throw new Error('Failed to get Spotify access token');
-      }
-
-      const { accessToken } = await response.json();
-      console.log('Spotify access token for playback:', !!accessToken);
-
-      if (!accessToken) {
-        alert('Please reconnect Spotify in Settings to play this track.');
-        return;
-      }
-
-      const trackUri = track.spotifyUri || `spotify:track:${track.trackId || track.id}`;
-      console.log('Playing track URI:', trackUri);
-      console.log('Track object structure:', track);
-      console.log('Track ID fields:', { 
-        trackId: track.trackId, 
-        id: track.id, 
-        spotifyId: track.spotifyId,
-        spotifyUri: track.spotifyUri,
-        source: track.source 
-      });
-      console.log('Using device ID:', spotifyDeviceId);
-
-      // Validate track URI before making request
-      if (!trackUri.startsWith('spotify:track:')) {
-        console.error('Invalid Spotify track URI:', trackUri);
-        alert('This track is not available on Spotify or has an invalid Spotify ID.');
-        return;
-      }
-
-      const playResponse = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${spotifyDeviceId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          uris: [trackUri]
-        })
-      });
-
-      console.log('Spotify play response status:', playResponse.status);
-      
-      if (!playResponse.ok) {
-        const errorData = await playResponse.text();
-        console.error('Spotify play error:', errorData);
-        
-        if (playResponse.status === 401) {
-          alert('Spotify authentication expired. Please reconnect Spotify in Settings.');
-        } else if (playResponse.status === 403) {
-          alert('Spotify Premium is required for playback. Please upgrade your Spotify account.');
-        } else {
-          alert(`Failed to play track: ${errorData}`);
-        }
-        return;
-      }
-
-      console.log('Track play request successful');
-      setIsPlaying(true);
-    } catch (error) {
-      console.error('Error playing Spotify track:', error);
-      if (error.message.includes('Premium')) {
-        alert('Spotify Premium is required for playback. Please upgrade your Spotify account.');
-      } else {
-        alert('Failed to play track on Spotify. Please try again.');
-      }
+      alert('This track cannot be played directly. Try importing from YouTube.');
     }
   };
 
@@ -283,43 +63,7 @@ function PlaylistModal({ playlist, onClose }) {
     handlePlayTrack(playlist.tracks[prevIndex], prevIndex);
   };
 
-  const isSpotifyTrack = (track) => {
-    const hasSpotifyUri = track.spotifyUri && track.spotifyUri.startsWith('spotify:track:');
-    const hasValidSpotifyId = track.spotifyId && track.spotifyId.length === 22 && /^[a-zA-Z0-9]+$/.test(track.spotifyId);
-    const hasValidTrackId = track.trackId && track.trackId.length === 22 && /^[a-zA-Z0-9]+$/.test(track.trackId);
-    
-    console.log('isSpotifyTrack check:', {
-      hasSpotifyUri,
-      hasValidSpotifyId,
-      hasValidTrackId,
-      source: track.source,
-      spotifyUri: track.spotifyUri,
-      spotifyId: track.spotifyId,
-      trackId: track.trackId
-    });
-    
-    return hasSpotifyUri || hasValidSpotifyId || hasValidTrackId;
-  };
-
-  const handlePlayPause = async () => {
-    if (!currentTrack) return;
-
-    if (isSpotifyTrack(currentTrack)) {
-      if (spotifyPlayer) {
-        await spotifyPlayer.togglePlay();
-      }
-    } else if (youtubePlayerRef.current) {
-      const command = isPlaying ? 'pauseVideo' : 'playVideo';
-      youtubePlayerRef.current.contentWindow.postMessage(
-        `{"event":"command","func":"${command}","args":""}`,
-        '*'
-      );
-      setIsPlaying(!isPlaying);
-    }
-  };
-
   const getTrackSource = (track) => {
-    if (isSpotifyTrack(track)) return 'spotify';
     if (track.youtubeUrl || track.youtubeId) return 'youtube';
     return null;
   };
@@ -450,9 +194,7 @@ function PlaylistModal({ playlist, onClose }) {
                       {track.artist || (track.artists && track.artists.map(a => a.name).join(', ')) || 'Unknown Artist'}
                     </span>
                   </div>
-                  {getTrackSource(track) === 'spotify' ? (
-                    <span className="track-source spotify">Spotify</span>
-                  ) : getTrackSource(track) === 'youtube' ? (
+                  {getTrackSource(track) === 'youtube' ? (
                     <button 
                       className="track-source-btn youtube"
                       onClick={(e) => { e.stopPropagation(); openYouTubeExternal(track); }}

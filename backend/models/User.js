@@ -15,28 +15,6 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
-  // Spotify Integration Fields
-  spotify: {
-    connected: { type: Boolean, default: false },
-    connectedAt: { type: Date },
-    spotifyId: { type: String },
-    displayName: { type: String },
-    profileImage: { type: String },
-    accessToken: { type: String },
-    refreshToken: { type: String },
-    tokenExpiresAt: { type: Date }
-  },
-  // Spotify Listening Stats
-  spotifyStats: {
-    totalListeningTime: { type: Number, default: 0 }, // in minutes
-    topGenres: [{ type: String }],
-    recentlyPlayed: [{
-      trackId: String,
-      trackName: String,
-      artistName: String,
-      playedAt: { type: Date, default: Date.now }
-    }]
-  },
   // Streak Fields
   streak: {
     currentStreak: { type: Number, default: 0 },
@@ -47,23 +25,6 @@ const userSchema = new mongoose.Schema({
   timestamps: true,
   strictPopulate: false 
 });
-
-// Method to check if Spotify token needs refresh
-userSchema.methods.needsSpotifyTokenRefresh = function() {
-  if (!this.spotify.tokenExpiresAt) return true;
-  // Refresh 5 minutes before expiry
-  return Date.now() >= this.spotify.tokenExpiresAt - (5 * 60 * 1000);
-};
-
-// Method to update Spotify tokens
-userSchema.methods.updateSpotifyTokens = function(accessToken, refreshToken, expiresIn) {
-  this.spotify.accessToken = accessToken;
-  if (refreshToken) {
-    this.spotify.refreshToken = refreshToken;
-  }
-  this.spotify.tokenExpiresAt = new Date(Date.now() + (expiresIn * 1000));
-  return this.save();
-};
 
 // Method to update listening streak
 userSchema.methods.updateStreak = function() {
@@ -184,7 +145,7 @@ userSchema.methods.getFollowingCount = function() {
 // Static method to get user profile with social stats
 userSchema.statics.getUserProfile = async function(userId) {
   const user = await this.findById(userId)
-    .select('-password -spotify.accessToken -spotify.refreshToken');
+    .select('-password');
   
   if (!user) {
     throw new Error('User not found');

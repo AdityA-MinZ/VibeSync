@@ -178,11 +178,11 @@ async function runTests() {
     console.log('Test 16: Add item to board');
     const addItem = await boardService.addItem(board1.board._id, user1._id, {
       itemType: 'track',
-      itemId: 'spotify:track:123',
+      itemId: 'youtube:track:123',
       title: 'Blinding Lights',
       artist: 'The Weeknd',
       album: 'After Hours',
-      source: 'spotify'
+      source: 'youtube'
     });
     console.log(`✅ Item added: ${addItem.itemCount} item(s) in board`);
 

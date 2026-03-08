@@ -86,23 +86,23 @@ async function runTests() {
     console.log('============================');
     
     const track1 = {
-      trackId: 'spotify:track:1',
+      trackId: 'youtube:track:1',
       title: 'Blinding Lights',
       artist: 'The Weeknd',
       album: 'After Hours',
       duration: 200,
       coverArt: 'https://example.com/cover1.jpg',
-      source: 'spotify'
+      source: 'youtube'
     };
     
     const track2 = {
-      trackId: 'spotify:track:2',
+      trackId: 'youtube:track:2',
       title: 'Levitating',
       artist: 'Dua Lipa',
       album: 'Future Nostalgia',
       duration: 203,
       coverArt: 'https://example.com/cover2.jpg',
-      source: 'spotify'
+      source: 'youtube'
     };
     
     await playbackSessionService.addToQueue(sessionId, hostUser._id, track1);

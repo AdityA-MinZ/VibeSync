@@ -6,7 +6,6 @@
     "dev": "nodemon server.js",
     "mongo:start": "../mongodb-start.sh",
     "mongo:stop": "../mongodb-stop.sh",
-    "test:spotify": "node test-spotify.js",
     "test:socket": "node test-socket.js",
     "test:youtube": "node test-youtube.js",
     "test:streaks": "node test-streaks.js",

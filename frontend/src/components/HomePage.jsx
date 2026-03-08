@@ -9,7 +9,7 @@ import SaveToBoard from "./SaveToBoard";
 import EditProfileModal from "./EditProfileModal";
 import PlaylistModal from "./PlaylistModal";
 import ImageCropper from "./ImageCropper";
-import { getUserProfile, getUserPlaylists, getUserStats, getUserActivity, updateUserProfile, updateStreak, importSpotifyPlaylist, importYouTubePlaylist, searchTracks, createPlaylist, deletePlaylist } from "../services/userService";
+import { getUserProfile, getUserPlaylists, getUserStats, getUserActivity, updateUserProfile, updateStreak, importYouTubePlaylist, searchTracks, createPlaylist, deletePlaylist } from "../services/userService";
 import { getNotifications, markAsRead, markAllAsRead, getUnreadCount } from "../services/notificationService";
 import API_URL from '../config';
 
@@ -29,7 +29,7 @@ function HomePage({ user, onLogout }) {
   const [showSaveToBoard, setShowSaveToBoard] = useState(false);
 
   // Create page state
-  const [importMode, setImportMode] = useState(null); // 'spotify', 'youtube', 'manual'
+  const [importMode, setImportMode] = useState(null); // 'youtube', 'manual'
   const [importUrl, setImportUrl] = useState("");
   const [playlistName, setPlaylistName] = useState("");
   const [playlistDescription, setPlaylistDescription] = useState("");
@@ -69,7 +69,6 @@ function HomePage({ user, onLogout }) {
   const [settingsSection, setSettingsSection] = useState('account');
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsMessage, setSettingsMessage] = useState('');
-  const [spotifyConnected, setSpotifyConnected] = useState(false);
   const [notificationSettings, setNotificationSettings] = useState({
     followRequests: true,
     newFollowers: true,
@@ -433,103 +432,6 @@ function HomePage({ user, onLogout }) {
     }
   };
 
-  const checkSpotifyStatus = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      
-      // Check if user is logged in with valid token
-      if (!token || token === 'undefined' || token === 'null') {
-        console.log('Invalid token in checkSpotifyStatus, clearing localStorage');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setSpotifyConnected(false);
-        return;
-      }
-      
-      const response = await fetch(`${API_URL}/spotify/status`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await response.json();
-      setSpotifyConnected(data.connected || false);
-    } catch (error) {
-      console.error('Error checking Spotify status:', error);
-      setSpotifyConnected(false);
-    }
-  };
-
-  const connectSpotify = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      
-      console.log('Spotify connection attempt - token exists:', !!token);
-      console.log('Spotify connection attempt - token value:', token?.slice(0, 20) + '...');
-      console.log('Spotify connection attempt - token type:', typeof token);
-      
-      // Check if user is logged in with valid token
-      if (!token || token === 'undefined' || token === 'null') {
-        console.log('Invalid token detected, clearing localStorage');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        alert('Please log in to connect Spotify');
-        return;
-      }
-      
-      console.log('Making request to:', `${API_URL}/spotify/login`);
-      console.log('Auth header:', `Bearer ${token?.slice(0, 20)}...`);
-      
-      const response = await fetch(`${API_URL}/spotify/login`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      console.log('Spotify login response status:', response.status);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Spotify login error:', errorData);
-        alert(errorData.error || 'Failed to connect to Spotify');
-        return;
-      }
-      
-      const data = await response.json();
-      console.log('Spotify login response data:', data);
-      
-      if (data.authUrl) {
-        // Redirect to Spotify auth
-        window.location.href = data.authUrl;
-      } else if (data.error) {
-        alert(data.error);
-      }
-    } catch (error) {
-      console.error('Error connecting Spotify:', error);
-      alert('Failed to connect to Spotify');
-    }
-  };
-
-  const disconnectSpotify = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      
-      // Check if user is logged in with valid token
-      if (!token || token === 'undefined' || token === 'null') {
-        console.log('Invalid token in disconnectSpotify, clearing localStorage');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        alert('Please log in to disconnect Spotify');
-        return;
-      }
-      
-      await fetch(`${API_URL}/spotify/disconnect`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setSpotifyConnected(false);
-      alert('Spotify disconnected successfully');
-    } catch (error) {
-      console.error('Error disconnecting Spotify:', error);
-      alert('Failed to disconnect Spotify');
-    }
-  };
-
   // Fetch playlists when on home page
   useEffect(() => {
     if (currentPage === "home") {
@@ -588,10 +490,6 @@ function HomePage({ user, onLogout }) {
   };
 
   // Create page handlers
-  const handleImportFromSpotify = () => {
-    setImportMode('spotify');
-  };
-
   const handleImportFromYouTube = () => {
     setImportMode('youtube');
   };
@@ -608,9 +506,7 @@ function HomePage({ user, onLogout }) {
 
     try {
       let response;
-      if (importMode === 'spotify') {
-        response = await importSpotifyPlaylist(importUrl);
-      } else if (importMode === 'youtube') {
+      if (importMode === 'youtube') {
         response = await importYouTubePlaylist(importUrl);
       }
 
@@ -624,12 +520,7 @@ function HomePage({ user, onLogout }) {
       }
     } catch (error) {
       console.error('Import error:', error);
-      const errorMessage = error.response?.data?.error || '';
-      if (errorMessage.includes('not connected') || error.response?.status === 401) {
-        alert('Please connect Spotify in Settings first before importing playlists.');
-      } else {
-        alert('Failed to import playlist. Please check the URL and try again.');
-      }
+      alert('Failed to import playlist. Please check the URL and try again.');
     }
   };
 
@@ -1391,21 +1282,10 @@ function HomePage({ user, onLogout }) {
           <div className="page-content active">
             <div className="page-header">
               <h1 className="page-title">Create Playlist</h1>
-              <p className="page-subtitle">Import from Spotify or YouTube, or create your own</p>
+              <p className="page-subtitle">Import from YouTube, or create your own</p>
             </div>
             
             <div className="create-options">
-              {/* Import from Spotify */}
-              <div className="create-option-card" onClick={() => handleImportFromSpotify()}>
-                <img 
-                  src="https://static.vecteezy.com/system/resources/previews/042/148/631/non_2x/spotify-logo-spotify-social-media-icon-free-png.png" 
-                  alt="Spotify" 
-                  className="option-icon-img spotify"
-                />
-                <h3>Import from Spotify</h3>
-                <p>Enter a Spotify playlist URL to import</p>
-              </div>
-
               {/* Import from YouTube */}
               <div className="create-option-card" onClick={() => handleImportFromYouTube()}>
                 <img 
@@ -1426,14 +1306,14 @@ function HomePage({ user, onLogout }) {
             </div>
 
             {/* Import Form (shown when importing) */}
-            {(importMode === 'spotify' || importMode === 'youtube') && (
+            {importMode === 'youtube' && (
               <div className="import-form">
-                <h3>Import from {importMode === 'spotify' ? 'Spotify' : 'YouTube'}</h3>
+                <h3>Import from YouTube</h3>
                 <div className="form-group-modern">
                   <input
                     type="text"
                     className="form-input-modern"
-                    placeholder={importMode === 'spotify' ? 'Paste Spotify playlist URL...' : 'Paste YouTube playlist URL...'}
+                    placeholder="Paste YouTube playlist URL..."
                     value={importUrl}
                     onChange={(e) => setImportUrl(e.target.value)}
                   />
@@ -1637,15 +1517,6 @@ function HomePage({ user, onLogout }) {
                   onClick={() => handleSettingsNavClick('notifications')}
                 >
                   Notifications
-                </button>
-                <button 
-                  className={`settings-nav-item ${settingsSection === 'spotify' ? 'active' : ''}`}
-                  onClick={() => {
-                    handleSettingsNavClick('spotify');
-                    checkSpotifyStatus();
-                  }}
-                >
-                  Spotify
                 </button>
               </div>
               
@@ -1898,42 +1769,6 @@ function HomePage({ user, onLogout }) {
                     >
                       {settingsLoading ? 'Saving...' : 'Save Notification Preferences'}
                     </button>
-                  </div>
-                )}
-
-                {settingsSection === 'spotify' && (
-                  <div className="settings-card">
-                    <h3 className="settings-section-title">Spotify Connection</h3>
-                    <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem' }}>
-                      Connect your Spotify account to import playlists and track your listening activity.
-                    </p>
-                    
-                    {spotifyConnected ? (
-                      <div className="spotify-status">
-                        <div className="connected-status">
-                          <span style={{ color: '#1DB954', fontSize: '1.5rem' }}>✓</span>
-                          <span>Spotify Connected</span>
-                        </div>
-                        <button 
-                          className="spotify-btn disconnect"
-                          onClick={disconnectSpotify}
-                        >
-                          Disconnect Spotify
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="spotify-status">
-                        <div className="disconnected-status">
-                          <span style={{ color: 'var(--color-text-secondary)' }}>Spotify not connected</span>
-                        </div>
-                        <button 
-                          className="spotify-btn connect"
-                          onClick={connectSpotify}
-                        >
-                          Connect Spotify
-                        </button>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>

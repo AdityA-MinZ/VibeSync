@@ -47,14 +47,13 @@ router.post('/', auth, async (req, res) => {
       tracks: (tracks || []).map(track => ({
         trackId: track.id || track.trackId,
         title: track.title || track.name,
-        artist: track.artist || (track.artists && track.artists.map(a => a.name).join(', ')),
+        artist: track.artist || (track.artists && track.artists.map(a => a.name).join(',')),
         album: track.album?.name || track.album,
         image: track.image || track.album?.images?.[0]?.url || track.coverImage,
         duration: track.duration,
         durationMs: track.duration_ms,
-        source: track.source || 'spotify',
-        sourceUrl: track.sourceUrl || track.spotifyUrl || track.externalUrl,
-        spotifyUri: track.spotifyUri || track.uri,
+        source: track.source || 'youtube',
+        sourceUrl: track.sourceUrl || track.externalUrl,
         youtubeUrl: track.youtubeUrl || track.url,
         youtubeId: track.youtubeId,
         previewUrl: track.previewUrl

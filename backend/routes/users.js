@@ -43,7 +43,7 @@ router.get('/me', auth, async (req, res) => {
   try {
     console.log('Fetching user profile for:', req.user.id);
     const user = await User.findById(req.user.id)
-      .select('-password -spotify.accessToken -spotify.refreshToken');
+      .select('-password');
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -67,7 +67,7 @@ router.get('/me', auth, async (req, res) => {
 router.get('/:id', auth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
-      .select('-password -spotify.accessToken -spotify.refreshToken');
+      .select('-password');
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -144,10 +144,8 @@ router.get('/me/stats', auth, async (req, res) => {
       tracksCount: totalTracks,
       followersCount: user.followers?.length || 0,
       followingCount: user.followings?.length || 0,
-      totalListeningTime: user.spotifyStats?.totalListeningTime || 0,
       currentStreak: user.streak?.currentStreak || 0,
-      longestStreak: user.streak?.longestStreak || 0,
-      topGenres: user.spotifyStats?.topGenres || []
+      longestStreak: user.streak?.longestStreak || 0
     });
   } catch (error) {
     console.log('Get user stats error:', error.message);
@@ -177,18 +175,6 @@ router.get('/me/activity', auth, async (req, res) => {
         color: '#7c3aed'
       });
     });
-
-    if (user.spotifyStats?.recentlyPlayed?.length > 0) {
-      user.spotifyStats.recentlyPlayed.slice(0, 3).forEach(track => {
-        activities.push({
-          type: 'listened',
-          icon: '🎧',
-          text: `Listened to '${track.trackName}' by ${track.artistName}`,
-          time: track.playedAt,
-          color: '#06b6d4'
-        });
-      });
-    }
 
     activities.sort((a, b) => new Date(b.time) - new Date(a.time));
 

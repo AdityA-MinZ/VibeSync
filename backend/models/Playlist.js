@@ -15,7 +15,6 @@ const playlistSchema = new mongoose.Schema({
     durationMs: Number,
     source: String,
     sourceUrl: String,
-    spotifyUri: String,
     youtubeUrl: String,
     youtubeId: String,
     previewUrl: String

@@ -44,7 +44,6 @@ app.use('/api/playlists', require('./routes/playlists'));
 app.use('/api/friends', require('./routes/friends'));
 app.use('/api/feed', require('./routes/feed'));
 app.use('/api/search', require('./routes/search'));
-app.use('/api/spotify', require('./routes/spotify'));
 app.use('/api/youtube', require('./routes/youtube'));
 app.use('/api/streaks', require('./routes/streaks'));
 app.use('/api/sessions', require('./routes/sessions'));
@@ -116,5 +115,5 @@ console.log('🎵 Playback Session Socket Handler initialized');
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 VibeSync Server + Socket.IO on port ${PORT}`);
-  console.log('📡 Features: Auth, Friends, Spotify, YouTube, Search, Streaks, Collaborative Playback');
+  console.log('📡 Features: Auth, Friends, YouTube, Search, Streaks, Collaborative Playback');
 });

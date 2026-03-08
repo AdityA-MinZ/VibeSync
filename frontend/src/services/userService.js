@@ -146,21 +146,6 @@ export const getUserActivity = async (userId, limit = 10) => {
   }
 };
 
-export const importSpotifyPlaylist = async (url) => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axios.post(
-      `${API_URL}/spotify/import-playlist`,
-      { url },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Import Spotify playlist error:', error);
-    throw error;
-  }
-};
-
 export const importYouTubePlaylist = async (url) => {
   try {
     const token = localStorage.getItem('token');
