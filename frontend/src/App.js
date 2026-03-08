@@ -133,10 +133,12 @@ function AppContent({ currentUser, onLogin, onRegister, onLogout }) {
           ) : (
             <div className="hero">
               <div className="hero-video-background">
-                <img 
-                  src="https://img.youtube.com/vi/xnsxllY5VPw/maxresdefault.jpg" 
-                  alt="VibeSync Background"
-                  className="hero-bg-image"
+                <iframe
+                  src="https://www.youtube.com/embed/xnsxllY5VPw?autoplay=1&mute=1&loop=1&playlist=xnsxllY5VPw"
+                  title="VibeSync Background"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
                 />
               </div>
               <div className="hero-content">
