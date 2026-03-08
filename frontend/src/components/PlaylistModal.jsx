@@ -233,15 +233,6 @@ function PlaylistModal({ playlist, onClose }) {
     alert(errorMessage);
   }, []);
 
-  const openYouTubeExternal = (track) => {
-    const url = track.youtubeUrl || `https://www.youtube.com/watch?v=${track.youtubeId}`;
-    window.open(url, '_blank');
-  };
-
-  const getTrackDuration = (track) => {
-    return track.durationMs || track.duration_ms || track.duration || 0;
-  };
-
   const handleTrackLike = async (trackIdx) => {
     const trackId = playlist.tracks[trackIdx].id || `track-${trackIdx}`;
     try {
