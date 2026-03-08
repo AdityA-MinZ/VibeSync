@@ -21,7 +21,7 @@ function formatNumber(num) {
 }
 
 function HomePage({ user, onLogout }) {
-  const [currentFilter, setCurrentFilter] = useState("electronic");
+  const [currentFilter, setCurrentFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState("home");
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
