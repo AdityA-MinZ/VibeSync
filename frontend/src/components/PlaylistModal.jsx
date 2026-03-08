@@ -374,6 +374,7 @@ function PlaylistModal({ playlist, onClose }) {
             </ul>
           </div>
 
+          {comments && (
           <div className="comments-section">
             <h3>Comments</h3>
             <div className="comment-input-wrapper">
@@ -405,9 +406,10 @@ function PlaylistModal({ playlist, onClose }) {
                 <li className="no-comments">No comments yet. Be the first!</li>
               )}
             </ul>
-            </div>
           </div>
-        )}
+          )}
+
+        </div>
 
         {currentTrack && (
           <div className="music-player-bar">
