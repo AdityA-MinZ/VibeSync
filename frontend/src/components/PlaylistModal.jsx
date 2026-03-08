@@ -364,7 +364,7 @@ function PlaylistModal({ playlist, onClose }) {
                   ) : (
                     <span className="track-source">No Source</span>
                   )}
-                  <span className="track-time">{formatDuration(getTrackDuration(track))}</span>
+                  <span className="track-time">{formatTime(getTrackDuration(track) / 1000)}</span>
                   <button 
                     className={`track-like-btn ${trackLikes[idx]?.liked ? 'liked' : ''}`}
                     onClick={(e) => { e.stopPropagation(); handleTrackLike(idx); }}
