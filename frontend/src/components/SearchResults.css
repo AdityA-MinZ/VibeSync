@@ -519,6 +519,42 @@
   background: var(--color-accent);
 }
 
+.follow-btn {
+  padding: 0.5rem 1.25rem;
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.3s;
+}
+
+.follow-btn:hover {
+  background: var(--color-accent-hover);
+  transform: scale(1.05);
+}
+
+.follow-btn:disabled,
+.follow-btn-sm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.follow-btn.following,
+.follow-btn-sm.following {
+  background: transparent;
+  border: 2px solid var(--color-accent);
+  color: var(--color-accent);
+}
+
+.follow-btn.following:hover,
+.follow-btn-sm.following:hover {
+  background: var(--color-accent);
+  color: white;
+}
+
 /* No Results */
 .no-results {
   text-align: center;

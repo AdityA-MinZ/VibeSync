@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { searchAll, getSuggestions, getTrendingSearches } from '../services/searchService';
+import { followUser, unfollowUser, checkFollowStatus } from '../services/socialService';
 import './SearchResults.css';
 
 function SearchResults({ query, onClose, onTrackSelect }) {
@@ -14,6 +15,8 @@ function SearchResults({ query, onClose, onTrackSelect }) {
   const [suggestions, setSuggestions] = useState([]);
   const [trending, setTrending] = useState([]);
   const [error, setError] = useState(null);
+  const [followStatus, setFollowStatus] = useState({});
+  const [followingLoading, setFollowingLoading] = useState({});
 
   const performSearch = useCallback(async () => {
     if (!query.trim()) return;
@@ -45,6 +48,42 @@ function SearchResults({ query, onClose, onTrackSelect }) {
     performSearch();
     loadTrending();
   }, [performSearch]);
+
+  useEffect(() => {
+    if (results.users.length > 0) {
+      checkFollowStatuses();
+    }
+  }, [results.users]);
+
+  const checkFollowStatuses = async () => {
+    const statuses = {};
+    for (const user of results.users) {
+      try {
+        const { isFollowing } = await checkFollowStatus(user._id);
+        statuses[user._id] = isFollowing;
+      } catch (err) {
+        statuses[user._id] = false;
+      }
+    }
+    setFollowStatus(statuses);
+  };
+
+  const handleFollowToggle = async (userId) => {
+    setFollowingLoading(prev => ({ ...prev, [userId]: true }));
+    try {
+      const isCurrentlyFollowing = followStatus[userId];
+      if (isCurrentlyFollowing) {
+        await unfollowUser(userId);
+      } else {
+        await followUser(userId);
+      }
+      setFollowStatus(prev => ({ ...prev, [userId]: !isCurrentlyFollowing }));
+    } catch (err) {
+      console.error('Follow toggle error:', err);
+    } finally {
+      setFollowingLoading(prev => ({ ...prev, [userId]: false }));
+    }
+  };
 
   useEffect(() => {
     if (query.length >= 2) {
@@ -202,7 +241,13 @@ function SearchResults({ query, onClose, onTrackSelect }) {
                     <p className="artist-followers">
                       {formatNumber(artist.followers?.length || 0)} followers
                     </p>
-                    <button className="follow-btn-sm">Follow</button>
+                    <button 
+                      className={`follow-btn-sm ${followStatus[artist._id] ? 'following' : ''}`}
+                      onClick={() => handleFollowToggle(artist._id)}
+                      disabled={followingLoading[artist._id]}
+                    >
+                      {followingLoading[artist._id] ? '...' : followStatus[artist._id] ? 'Following' : 'Follow'}
+                    </button>
                   </div>
                 ))}
               </div>
@@ -249,7 +294,13 @@ function SearchResults({ query, onClose, onTrackSelect }) {
                       <h4 className="user-name">{user.username}</h4>
                       <p className="user-email">{user.email}</p>
                     </div>
-                    <button className="view-profile-btn">View Profile</button>
+                    <button 
+                      className={`follow-btn ${followStatus[user._id] ? 'following' : ''}`}
+                      onClick={() => handleFollowToggle(user._id)}
+                      disabled={followingLoading[user._id]}
+                    >
+                      {followingLoading[user._id] ? '...' : followStatus[user._id] ? 'Following' : 'Follow'}
+                    </button>
                   </div>
                 ))}
               </div>
