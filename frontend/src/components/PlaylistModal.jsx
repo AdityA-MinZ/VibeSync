@@ -273,12 +273,12 @@ function PlaylistModal({ playlist, onClose }) {
                 <div className="youtube-player-wrapper">
                   <iframe
                     ref={youtubePlayerRef}
-                    src={`https://www.youtube.com/embed/${getYoutubeVideoId(currentTrack.youtubeUrl)}?enablejsapi=1&playsinline=1&rel=0&modestbranding=1`}
-                    title="YouTube video player"
+                    src={`https://www.youtube.com/embed/${getYoutubeVideoId(currentTrack.youtubeUrl)}?enablejsapi=1&playsinline=1&rel=0&modestbranding=1&controls=0&disablekb=1&fs=0&iv_load_policy=3`}
+                    title="YouTube audio player"
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    className="youtube-iframe"
+                    allowFullScreen={false}
+                    className="youtube-iframe youtube-audio-only"
                     onLoad={() => console.log('YouTube iframe loaded')}
                     onError={() => console.error('YouTube iframe error')}
                   />
