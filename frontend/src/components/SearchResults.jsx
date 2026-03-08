@@ -44,17 +44,6 @@ function SearchResults({ query, onClose, onTrackSelect }) {
     }
   }, [query]);
 
-  useEffect(() => {
-    performSearch();
-    loadTrending();
-  }, [performSearch]);
-
-  useEffect(() => {
-    if (results.users.length > 0) {
-      checkFollowStatuses();
-    }
-  }, [results.users, checkFollowStatuses]);
-
   const checkFollowStatuses = useCallback(async () => {
     const statuses = {};
     for (const user of results.users) {
@@ -84,6 +73,17 @@ function SearchResults({ query, onClose, onTrackSelect }) {
       setFollowingLoading(prev => ({ ...prev, [userId]: false }));
     }
   };
+
+  useEffect(() => {
+    performSearch();
+    loadTrending();
+  }, [performSearch]);
+
+  useEffect(() => {
+    if (results.users.length > 0) {
+      checkFollowStatuses();
+    }
+  }, [results.users, checkFollowStatuses]);
 
   useEffect(() => {
     if (query.length >= 2) {
