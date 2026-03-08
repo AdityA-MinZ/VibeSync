@@ -36,6 +36,24 @@ export function MusicPlayerProvider({ children }) {
     };
   }, []);
 
+  const loadYouTubeApi = useCallback(() => {
+    return new Promise((resolve) => {
+      if (window.YT && window.YT.Player) {
+        resolve();
+        return;
+      }
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      window.onYouTubeIframeAPIReady = () => {
+        resolve();
+      };
+    });
+  }, []);
+
+  // Utility functions first (no dependencies)
   const getTrackSource = useCallback((track) => {
     if (track.youtubeUrl || track.youtubeId) return 'youtube';
     if (track.audioUrl || track.sourceUrl || track.source === 'upload') return 'uploaded';
@@ -54,22 +72,51 @@ export function MusicPlayerProvider({ children }) {
     return getFullUrl(relativeUrl);
   };
 
-  const loadYouTubeApi = useCallback(() => {
-    return new Promise((resolve) => {
-      if (window.YT && window.YT.Player) {
-        resolve();
-        return;
-      }
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+  // Core functions with minimal dependencies
+  const playTrack = useCallback((track, playlistData = null, index = 0) => {
+    if (!track) return;
+    
+    setCurrentTrack({ ...track, index });
+    setCurrentTime(0);
+    setDuration(0);
+    
+    if (playlistData) {
+      setPlaylist(playlistData);
+      setCurrentIndex(index);
+    }
 
-      window.onYouTubeIframeAPIReady = () => {
-        resolve();
-      };
-    });
-  }, []);
+    const source = getTrackSource(track);
+    console.log('Playing track, source:', source);
+
+    if (source === 'youtube') {
+      initYouTubePlayer();
+      setTimeout(() => {
+        if (ytPlayerRef.current) {
+          const videoId = getYoutubeVideoId(track.youtubeUrl) || track.youtubeId;
+          if (videoId) {
+            ytPlayerRef.current.loadVideoById(videoId);
+            setIsPlaying(true);
+          }
+        }
+      }, 500);
+    } else if (source === 'uploaded') {
+      const audioUrl = getAudioUrl(track);
+      if (audioUrl && audioRef.current) {
+        audioRef.current.src = audioUrl;
+        audioRef.current.play()
+          .then(() => setIsPlaying(true))
+          .catch(err => console.error('Audio play error:', err));
+        
+        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = setInterval(() => {
+          if (audioRef.current) {
+            setCurrentTime(audioRef.current.currentTime);
+            setDuration(audioRef.current.duration || 0);
+          }
+        }, 1000);
+      }
+    }
+  }, [getTrackSource, getYoutubeVideoId, getAudioUrl]);
 
   const playNext = useCallback(() => {
     if (!playlist || !currentTrack) return;
@@ -122,52 +169,7 @@ export function MusicPlayerProvider({ children }) {
         },
       });
     });
-  }, [loadYouTubeApi, currentTrack, getTrackSource, handleYouTubeStateChange]);
-
-  const playTrack = useCallback((track, playlistData = null, index = 0) => {
-    if (!track) return;
-    
-    setCurrentTrack({ ...track, index });
-    setCurrentTime(0);
-    setDuration(0);
-    
-    if (playlistData) {
-      setPlaylist(playlistData);
-      setCurrentIndex(index);
-    }
-
-    const source = getTrackSource(track);
-    console.log('Playing track, source:', source);
-
-    if (source === 'youtube') {
-      initYouTubePlayer();
-      setTimeout(() => {
-        if (ytPlayerRef.current) {
-          const videoId = getYoutubeVideoId(track.youtubeUrl) || track.youtubeId;
-          if (videoId) {
-            ytPlayerRef.current.loadVideoById(videoId);
-            setIsPlaying(true);
-          }
-        }
-      }, 500);
-    } else if (source === 'uploaded') {
-      const audioUrl = getAudioUrl(track);
-      if (audioUrl && audioRef.current) {
-        audioRef.current.src = audioUrl;
-        audioRef.current.play()
-          .then(() => setIsPlaying(true))
-          .catch(err => console.error('Audio play error:', err));
-        
-        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-        progressIntervalRef.current = setInterval(() => {
-          if (audioRef.current) {
-            setCurrentTime(audioRef.current.currentTime);
-            setDuration(audioRef.current.duration || 0);
-          }
-        }, 1000);
-      }
-    }
-  }, [getTrackSource, initYouTubePlayer]);
+  }, [loadYouTubeApi, currentTrack, getTrackSource, getYoutubeVideoId, handleYouTubeStateChange]);
 
   const togglePlayPause = useCallback(() => {
     const source = currentTrack ? getTrackSource(currentTrack) : null;
