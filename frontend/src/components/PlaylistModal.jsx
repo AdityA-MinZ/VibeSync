@@ -92,6 +92,19 @@ function PlaylistModal({ playlist, onClose }) {
     return match ? match[1] : null;
   };
 
+  const openYouTubeExternal = (track) => {
+    const videoId = getYoutubeVideoId(track.youtubeUrl) || track.youtubeId;
+    if (videoId) {
+      window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
+    } else {
+      alert('No YouTube video found for this track');
+    }
+  };
+
+  const getTrackDuration = (track) => {
+    return track.duration_ms || track.duration || 0;
+  };
+
   const handlePlayTrack = useCallback(async (track, index) => {
     console.log('Playing track:', track);
     setCurrentTrack({ ...track, index });
