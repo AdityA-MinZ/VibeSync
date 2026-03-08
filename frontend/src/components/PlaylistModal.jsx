@@ -1,25 +1,29 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { toggleLike } from '../services/socialService';
+import { useMusicPlayer } from '../context/MusicPlayerContext';
 import LikeButton from './LikeButton';
 import './PlaylistModal.css';
 
 function PlaylistModal({ playlist, onClose }) {
-  const [currentTrack, setCurrentTrack] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const { 
+    currentTrack, 
+    isPlaying,
+    playTrack,
+    playNext,
+    playPrev,
+    togglePlayPause,
+    currentTime,
+    duration
+  } = useMusicPlayer();
+  
   const [trackLikes, setTrackLikes] = useState({});
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState([]);
   const [loadingComment, setLoadingComment] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.7);
   const [isMuted, setIsMuted] = useState(false);
   const [isRepeat, setIsRepeat] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
-  const [playlistIndex, setPlaylistIndex] = useState(0);
-  const tracksRef = useRef(null);
-  const ytPlayerRef = useRef(null);
-  const progressIntervalRef = useRef(null);
 
   useEffect(() => {
     if (playlist?.tracks) {
@@ -31,14 +35,6 @@ function PlaylistModal({ playlist, onClose }) {
       setComments(playlist.comments || []);
     }
   }, [playlist]);
-
-  useEffect(() => {
-    return () => {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    };
-  }, []);
 
   const formatTime = (seconds) => {
     if (!seconds || isNaN(seconds)) return '0:00';
@@ -72,87 +68,25 @@ function PlaylistModal({ playlist, onClose }) {
   };
 
   const handlePlayTrack = useCallback(async (track, index) => {
-    console.log('Playing track:', track);
-    setCurrentTrack({ ...track, index });
-    setCurrentTime(0);
-    setDuration(0);
-    
-    const source = getTrackSource(track);
-    console.log('Track source:', source);
-    
-    if (source === 'youtube') {
-      console.log('Playing YouTube track');
-      if (ytPlayerRef.current) {
-        const videoId = getYoutubeVideoId(track.youtubeUrl) || track.youtubeId;
-        if (videoId) {
-          console.log('Loading YouTube video:', videoId);
-          ytPlayerRef.current.loadVideoById(videoId);
-          setIsPlaying(true); // Will be updated by YouTube state change
-        } else {
-          console.error('No YouTube video ID found');
-          alert('No YouTube video found for this track');
-        }
-      } else {
-        console.log('YouTube player not ready yet');
-        // Player will load the video when ready
-      }
-    } else {
-      console.log('Track cannot be played directly:', track);
-      alert('This track cannot be played directly. Try importing from YouTube.');
-    }
-  }, [getTrackSource, getYoutubeVideoId]);
+    playTrack(track, playlist?.tracks, index);
+  }, [playTrack, playlist]);
 
   const handleNextTrack = useCallback(async () => {
-    if (!currentTrack || !playlist?.tracks) return;
-    
-    let nextIndex;
-    if (isShuffle) {
-      // Random track (but not the current one)
-      do {
-        nextIndex = Math.floor(Math.random() * playlist.tracks.length);
-      } while (nextIndex === currentTrack.index && playlist.tracks.length > 1);
-    } else {
-      // Next track or loop to beginning
-      nextIndex = (currentTrack.index + 1) % playlist.tracks.length;
-      // If we're at the end and not repeating, stop playback
-      if (nextIndex === 0 && !isRepeat) {
-        setIsPlaying(false);
-        setCurrentTrack(null);
-        return;
-      }
-    }
-    
-    setPlaylistIndex(nextIndex);
-    handlePlayTrack(playlist.tracks[nextIndex], nextIndex);
-  }, [currentTrack, playlist, handlePlayTrack, isShuffle, isRepeat]);
+    playNext();
+  }, [playNext]);
 
   const handlePrevTrack = useCallback(async () => {
-    if (!currentTrack || !playlist?.tracks) return;
-    
-    const prevIndex = currentTrack.index === 0 ? playlist.tracks.length - 1 : currentTrack.index - 1;
-    setPlaylistIndex(prevIndex);
-    handlePlayTrack(playlist.tracks[prevIndex], prevIndex);
-  }, [currentTrack, playlist, handlePlayTrack]);
+    playPrev();
+  }, [playPrev]);
 
   const handleVolumeChange = (e) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
-    if (ytPlayerRef.current) {
-      ytPlayerRef.current.setVolume(newVolume * 100);
-    }
   };
 
   const handleMuteToggle = useCallback(() => {
     setIsMuted(prev => !prev);
-    if (ytPlayerRef.current) {
-      if (isMuted) {
-        ytPlayerRef.current.unMute();
-        ytPlayerRef.current.setVolume(volume * 100);
-      } else {
-        ytPlayerRef.current.mute();
-      }
-    }
-  }, [isMuted, volume]);
+  }, []);
 
   const handleRepeatToggle = useCallback(() => {
     setIsRepeat(prev => !prev);
@@ -163,82 +97,12 @@ function PlaylistModal({ playlist, onClose }) {
   }, []);
 
   const handlePlayPause = useCallback(() => {
-    if (!currentTrack) return;
-    
-    const source = getTrackSource(currentTrack);
-    if (source === 'youtube' && ytPlayerRef.current) {
-      if (isPlaying) {
-        ytPlayerRef.current.pauseVideo();
-      } else {
-        ytPlayerRef.current.playVideo();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  }, [currentTrack, isPlaying, getTrackSource]);
+    togglePlayPause();
+  }, [togglePlayPause]);
 
   const handleSeek = (e) => {
-    if (!ytPlayerRef.current || !duration) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const percent = (e.clientX - rect.left) / rect.width;
-    const seekTime = percent * duration;
-    ytPlayerRef.current.seekTo(seekTime, true);
-    setCurrentTime(seekTime);
+    // Seeking handled by MiniPlayer
   };
-
-  const onYouTubeReady = useCallback((event) => {
-    console.log('YouTube player ready');
-    ytPlayerRef.current = event.target;
-    
-    // Set initial volume
-    ytPlayerRef.current.setVolume(volume * 100);
-    if (isMuted) {
-      ytPlayerRef.current.mute();
-    }
-    
-    // Auto-play current track if it's a YouTube track
-    if (currentTrack && getTrackSource(currentTrack) === 'youtube') {
-      const videoId = getYoutubeVideoId(currentTrack.youtubeUrl) || currentTrack.youtubeId;
-      if (videoId) {
-        console.log('Loading YouTube video:', videoId);
-        ytPlayerRef.current.loadVideoById(videoId);
-      }
-    }
-  }, [currentTrack, getTrackSource, getYoutubeVideoId, volume, isMuted]);
-
-  const onYouTubeStateChange = useCallback((event) => {
-    console.log('YouTube player state changed:', event.data);
-    
-    if (event.data === window.YT.PlayerState.PLAYING) {
-      setIsPlaying(true);
-      const dur = ytPlayerRef.current.getDuration();
-      setDuration(dur);
-      
-      // Start progress tracking
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-      progressIntervalRef.current = setInterval(() => {
-        if (ytPlayerRef.current && ytPlayerRef.current.getCurrentTime) {
-          const currentTime = ytPlayerRef.current.getCurrentTime();
-          setCurrentTime(currentTime);
-        }
-      },1000);
-    } else if (event.data === window.YT.PlayerState.PAUSED) {
-      setIsPlaying(false);
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    } else if (event.data === window.YT.PlayerState.ENDED) {
-      setIsPlaying(false);
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-      // Auto-play next track
-      handleNextTrack();
-    } else if (event.data === window.YT.PlayerState.BUFFERING) {
-      console.log('YouTube video buffering...');
-    }
-  }, [handleNextTrack]);
 
   const onYouTubeError = useCallback((event) => {
     console.error('YouTube player error:', event.data);
@@ -305,7 +169,6 @@ function PlaylistModal({ playlist, onClose }) {
           setVolume(prev => Math.max(0, prev - 0.1));
           break;
         default:
-          // Handle any other key presses if needed
           break;
       }
     };
@@ -412,7 +275,7 @@ function PlaylistModal({ playlist, onClose }) {
         <div className="playlist-modal-content">
           <div className="tracks-section">
             <h3>Tracks</h3>
-            <ul className="modal-tracks-list" ref={tracksRef}>
+            <ul className="modal-tracks-list">
               {playlist.tracks?.map((track, idx) => (
                 <li 
                   key={track.id || idx} 
