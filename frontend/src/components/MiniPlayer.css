@@ -11,6 +11,10 @@
   animation: slideUp 0.3s ease;
 }
 
+body {
+  padding-bottom: 80px;
+}
+
 @keyframes slideUp {
   from {
     transform: translateY(100%);
