@@ -11,7 +11,6 @@ function PlaylistModal({ playlist, onClose }) {
   const [comments, setComments] = useState([]);
   const [loadingComment, setLoadingComment] = useState(false);
   const tracksRef = useRef(null);
-  const youtubePlayerRef = useRef(null);
 
   useEffect(() => {
     if (playlist?.tracks) {
@@ -66,18 +65,6 @@ function PlaylistModal({ playlist, onClose }) {
   const getTrackSource = (track) => {
     if (track.youtubeUrl || track.youtubeId) return 'youtube';
     return null;
-  };
-
-  const handlePlayPause = () => {
-    if (!currentTrack) return;
-    if (youtubePlayerRef.current) {
-      const command = isPlaying ? 'pauseVideo' : 'playVideo';
-      youtubePlayerRef.current.contentWindow.postMessage(
-        `{"event":"command","func":"${command}","args":""}`,
-        '*'
-      );
-      setIsPlaying(!isPlaying);
-    }
   };
 
   const getYoutubeVideoId = (url) => {
@@ -263,24 +250,6 @@ function PlaylistModal({ playlist, onClose }) {
                 <li className="no-comments">No comments yet. Be the first!</li>
               )}
             </ul>
-          </div>
-        </div>
-
-        {currentTrack && getTrackSource(currentTrack) === 'youtube' && (
-          <div className="youtube-player-section">
-            <div className="youtube-audio-player">
-              <img 
-                src={currentTrack.image || 'https://picsum.photos/100/100'} 
-                alt={currentTrack.title}
-                className="youtube-audio-cover"
-              />
-              <div className="youtube-audio-info">
-                <div className="youtube-audio-title">{currentTrack.title || currentTrack.name}</div>
-                <div className="youtube-audio-artist">{currentTrack.artist}</div>
-              </div>
-              <button className="youtube-external-btn" onClick={() => openYouTubeExternal(currentTrack)}>
-                ▶ Play on YouTube
-              </button>
             </div>
           </div>
         )}
@@ -302,18 +271,16 @@ function PlaylistModal({ playlist, onClose }) {
             </div>
             <div className="player-controls">
               <button onClick={handlePrevTrack}>⏮</button>
-              <button className="play-pause-btn" onClick={handlePlayPause}>
-                {isPlaying ? '⏸' : '▶'}
+              <button className="play-pause-btn" onClick={() => openYouTubeExternal(currentTrack)}>
+                ▶
               </button>
               <button onClick={handleNextTrack}>⏭</button>
             </div>
-            <div className="player-progress">
-              <span>0:00</span>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: '0%' }}></div>
+            {getTrackSource(currentTrack) === 'youtube' && (
+              <div className="player-yt-badge">
+                YouTube
               </div>
-              <span>{formatDuration(getTrackDuration(currentTrack))}</span>
-            </div>
+            )}
           </div>
         )}
       </div>
