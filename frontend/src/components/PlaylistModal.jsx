@@ -72,7 +72,7 @@ function PlaylistModal({ playlist, onClose }) {
         playerRef.current.destroy();
       }
     };
-  }, []);
+  }, [onYouTubeReady, onYouTubeStateChange]);
 
   const formatTime = (seconds) => {
     if (!seconds || isNaN(seconds)) return '0:00';
@@ -224,6 +224,9 @@ function PlaylistModal({ playlist, onClose }) {
       case 101:
       case 150:
         errorMessage = 'YouTube video embedding not allowed';
+        break;
+      default:
+        errorMessage = `Unknown YouTube error (${event.data})`;
         break;
     }
     
