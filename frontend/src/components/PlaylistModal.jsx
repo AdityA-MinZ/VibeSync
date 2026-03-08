@@ -12,6 +12,11 @@ function PlaylistModal({ playlist, onClose }) {
   const [loadingComment, setLoadingComment] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(0.7);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isRepeat, setIsRepeat] = useState(false);
+  const [isShuffle, setIsShuffle] = useState(false);
+  const [playlistIndex, setPlaylistIndex] = useState(0);
   const tracksRef = useRef(null);
   const playerRef = useRef(null);
   const ytPlayerRef = useRef(null);
@@ -35,6 +40,51 @@ function PlaylistModal({ playlist, onClose }) {
       }
     };
   }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (!currentTrack) return;
+      
+      switch(e.code) {
+        case 'Space':
+          e.preventDefault();
+          handlePlayPause();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          handleNextTrack();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          handlePrevTrack();
+          break;
+        case 'KeyM':
+          e.preventDefault();
+          handleMuteToggle();
+          break;
+        case 'KeyR':
+          e.preventDefault();
+          handleRepeatToggle();
+          break;
+        case 'KeyS':
+          e.preventDefault();
+          handleShuffleToggle();
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setVolume(prev => Math.min(1, prev + 0.1));
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          setVolume(prev => Math.max(0, prev - 0.1));
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [currentTrack, handlePlayPause, handleNextTrack, handlePrevTrack, handleMuteToggle, handleRepeatToggle, handleShuffleToggle]);
 
   const formatTime = (seconds) => {
     if (!seconds || isNaN(seconds)) return '0:00';
@@ -100,15 +150,63 @@ function PlaylistModal({ playlist, onClose }) {
 
   const handleNextTrack = useCallback(async () => {
     if (!currentTrack || !playlist?.tracks) return;
-    const nextIndex = (currentTrack.index + 1) % playlist.tracks.length;
+    
+    let nextIndex;
+    if (isShuffle) {
+      // Random track (but not the current one)
+      do {
+        nextIndex = Math.floor(Math.random() * playlist.tracks.length);
+      } while (nextIndex === currentTrack.index && playlist.tracks.length > 1);
+    } else {
+      // Next track or loop to beginning
+      nextIndex = (currentTrack.index + 1) % playlist.tracks.length;
+      // If we're at the end and not repeating, stop playback
+      if (nextIndex === 0 && !isRepeat) {
+        setIsPlaying(false);
+        setCurrentTrack(null);
+        return;
+      }
+    }
+    
+    setPlaylistIndex(nextIndex);
     handlePlayTrack(playlist.tracks[nextIndex], nextIndex);
-  }, [currentTrack, playlist, handlePlayTrack]);
+  }, [currentTrack, playlist, handlePlayTrack, isShuffle, isRepeat]);
 
   const handlePrevTrack = useCallback(async () => {
     if (!currentTrack || !playlist?.tracks) return;
+    
     const prevIndex = currentTrack.index === 0 ? playlist.tracks.length - 1 : currentTrack.index - 1;
+    setPlaylistIndex(prevIndex);
     handlePlayTrack(playlist.tracks[prevIndex], prevIndex);
   }, [currentTrack, playlist, handlePlayTrack]);
+
+  const handleVolumeChange = (e) => {
+    const newVolume = parseFloat(e.target.value);
+    setVolume(newVolume);
+    if (ytPlayerRef.current) {
+      ytPlayerRef.current.setVolume(newVolume * 100);
+    }
+  };
+
+  const handleMuteToggle = () => {
+    setIsMuted(!isMuted);
+    if (ytPlayerRef.current) {
+      if (isMuted) {
+        ytPlayerRef.current.unMute();
+        ytPlayerRef.current.setVolume(volume * 100);
+      } else {
+        ytPlayerRef.current.mute();
+      }
+    }
+  };
+
+  const handleRepeatToggle = () => {
+    setIsRepeat(!isRepeat);
+  };
+
+  const handleShuffleToggle = () => {
+    setIsShuffle(!isShuffle);
+  };
 
   const handlePlayPause = () => {
     if (!currentTrack) return;
@@ -137,6 +235,12 @@ function PlaylistModal({ playlist, onClose }) {
     console.log('YouTube player ready');
     ytPlayerRef.current = event.target;
     
+    // Set initial volume
+    ytPlayerRef.current.setVolume(volume * 100);
+    if (isMuted) {
+      ytPlayerRef.current.mute();
+    }
+    
     // Auto-play current track if it's a YouTube track
     if (currentTrack && getTrackSource(currentTrack) === 'youtube') {
       const videoId = getYoutubeVideoId(currentTrack.youtubeUrl) || currentTrack.youtubeId;
@@ -145,7 +249,7 @@ function PlaylistModal({ playlist, onClose }) {
         ytPlayerRef.current.loadVideoById(videoId);
       }
     }
-  }, [currentTrack, getTrackSource, getYoutubeVideoId]);
+  }, [currentTrack, getTrackSource, getYoutubeVideoId, volume, isMuted]);
 
   const onYouTubeStateChange = useCallback((event) => {
     console.log('YouTube player state changed:', event.data);
@@ -333,6 +437,11 @@ function PlaylistModal({ playlist, onClose }) {
                 🔗 Share
               </button>
             </div>
+            {currentTrack && (
+              <div className="keyboard-shortcuts-hint">
+                <small>💡 Keyboard shortcuts: Space (play/pause) | ←→ (prev/next) | M (mute) | R (repeat) | S (shuffle) | ↑↓ (volume)</small>
+              </div>
+            )}
           </div>
         </div>
 
@@ -440,11 +549,25 @@ function PlaylistModal({ playlist, onClose }) {
               </div>
             </div>
             <div className="player-controls">
-              <button onClick={handlePrevTrack}>⏮</button>
-              <button className="play-pause-btn" onClick={handlePlayPause}>
+              <button 
+                className={`control-btn ${isShuffle ? 'active' : ''}`}
+                onClick={handleShuffleToggle}
+                title="Shuffle"
+              >
+                🔀
+              </button>
+              <button onClick={handlePrevTrack} title="Previous">⏮</button>
+              <button className="play-pause-btn" onClick={handlePlayPause} title="Play/Pause">
                 {isPlaying ? '⏸' : '▶'}
               </button>
-              <button onClick={handleNextTrack}>⏭</button>
+              <button onClick={handleNextTrack} title="Next">⏭</button>
+              <button 
+                className={`control-btn ${isRepeat ? 'active' : ''}`}
+                onClick={handleRepeatToggle}
+                title="Repeat"
+              >
+                🔁
+              </button>
             </div>
             <div className="player-progress">
               <span className="player-time">{formatTime(currentTime)}</span>
@@ -455,6 +578,21 @@ function PlaylistModal({ playlist, onClose }) {
                 ></div>
               </div>
               <span className="player-time">{formatTime(duration)}</span>
+            </div>
+            <div className="player-volume">
+              <button onClick={handleMuteToggle} title="Mute/Unmute">
+                {isMuted ? '🔇' : '🔊'}
+              </button>
+              <input 
+                type="range" 
+                min="0" 
+                max="1" 
+                step="0.1" 
+                value={isMuted ? 0 : volume}
+                onChange={handleVolumeChange}
+                className="volume-slider"
+                title="Volume"
+              />
             </div>
             {getTrackSource(currentTrack) === 'youtube' && (
               <div className="player-yt-badge">YouTube</div>
