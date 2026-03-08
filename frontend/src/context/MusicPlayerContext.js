@@ -25,6 +25,10 @@ export function MusicPlayerProvider({ children }) {
   const progressIntervalRef = useRef(null);
   const playerRef = useRef(null);
 
+  const playNextRef = useRef(null);
+  const handleYouTubeStateChangeRef = useRef(null);
+  const initYouTubePlayerRef = useRef(null);
+
   useEffect(() => {
     return () => {
       if (progressIntervalRef.current) {
@@ -53,7 +57,6 @@ export function MusicPlayerProvider({ children }) {
     });
   }, []);
 
-  // Utility functions first (no dependencies)
   const getTrackSource = useCallback((track) => {
     if (track.youtubeUrl || track.youtubeId) return 'youtube';
     if (track.audioUrl || track.sourceUrl || track.source === 'upload') return 'uploaded';
@@ -72,7 +75,29 @@ export function MusicPlayerProvider({ children }) {
     return getFullUrl(relativeUrl);
   }, []);
 
-  // eslint-disable-next-line no-use-before-define
+  const handleYouTubeStateChange = useCallback((event) => {
+    if (event.data === window.YT.PlayerState.PLAYING) {
+      setIsPlaying(true);
+      const dur = ytPlayerRef.current?.getDuration();
+      setDuration(dur || 0);
+      
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = setInterval(() => {
+        if (ytPlayerRef.current?.getCurrentTime) {
+          setCurrentTime(ytPlayerRef.current.getCurrentTime());
+        }
+      }, 1000);
+    } else if (event.data === window.YT.PlayerState.PAUSED) {
+      setIsPlaying(false);
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    } else if (event.data === window.YT.PlayerState.ENDED) {
+      setIsPlaying(false);
+      if (playNextRef.current) {
+        playNextRef.current();
+      }
+    }
+  }, []);
+
   const initYouTubePlayer = useCallback(() => {
     if (playerRef.current) return;
     
@@ -85,15 +110,12 @@ export function MusicPlayerProvider({ children }) {
           onReady: (event) => {
             ytPlayerRef.current = event.target;
           },
-          // eslint-disable-next-line no-use-before-define
           onStateChange: handleYouTubeStateChange,
         },
       });
     });
-    // eslint-disable-next-line no-use-before-define
   }, [loadYouTubeApi, handleYouTubeStateChange]);
 
-  // eslint-disable-next-line no-use-before-define
   const playNext = useCallback(() => {
     if (!playlist || !currentTrack) return;
     const nextIndex = (currentIndex + 1) % playlist.length;
@@ -134,28 +156,10 @@ export function MusicPlayerProvider({ children }) {
     }
   }, [playlist, currentTrack, currentIndex, getTrackSource, getYoutubeVideoId, getAudioUrl, initYouTubePlayer]);
 
-  const handleYouTubeStateChange = useCallback((event) => {
-    if (event.data === window.YT.PlayerState.PLAYING) {
-      setIsPlaying(true);
-      const dur = ytPlayerRef.current?.getDuration();
-      setDuration(dur || 0);
-      
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = setInterval(() => {
-        if (ytPlayerRef.current?.getCurrentTime) {
-          setCurrentTime(ytPlayerRef.current.getCurrentTime());
-        }
-      }, 1000);
-    } else if (event.data === window.YT.PlayerState.PAUSED) {
-      setIsPlaying(false);
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-    } else if (event.data === window.YT.PlayerState.ENDED) {
-      setIsPlaying(false);
-      playNext();
-    }
-  }, [playNext]);
+  handleYouTubeStateChangeRef.current = handleYouTubeStateChange;
+  playNextRef.current = playNext;
+  initYouTubePlayerRef.current = initYouTubePlayer;
 
-  // Core functions with minimal dependencies
   const playTrack = useCallback((track, playlistData = null, index = 0) => {
     if (!track) return;
     
@@ -169,7 +173,6 @@ export function MusicPlayerProvider({ children }) {
     }
 
     const source = getTrackSource(track);
-    console.log('Playing track, source:', source);
 
     if (source === 'youtube') {
       initYouTubePlayer();
@@ -245,7 +248,9 @@ export function MusicPlayerProvider({ children }) {
 
     const handleEnded = () => {
       setIsPlaying(false);
-      playNext();
+      if (playNextRef.current) {
+        playNextRef.current();
+      }
     };
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
@@ -259,7 +264,7 @@ export function MusicPlayerProvider({ children }) {
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
     };
-  }, [playNext]);
+  }, []);
 
   const value = {
     currentTrack,
