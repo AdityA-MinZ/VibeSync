@@ -18,7 +18,6 @@ function PlaylistModal({ playlist, onClose }) {
   const [isShuffle, setIsShuffle] = useState(false);
   const [playlistIndex, setPlaylistIndex] = useState(0);
   const tracksRef = useRef(null);
-  const playerRef = useRef(null);
   const ytPlayerRef = useRef(null);
   const progressIntervalRef = useRef(null);
 
@@ -266,44 +265,6 @@ function PlaylistModal({ playlist, onClose }) {
     
     alert(errorMessage);
   }, []);
-
-  useEffect(() => {
-    // Load YouTube IFrame API
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    const firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-    window.onYouTubeIframeAPIReady = () => {
-      console.log('YouTube IFrame API ready');
-      playerRef.current = new window.YT.Player('youtube-player', {
-        height: '200',
-        width: '100%',
-        playerVars: {
-          autoplay: 0,
-          controls: 1, // Show controls for better UX
-          disablekb: 0, // Allow keyboard controls
-          fs: 0, // Disable fullscreen button
-          iv_load_policy: 3, // Hide annotations
-          modestbranding: 1, // Minimal branding
-          rel: 0, // Hide related videos
-          showinfo: 0, // Hide video info
-        },
-        events: {
-          onReady: onYouTubeReady,
-          onStateChange: onYouTubeStateChange,
-          onError: onYouTubeError,
-        },
-      });
-    };
-
-    return () => {
-      // Cleanup YouTube player
-      if (playerRef.current) {
-        playerRef.current.destroy();
-      }
-    };
-  }, [onYouTubeReady, onYouTubeStateChange, onYouTubeError]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -604,9 +565,7 @@ function PlaylistModal({ playlist, onClose }) {
         )}
 
         {currentTrack && getTrackSource(currentTrack) === 'youtube' && (
-          <div className="youtube-embed-container">
-            <div id="youtube-player"></div>
-          </div>
+          <div className="player-yt-badge">YouTube</div>
         )}
       </div>
     </div>

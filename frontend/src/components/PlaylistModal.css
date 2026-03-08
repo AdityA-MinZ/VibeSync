@@ -630,6 +630,7 @@
   border-radius: 8px;
   overflow: hidden;
   background: #000;
+  display: none;
 }
 
 .youtube-embed-container iframe {
