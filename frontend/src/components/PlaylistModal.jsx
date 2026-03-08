@@ -41,54 +41,6 @@ function PlaylistModal({ playlist, onClose }) {
     };
   }, []);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyPress = (e) => {
-      if (!currentTrack) return;
-      
-      switch(e.code) {
-        case 'Space':
-          e.preventDefault();
-          handlePlayPause();
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          handleNextTrack();
-          break;
-        case 'ArrowLeft':
-          e.preventDefault();
-          handlePrevTrack();
-          break;
-        case 'KeyM':
-          e.preventDefault();
-          handleMuteToggle();
-          break;
-        case 'KeyR':
-          e.preventDefault();
-          handleRepeatToggle();
-          break;
-        case 'KeyS':
-          e.preventDefault();
-          handleShuffleToggle();
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          setVolume(prev => Math.min(1, prev + 0.1));
-          break;
-        case 'ArrowDown':
-          e.preventDefault();
-          setVolume(prev => Math.max(0, prev - 0.1));
-          break;
-        default:
-          // Handle any other key presses if needed
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentTrack, handlePlayPause, handleNextTrack, handlePrevTrack, handleMuteToggle, handleRepeatToggle, handleShuffleToggle]);
-
   const formatTime = (seconds) => {
     if (!seconds || isNaN(seconds)) return '0:00';
     const mins = Math.floor(seconds / 60);
@@ -352,6 +304,54 @@ function PlaylistModal({ playlist, onClose }) {
       }
     };
   }, [onYouTubeReady, onYouTubeStateChange, onYouTubeError]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (!currentTrack) return;
+      
+      switch(e.code) {
+        case 'Space':
+          e.preventDefault();
+          handlePlayPause();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          handleNextTrack();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          handlePrevTrack();
+          break;
+        case 'KeyM':
+          e.preventDefault();
+          handleMuteToggle();
+          break;
+        case 'KeyR':
+          e.preventDefault();
+          handleRepeatToggle();
+          break;
+        case 'KeyS':
+          e.preventDefault();
+          handleShuffleToggle();
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setVolume(prev => Math.min(1, prev + 0.1));
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          setVolume(prev => Math.max(0, prev - 0.1));
+          break;
+        default:
+          // Handle any other key presses if needed
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [currentTrack, handlePlayPause, handleNextTrack, handlePrevTrack, handleMuteToggle, handleRepeatToggle, handleShuffleToggle]);
 
   const handleTrackLike = async (trackIdx) => {
     const trackId = playlist.tracks[trackIdx].id || `track-${trackIdx}`;
