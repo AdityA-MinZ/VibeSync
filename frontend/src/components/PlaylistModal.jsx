@@ -36,6 +36,81 @@ function PlaylistModal({ playlist, onClose }) {
     };
   }, []);
 
+  const onYouTubeReady = useCallback((event) => {
+    console.log('YouTube player ready');
+    ytPlayerRef.current = event.target;
+    
+    // Auto-play current track if it's a YouTube track
+    if (currentTrack && getTrackSource(currentTrack) === 'youtube') {
+      const videoId = getYoutubeVideoId(currentTrack.youtubeUrl) || currentTrack.youtubeId;
+      if (videoId) {
+        console.log('Loading YouTube video:', videoId);
+        ytPlayerRef.current.loadVideoById(videoId);
+      }
+    }
+  }, [currentTrack, getTrackSource, getYoutubeVideoId]);
+
+  const onYouTubeStateChange = useCallback((event) => {
+    console.log('YouTube player state changed:', event.data);
+    
+    if (event.data === window.YT.PlayerState.PLAYING) {
+      setIsPlaying(true);
+      const dur = ytPlayerRef.current.getDuration();
+      setDuration(dur);
+      
+      // Start progress tracking
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+      progressIntervalRef.current = setInterval(() => {
+        if (ytPlayerRef.current && ytPlayerRef.current.getCurrentTime) {
+          const currentTime = ytPlayerRef.current.getCurrentTime();
+          setCurrentTime(currentTime);
+        }
+      },1000);
+    } else if (event.data === window.YT.PlayerState.PAUSED) {
+      setIsPlaying(false);
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    } else if (event.data === window.YT.PlayerState.ENDED) {
+      setIsPlaying(false);
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+      // Auto-play next track
+      handleNextTrack();
+    } else if (event.data === window.YT.PlayerState.BUFFERING) {
+      console.log('YouTube video buffering...');
+    }
+  }, [handleNextTrack]);
+
+  const onYouTubeError = useCallback((event) => {
+    console.error('YouTube player error:', event.data);
+    let errorMessage = 'Failed to load YouTube video';
+    
+    switch (event.data) {
+      case 2:
+        errorMessage = 'Invalid YouTube video ID';
+        break;
+      case 5:
+        errorMessage = 'YouTube video not supported in HTML5 player';
+        break;
+      case 100:
+        errorMessage = 'YouTube video not found or removed';
+        break;
+      case 101:
+      case 150:
+        errorMessage = 'YouTube video embedding not allowed';
+        break;
+      default:
+        errorMessage = `Unknown YouTube error (${event.data})`;
+        break;
+    }
+    
+    alert(errorMessage);
+  }, []);
+
   useEffect(() => {
     // Load YouTube IFrame API
     const tag = document.createElement('script');
@@ -72,7 +147,7 @@ function PlaylistModal({ playlist, onClose }) {
         playerRef.current.destroy();
       }
     };
-  }, [onYouTubeReady, onYouTubeStateChange]);
+  }, []);
 
   const formatTime = (seconds) => {
     if (!seconds || isNaN(seconds)) return '0:00';
@@ -81,16 +156,16 @@ function PlaylistModal({ playlist, onClose }) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const getTrackSource = (track) => {
+  const getTrackSource = useCallback((track) => {
     if (track.youtubeUrl || track.youtubeId) return 'youtube';
     return null;
-  };
+  }, []);
 
-  const getYoutubeVideoId = (url) => {
+  const getYoutubeVideoId = useCallback((url) => {
     if (!url) return null;
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
     return match ? match[1] : null;
-  };
+  }, []);
 
   const openYouTubeExternal = (track) => {
     const videoId = getYoutubeVideoId(track.youtubeUrl) || track.youtubeId;
@@ -170,81 +245,6 @@ function PlaylistModal({ playlist, onClose }) {
     ytPlayerRef.current.seekTo(seekTime, true);
     setCurrentTime(seekTime);
   };
-
-  const onYouTubeReady = useCallback((event) => {
-    console.log('YouTube player ready');
-    ytPlayerRef.current = event.target;
-    
-    // Auto-play current track if it's a YouTube track
-    if (currentTrack && getTrackSource(currentTrack) === 'youtube') {
-      const videoId = getYoutubeVideoId(currentTrack.youtubeUrl) || currentTrack.youtubeId;
-      if (videoId) {
-        console.log('Loading YouTube video:', videoId);
-        ytPlayerRef.current.loadVideoById(videoId);
-      }
-    }
-  }, [currentTrack]);
-
-  const onYouTubeStateChange = useCallback((event) => {
-    console.log('YouTube player state changed:', event.data);
-    
-    if (event.data === window.YT.PlayerState.PLAYING) {
-      setIsPlaying(true);
-      const dur = ytPlayerRef.current.getDuration();
-      setDuration(dur);
-      
-      // Start progress tracking
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-      progressIntervalRef.current = setInterval(() => {
-        if (ytPlayerRef.current && ytPlayerRef.current.getCurrentTime) {
-          const currentTime = ytPlayerRef.current.getCurrentTime();
-          setCurrentTime(currentTime);
-        }
-      },1000);
-    } else if (event.data === window.YT.PlayerState.PAUSED) {
-      setIsPlaying(false);
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    } else if (event.data === window.YT.PlayerState.ENDED) {
-      setIsPlaying(false);
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-      // Auto-play next track
-      handleNextTrack();
-    } else if (event.data === window.YT.PlayerState.BUFFERING) {
-      console.log('YouTube video buffering...');
-    }
-  }, [handleNextTrack]);
-
-  const onYouTubeError = useCallback((event) => {
-    console.error('YouTube player error:', event.data);
-    let errorMessage = 'Failed to load YouTube video';
-    
-    switch (event.data) {
-      case 2:
-        errorMessage = 'Invalid YouTube video ID';
-        break;
-      case 5:
-        errorMessage = 'YouTube video not supported in HTML5 player';
-        break;
-      case 100:
-        errorMessage = 'YouTube video not found or removed';
-        break;
-      case 101:
-      case 150:
-        errorMessage = 'YouTube video embedding not allowed';
-        break;
-      default:
-        errorMessage = `Unknown YouTube error (${event.data})`;
-        break;
-    }
-    
-    alert(errorMessage);
-  }, []);
 
   const handleTrackLike = async (trackIdx) => {
     const trackId = playlist.tracks[trackIdx].id || `track-${trackIdx}`;
