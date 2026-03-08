@@ -158,7 +158,7 @@ function PlaylistModal({ playlist, onClose }) {
     setCurrentTime(seekTime);
   };
 
-  const onYouTubeReady = (event) => {
+  const onYouTubeReady = useCallback((event) => {
     console.log('YouTube player ready');
     ytPlayerRef.current = event.target;
     
@@ -170,9 +170,9 @@ function PlaylistModal({ playlist, onClose }) {
         ytPlayerRef.current.loadVideoById(videoId);
       }
     }
-  };
+  }, [currentTrack]);
 
-  const onYouTubeStateChange = (event) => {
+  const onYouTubeStateChange = useCallback((event) => {
     console.log('YouTube player state changed:', event.data);
     
     if (event.data === window.YT.PlayerState.PLAYING) {
@@ -189,7 +189,7 @@ function PlaylistModal({ playlist, onClose }) {
           const currentTime = ytPlayerRef.current.getCurrentTime();
           setCurrentTime(currentTime);
         }
-      }, 1000);
+      },1000);
     } else if (event.data === window.YT.PlayerState.PAUSED) {
       setIsPlaying(false);
       if (progressIntervalRef.current) {
@@ -205,9 +205,9 @@ function PlaylistModal({ playlist, onClose }) {
     } else if (event.data === window.YT.PlayerState.BUFFERING) {
       console.log('YouTube video buffering...');
     }
-  };
+  }, [handleNextTrack]);
 
-  const onYouTubeError = (event) => {
+  const onYouTubeError = useCallback((event) => {
     console.error('YouTube player error:', event.data);
     let errorMessage = 'Failed to load YouTube video';
     
@@ -231,7 +231,7 @@ function PlaylistModal({ playlist, onClose }) {
     }
     
     alert(errorMessage);
-  };
+  }, []);
 
   const openYouTubeExternal = (track) => {
     const url = track.youtubeUrl || `https://www.youtube.com/watch?v=${track.youtubeId}`;
