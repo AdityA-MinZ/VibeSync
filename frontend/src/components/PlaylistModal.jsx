@@ -36,6 +36,72 @@ function PlaylistModal({ playlist, onClose }) {
     };
   }, []);
 
+  const formatTime = (seconds) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getTrackSource = useCallback((track) => {
+    if (track.youtubeUrl || track.youtubeId) return 'youtube';
+    return null;
+  }, []);
+
+  const getYoutubeVideoId = useCallback((url) => {
+    if (!url) return null;
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    return match ? match[1] : null;
+  }, []);
+
+  const openYouTubeExternal = (track) => {
+    const videoId = getYoutubeVideoId(track.youtubeUrl) || track.youtubeId;
+    if (videoId) {
+      window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
+    } else {
+      alert('No YouTube video found for this track');
+    }
+  };
+
+  const getTrackDuration = (track) => {
+    return track.duration_ms || track.duration || 0;
+  };
+
+  const handleNextTrack = useCallback(async () => {
+    if (!currentTrack || !playlist?.tracks) return;
+    const nextIndex = (currentTrack.index + 1) % playlist.tracks.length;
+    handlePlayTrack(playlist.tracks[nextIndex], nextIndex);
+  }, [currentTrack, playlist, handlePlayTrack]);
+
+  const handlePrevTrack = useCallback(async () => {
+    if (!currentTrack || !playlist?.tracks) return;
+    const prevIndex = currentTrack.index === 0 ? playlist.tracks.length - 1 : currentTrack.index - 1;
+    handlePlayTrack(playlist.tracks[prevIndex], prevIndex);
+  }, [currentTrack, playlist, handlePlayTrack]);
+
+  const handlePlayPause = () => {
+    if (!currentTrack) return;
+    
+    const source = getTrackSource(currentTrack);
+    if (source === 'youtube' && ytPlayerRef.current) {
+      if (isPlaying) {
+        ytPlayerRef.current.pauseVideo();
+      } else {
+        ytPlayerRef.current.playVideo();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleSeek = (e) => {
+    if (!ytPlayerRef.current || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    const seekTime = percent * duration;
+    ytPlayerRef.current.seekTo(seekTime, true);
+    setCurrentTime(seekTime);
+  };
+
   const onYouTubeReady = useCallback((event) => {
     console.log('YouTube player ready');
     ytPlayerRef.current = event.target;
@@ -147,38 +213,7 @@ function PlaylistModal({ playlist, onClose }) {
         playerRef.current.destroy();
       }
     };
-  }, []);
-
-  const formatTime = (seconds) => {
-    if (!seconds || isNaN(seconds)) return '0:00';
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const getTrackSource = useCallback((track) => {
-    if (track.youtubeUrl || track.youtubeId) return 'youtube';
-    return null;
-  }, []);
-
-  const getYoutubeVideoId = useCallback((url) => {
-    if (!url) return null;
-    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
-    return match ? match[1] : null;
-  }, []);
-
-  const openYouTubeExternal = (track) => {
-    const videoId = getYoutubeVideoId(track.youtubeUrl) || track.youtubeId;
-    if (videoId) {
-      window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
-    } else {
-      alert('No YouTube video found for this track');
-    }
-  };
-
-  const getTrackDuration = (track) => {
-    return track.duration_ms || track.duration || 0;
-  };
+  }, [onYouTubeReady, onYouTubeStateChange, onYouTubeError]);
 
   const handlePlayTrack = useCallback(async (track, index) => {
     console.log('Playing track:', track);
@@ -210,41 +245,6 @@ function PlaylistModal({ playlist, onClose }) {
       alert('This track cannot be played directly. Try importing from YouTube.');
     }
   }, [getTrackSource, getYoutubeVideoId]);
-
-  const handleNextTrack = useCallback(async () => {
-    if (!currentTrack || !playlist?.tracks) return;
-    const nextIndex = (currentTrack.index + 1) % playlist.tracks.length;
-    handlePlayTrack(playlist.tracks[nextIndex], nextIndex);
-  }, [currentTrack, playlist, handlePlayTrack]);
-
-  const handlePrevTrack = useCallback(async () => {
-    if (!currentTrack || !playlist?.tracks) return;
-    const prevIndex = currentTrack.index === 0 ? playlist.tracks.length - 1 : currentTrack.index - 1;
-    handlePlayTrack(playlist.tracks[prevIndex], prevIndex);
-  }, [currentTrack, playlist, handlePlayTrack]);
-
-  const handlePlayPause = () => {
-    if (!currentTrack) return;
-    
-    const source = getTrackSource(currentTrack);
-    if (source === 'youtube' && ytPlayerRef.current) {
-      if (isPlaying) {
-        ytPlayerRef.current.pauseVideo();
-      } else {
-        ytPlayerRef.current.playVideo();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  const handleSeek = (e) => {
-    if (!ytPlayerRef.current || !duration) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const percent = (e.clientX - rect.left) / rect.width;
-    const seekTime = percent * duration;
-    ytPlayerRef.current.seekTo(seekTime, true);
-    setCurrentTime(seekTime);
-  };
 
   const handleTrackLike = async (trackIdx) => {
     const trackId = playlist.tracks[trackIdx].id || `track-${trackIdx}`;
