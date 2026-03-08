@@ -90,7 +90,7 @@ export function MusicPlayerProvider({ children }) {
         },
       });
     });
-  }, [loadYouTubeApi, currentTrack, getTrackSource]);
+  }, [loadYouTubeApi, currentTrack, getTrackSource, handleYouTubeStateChange, playTrack]);
 
   const handleYouTubeStateChange = useCallback((event) => {
     if (event.data === window.YT.PlayerState.PLAYING) {
@@ -111,7 +111,7 @@ export function MusicPlayerProvider({ children }) {
       setIsPlaying(false);
       playNext();
     }
-  }, []);
+  }, [playNext]);
 
   const playTrack = useCallback((track, playlistData = null, index = 0) => {
     if (!track) return;
@@ -182,13 +182,13 @@ export function MusicPlayerProvider({ children }) {
     if (!playlist || !currentTrack) return;
     const nextIndex = (currentIndex + 1) % playlist.length;
     playTrack(playlist[nextIndex], playlist, nextIndex);
-  }, [playlist, currentIndex, playTrack]);
+  }, [playlist, currentIndex, currentTrack, playTrack]);
 
   const playPrev = useCallback(() => {
     if (!playlist || !currentTrack) return;
     const prevIndex = currentIndex === 0 ? playlist.length - 1 : currentIndex - 1;
     playTrack(playlist[prevIndex], playlist, prevIndex);
-  }, [playlist, currentIndex, playTrack]);
+  }, [playlist, currentIndex, currentTrack, playTrack]);
 
   const seekTo = useCallback((time) => {
     const source = currentTrack ? getTrackSource(currentTrack) : null;
