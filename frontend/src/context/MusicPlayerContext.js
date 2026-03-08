@@ -71,6 +71,33 @@ export function MusicPlayerProvider({ children }) {
     });
   }, []);
 
+  const playNext = useCallback(() => {
+    if (!playlist || !currentTrack) return;
+    const nextIndex = (currentIndex + 1) % playlist.length;
+    playTrack(playlist[nextIndex], playlist, nextIndex);
+  }, [playlist, currentIndex, currentTrack, playTrack]);
+
+  const handleYouTubeStateChange = useCallback((event) => {
+    if (event.data === window.YT.PlayerState.PLAYING) {
+      setIsPlaying(true);
+      const dur = ytPlayerRef.current?.getDuration();
+      setDuration(dur || 0);
+      
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = setInterval(() => {
+        if (ytPlayerRef.current?.getCurrentTime) {
+          setCurrentTime(ytPlayerRef.current.getCurrentTime());
+        }
+      }, 1000);
+    } else if (event.data === window.YT.PlayerState.PAUSED) {
+      setIsPlaying(false);
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    } else if (event.data === window.YT.PlayerState.ENDED) {
+      setIsPlaying(false);
+      playNext();
+    }
+  }, [playNext]);
+
   const initYouTubePlayer = useCallback(() => {
     if (playerRef.current) return;
     
@@ -141,33 +168,6 @@ export function MusicPlayerProvider({ children }) {
       }
     }
   }, [getTrackSource, initYouTubePlayer]);
-
-  const playNext = useCallback(() => {
-    if (!playlist || !currentTrack) return;
-    const nextIndex = (currentIndex + 1) % playlist.length;
-    playTrack(playlist[nextIndex], playlist, nextIndex);
-  }, [playlist, currentIndex, currentTrack, playTrack]);
-
-  const handleYouTubeStateChange = useCallback((event) => {
-    if (event.data === window.YT.PlayerState.PLAYING) {
-      setIsPlaying(true);
-      const dur = ytPlayerRef.current?.getDuration();
-      setDuration(dur || 0);
-      
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = setInterval(() => {
-        if (ytPlayerRef.current?.getCurrentTime) {
-          setCurrentTime(ytPlayerRef.current.getCurrentTime());
-        }
-      }, 1000);
-    } else if (event.data === window.YT.PlayerState.PAUSED) {
-      setIsPlaying(false);
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-    } else if (event.data === window.YT.PlayerState.ENDED) {
-      setIsPlaying(false);
-      playNext();
-    }
-  }, [playNext]);
 
   const togglePlayPause = useCallback(() => {
     const source = currentTrack ? getTrackSource(currentTrack) : null;
