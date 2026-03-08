@@ -140,6 +140,33 @@
 .playlist-modal-owner {
   margin: 0 0 0.5rem 0;
   opacity: 0.9;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.owner-username:hover {
+  text-decoration: underline;
+}
+
+.follow-owner-btn {
+  padding: 0.25rem 0.75rem;
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  border-radius: 15px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.follow-owner-btn:hover {
+  background: var(--color-accent-hover);
+}
+
+.follow-owner-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .playlist-modal-description {

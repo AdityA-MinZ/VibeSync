@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { toggleLike } from '../services/socialService';
+import { toggleLike, followUser, unfollowUser, checkFollowStatus } from '../services/socialService';
 import { useMusicPlayer } from '../context/MusicPlayerContext';
 import LikeButton from './LikeButton';
 import './PlaylistModal.css';
 
-function PlaylistModal({ playlist, onClose }) {
+function PlaylistModal({ playlist, onClose, onViewProfile, currentUserId }) {
   const { 
     currentTrack, 
     isPlaying,
@@ -24,6 +24,49 @@ function PlaylistModal({ playlist, onClose }) {
   const [isMuted, setIsMuted] = useState(false);
   const [isRepeat, setIsRepeat] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+
+  const ownerId = playlist.owner?._id || playlist.owner;
+  const isOwnPlaylist = currentUserId && ownerId && (currentUserId === ownerId || currentUserId === ownerId.toString());
+
+  useEffect(() => {
+    const checkFollowStatus = async () => {
+      if (ownerId && !isOwnPlaylist) {
+        try {
+          const { isFollowing } = await checkFollowStatus(ownerId);
+          setIsFollowing(isFollowing);
+        } catch (err) {
+          console.error('Check follow status error:', err);
+        }
+      }
+    };
+    checkFollowStatus();
+  }, [ownerId, isOwnPlaylist]);
+
+  const handleFollowToggle = async () => {
+    if (!ownerId || isOwnPlaylist) return;
+    setFollowLoading(true);
+    try {
+      if (isFollowing) {
+        await unfollowUser(ownerId);
+        setIsFollowing(false);
+      } else {
+        await followUser(ownerId);
+        setIsFollowing(true);
+      }
+    } catch (err) {
+      console.error('Follow toggle error:', err);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const handleViewProfile = () => {
+    if (onViewProfile && playlist.owner?.username) {
+      onViewProfile(playlist.owner.username);
+    }
+  };
 
   useEffect(() => {
     if (playlist?.tracks) {
@@ -241,7 +284,24 @@ function PlaylistModal({ playlist, onClose }) {
           />
           <div className="playlist-modal-info">
             <h2>{playlist.title}</h2>
-            <p className="playlist-modal-owner">By {playlist.owner?.username || 'Unknown'}</p>
+            <p className="playlist-modal-owner">
+              By <span 
+                className="owner-username" 
+                onClick={handleViewProfile}
+                style={{ cursor: 'pointer', color: 'var(--color-accent)' }}
+              >
+                {playlist.owner?.username || 'Unknown'}
+              </span>
+              {!isOwnPlaylist && ownerId && (
+                <button 
+                  className="follow-owner-btn"
+                  onClick={handleFollowToggle}
+                  disabled={followLoading}
+                >
+                  {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
+                </button>
+              )}
+            </p>
             {playlist.description && (
               <p className="playlist-modal-description">{playlist.description}</p>
             )}

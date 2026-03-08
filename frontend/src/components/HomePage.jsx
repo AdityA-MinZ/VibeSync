@@ -186,6 +186,13 @@ function HomePage({ user, onLogout }) {
     setSelectedPlaylist(null);
   };
 
+  const handleViewProfileFromPlaylist = (username) => {
+    setSelectedPlaylist(null);
+    setSearchParams({ view: 'profile', user: username });
+    setCurrentPage('profile');
+    setViewedUser(username);
+  };
+
   const handleDeletePlaylist = async (playlistId, e) => {
     e.stopPropagation();
     if (!window.confirm('Are you sure you want to delete this playlist?')) return;
@@ -1918,6 +1925,8 @@ function HomePage({ user, onLogout }) {
         <PlaylistModal
           playlist={selectedPlaylist}
           onClose={handleClosePlaylistModal}
+          onViewProfile={handleViewProfileFromPlaylist}
+          currentUserId={user?._id || user?.id}
         />
       )}
 
