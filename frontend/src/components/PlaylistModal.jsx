@@ -10,7 +10,12 @@ function PlaylistModal({ playlist, onClose }) {
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState([]);
   const [loadingComment, setLoadingComment] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const tracksRef = useRef(null);
+  const playerRef = useRef(null);
+  const ytPlayerRef = useRef(null);
+  const progressIntervalRef = useRef(null);
 
   useEffect(() => {
     if (playlist?.tracks) {
@@ -23,43 +28,100 @@ function PlaylistModal({ playlist, onClose }) {
     }
   }, [playlist]);
 
-  const formatDuration = (ms) => {
-    if (!ms) return '0:00';
-    const minutes = Math.floor(ms / 60000);
-    const seconds = ((ms % 60000) / 1000).toFixed(0);
-    return `${minutes}:${seconds.padStart(2, '0')}`;
-  };
+  useEffect(() => {
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, []);
 
-  const getTrackDuration = (track) => {
-    return track.durationMs || track.duration_ms || track.duration || 0;
+  useEffect(() => {
+    // Load YouTube IFrame API
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    window.onYouTubeIframeAPIReady = () => {
+      console.log('YouTube IFrame API ready');
+      playerRef.current = new window.YT.Player('youtube-player', {
+        height: '200',
+        width: '100%',
+        playerVars: {
+          autoplay: 0,
+          controls: 1, // Show controls for better UX
+          disablekb: 0, // Allow keyboard controls
+          fs: 0, // Disable fullscreen button
+          iv_load_policy: 3, // Hide annotations
+          modestbranding: 1, // Minimal branding
+          rel: 0, // Hide related videos
+          showinfo: 0, // Hide video info
+        },
+        events: {
+          onReady: onYouTubeReady,
+          onStateChange: onYouTubeStateChange,
+          onError: onYouTubeError,
+        },
+      });
+    };
+
+    return () => {
+      // Cleanup YouTube player
+      if (playerRef.current) {
+        playerRef.current.destroy();
+      }
+    };
+  }, []);
+
+  const formatTime = (seconds) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const handlePlayTrack = async (track, index) => {
     console.log('Playing track:', track);
     setCurrentTrack({ ...track, index });
+    setCurrentTime(0);
+    setDuration(0);
     
     const source = getTrackSource(track);
     console.log('Track source:', source);
     
     if (source === 'youtube') {
       console.log('Playing YouTube track');
-      setIsPlaying(true);
+      if (ytPlayerRef.current) {
+        const videoId = getYoutubeVideoId(track.youtubeUrl) || track.youtubeId;
+        if (videoId) {
+          console.log('Loading YouTube video:', videoId);
+          ytPlayerRef.current.loadVideoById(videoId);
+          setIsPlaying(true); // Will be updated by YouTube state change
+        } else {
+          console.error('No YouTube video ID found');
+          alert('No YouTube video found for this track');
+        }
+      } else {
+        console.log('YouTube player not ready yet');
+        // Player will load the video when ready
+      }
     } else {
       console.log('Track cannot be played directly:', track);
       alert('This track cannot be played directly. Try importing from YouTube.');
     }
   };
 
-  const handleNextTrack = async () => {
-    if (!currentTrack || !playlist?.tracks) return;
-    const nextIndex = (currentTrack.index + 1) % playlist.tracks.length;
-    handlePlayTrack(playlist.tracks[nextIndex], nextIndex);
-  };
-
   const handlePrevTrack = async () => {
     if (!currentTrack || !playlist?.tracks) return;
     const prevIndex = currentTrack.index === 0 ? playlist.tracks.length - 1 : currentTrack.index - 1;
     handlePlayTrack(playlist.tracks[prevIndex], prevIndex);
+  };
+
+  const handleNextTrack = async () => {
+    if (!currentTrack || !playlist?.tracks) return;
+    const nextIndex = (currentTrack.index + 1) % playlist.tracks.length;
+    handlePlayTrack(playlist.tracks[nextIndex], nextIndex);
   };
 
   const getTrackSource = (track) => {
@@ -73,9 +135,108 @@ function PlaylistModal({ playlist, onClose }) {
     return match ? match[1] : null;
   };
 
+  const handlePlayPause = () => {
+    if (!currentTrack) return;
+    
+    const source = getTrackSource(currentTrack);
+    if (source === 'youtube' && ytPlayerRef.current) {
+      if (isPlaying) {
+        ytPlayerRef.current.pauseVideo();
+      } else {
+        ytPlayerRef.current.playVideo();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleSeek = (e) => {
+    if (!ytPlayerRef.current || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    const seekTime = percent * duration;
+    ytPlayerRef.current.seekTo(seekTime, true);
+    setCurrentTime(seekTime);
+  };
+
+  const onYouTubeReady = (event) => {
+    console.log('YouTube player ready');
+    ytPlayerRef.current = event.target;
+    
+    // Auto-play current track if it's a YouTube track
+    if (currentTrack && getTrackSource(currentTrack) === 'youtube') {
+      const videoId = getYoutubeVideoId(currentTrack.youtubeUrl) || currentTrack.youtubeId;
+      if (videoId) {
+        console.log('Loading YouTube video:', videoId);
+        ytPlayerRef.current.loadVideoById(videoId);
+      }
+    }
+  };
+
+  const onYouTubeStateChange = (event) => {
+    console.log('YouTube player state changed:', event.data);
+    
+    if (event.data === window.YT.PlayerState.PLAYING) {
+      setIsPlaying(true);
+      const dur = ytPlayerRef.current.getDuration();
+      setDuration(dur);
+      
+      // Start progress tracking
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+      progressIntervalRef.current = setInterval(() => {
+        if (ytPlayerRef.current && ytPlayerRef.current.getCurrentTime) {
+          const currentTime = ytPlayerRef.current.getCurrentTime();
+          setCurrentTime(currentTime);
+        }
+      }, 1000);
+    } else if (event.data === window.YT.PlayerState.PAUSED) {
+      setIsPlaying(false);
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    } else if (event.data === window.YT.PlayerState.ENDED) {
+      setIsPlaying(false);
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+      // Auto-play next track
+      handleNextTrack();
+    } else if (event.data === window.YT.PlayerState.BUFFERING) {
+      console.log('YouTube video buffering...');
+    }
+  };
+
+  const onYouTubeError = (event) => {
+    console.error('YouTube player error:', event.data);
+    let errorMessage = 'Failed to load YouTube video';
+    
+    switch (event.data) {
+      case 2:
+        errorMessage = 'Invalid YouTube video ID';
+        break;
+      case 5:
+        errorMessage = 'YouTube video not supported in HTML5 player';
+        break;
+      case 100:
+        errorMessage = 'YouTube video not found or removed';
+        break;
+      case 101:
+      case 150:
+        errorMessage = 'YouTube video embedding not allowed';
+        break;
+    }
+    
+    alert(errorMessage);
+  };
+
   const openYouTubeExternal = (track) => {
     const url = track.youtubeUrl || `https://www.youtube.com/watch?v=${track.youtubeId}`;
     window.open(url, '_blank');
+  };
+
+  const getTrackDuration = (track) => {
+    return track.durationMs || track.duration_ms || track.duration || 0;
   };
 
   const handleTrackLike = async (trackIdx) => {
@@ -271,16 +432,30 @@ function PlaylistModal({ playlist, onClose }) {
             </div>
             <div className="player-controls">
               <button onClick={handlePrevTrack}>⏮</button>
-              <button className="play-pause-btn" onClick={() => openYouTubeExternal(currentTrack)}>
-                ▶
+              <button className="play-pause-btn" onClick={handlePlayPause}>
+                {isPlaying ? '⏸' : '▶'}
               </button>
               <button onClick={handleNextTrack}>⏭</button>
             </div>
-            {getTrackSource(currentTrack) === 'youtube' && (
-              <div className="player-yt-badge">
-                YouTube
+            <div className="player-progress">
+              <span className="player-time">{formatTime(currentTime)}</span>
+              <div className="progress-bar" onClick={handleSeek}>
+                <div 
+                  className="progress-fill" 
+                  style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+                ></div>
               </div>
+              <span className="player-time">{formatTime(duration)}</span>
+            </div>
+            {getTrackSource(currentTrack) === 'youtube' && (
+              <div className="player-yt-badge">YouTube</div>
             )}
+          </div>
+        )}
+
+        {currentTrack && getTrackSource(currentTrack) === 'youtube' && (
+          <div className="youtube-embed-container">
+            <div id="youtube-player"></div>
           </div>
         )}
       </div>

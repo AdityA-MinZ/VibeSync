@@ -511,6 +511,25 @@
   font-weight: 600;
 }
 
+.youtube-embed-container {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  margin: 1rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+}
+
+.youtube-embed-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
 .progress-fill {
   height: 100%;
   background: #667eea;
