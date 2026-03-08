@@ -53,9 +53,9 @@ function SearchResults({ query, onClose, onTrackSelect }) {
     if (results.users.length > 0) {
       checkFollowStatuses();
     }
-  }, [results.users]);
+  }, [results.users, checkFollowStatuses]);
 
-  const checkFollowStatuses = async () => {
+  const checkFollowStatuses = useCallback(async () => {
     const statuses = {};
     for (const user of results.users) {
       try {
@@ -66,7 +66,7 @@ function SearchResults({ query, onClose, onTrackSelect }) {
       }
     }
     setFollowStatus(statuses);
-  };
+  }, [results.users]);
 
   const handleFollowToggle = async (userId) => {
     setFollowingLoading(prev => ({ ...prev, [userId]: true }));
