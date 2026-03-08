@@ -71,48 +71,6 @@ export function MusicPlayerProvider({ children }) {
     });
   }, []);
 
-  const initYouTubePlayer = useCallback(() => {
-    if (playerRef.current) return;
-    
-    loadYouTubeApi().then(() => {
-      playerRef.current = new window.YT.Player('youtube-player-hidden', {
-        height: '0',
-        width: '0',
-        playerVars: { autoplay: 0, controls: 0 },
-        events: {
-          onReady: (event) => {
-            ytPlayerRef.current = event.target;
-            if (currentTrack && getTrackSource(currentTrack) === 'youtube') {
-              playTrack(currentTrack);
-            }
-          },
-          onStateChange: handleYouTubeStateChange,
-        },
-      });
-    });
-  }, [loadYouTubeApi, currentTrack, getTrackSource, handleYouTubeStateChange, playTrack]);
-
-  const handleYouTubeStateChange = useCallback((event) => {
-    if (event.data === window.YT.PlayerState.PLAYING) {
-      setIsPlaying(true);
-      const dur = ytPlayerRef.current?.getDuration();
-      setDuration(dur || 0);
-      
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = setInterval(() => {
-        if (ytPlayerRef.current?.getCurrentTime) {
-          setCurrentTime(ytPlayerRef.current.getCurrentTime());
-        }
-      }, 1000);
-    } else if (event.data === window.YT.PlayerState.PAUSED) {
-      setIsPlaying(false);
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-    } else if (event.data === window.YT.PlayerState.ENDED) {
-      setIsPlaying(false);
-      playNext();
-    }
-  }, [playNext]);
-
   const playTrack = useCallback((track, playlistData = null, index = 0) => {
     if (!track) return;
     
@@ -158,6 +116,54 @@ export function MusicPlayerProvider({ children }) {
     }
   }, [getTrackSource, initYouTubePlayer]);
 
+  const playNext = useCallback(() => {
+    if (!playlist || !currentTrack) return;
+    const nextIndex = (currentIndex + 1) % playlist.length;
+    playTrack(playlist[nextIndex], playlist, nextIndex);
+  }, [playlist, currentIndex, currentTrack, playTrack]);
+
+  const handleYouTubeStateChange = useCallback((event) => {
+    if (event.data === window.YT.PlayerState.PLAYING) {
+      setIsPlaying(true);
+      const dur = ytPlayerRef.current?.getDuration();
+      setDuration(dur || 0);
+      
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = setInterval(() => {
+        if (ytPlayerRef.current?.getCurrentTime) {
+          setCurrentTime(ytPlayerRef.current.getCurrentTime());
+        }
+      }, 1000);
+    } else if (event.data === window.YT.PlayerState.PAUSED) {
+      setIsPlaying(false);
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    } else if (event.data === window.YT.PlayerState.ENDED) {
+      setIsPlaying(false);
+      playNext();
+    }
+  }, [playNext]);
+
+  const initYouTubePlayer = useCallback(() => {
+    if (playerRef.current) return;
+    
+    loadYouTubeApi().then(() => {
+      playerRef.current = new window.YT.Player('youtube-player-hidden', {
+        height: '0',
+        width: '0',
+        playerVars: { autoplay: 0, controls: 0 },
+        events: {
+          onReady: (event) => {
+            ytPlayerRef.current = event.target;
+            if (currentTrack && getTrackSource(currentTrack) === 'youtube') {
+              playTrack(currentTrack);
+            }
+          },
+          onStateChange: handleYouTubeStateChange,
+        },
+      });
+    });
+  }, [loadYouTubeApi, currentTrack, getTrackSource, handleYouTubeStateChange, playTrack]);
+
   const togglePlayPause = useCallback(() => {
     const source = currentTrack ? getTrackSource(currentTrack) : null;
     
@@ -177,12 +183,6 @@ export function MusicPlayerProvider({ children }) {
       setIsPlaying(!isPlaying);
     }
   }, [currentTrack, isPlaying, getTrackSource]);
-
-  const playNext = useCallback(() => {
-    if (!playlist || !currentTrack) return;
-    const nextIndex = (currentIndex + 1) % playlist.length;
-    playTrack(playlist[nextIndex], playlist, nextIndex);
-  }, [playlist, currentIndex, currentTrack, playTrack]);
 
   const playPrev = useCallback(() => {
     if (!playlist || !currentTrack) return;
