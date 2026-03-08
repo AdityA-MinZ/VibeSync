@@ -130,20 +130,31 @@ function AppContent({ currentUser, onLogin, onRegister, onLogout }) {
             <Navigate to="/dashboard" replace />
           ) : (
             <div className="hero">
-              <h1>Connect, Share, Discover</h1>
-              <p>
-                Join VibeSync and immerse yourself in a world of music. Share your
-                playlists, connect with friends, and discover new sounds tailored
-                just for you.
-              </p>
-              <div className="hero-actions">
-                <Link to="/login" className="btn-primary">
-                  Login
-                </Link>
-                <span style={{ margin: '0 1rem' }}></span>
-                <Link to="/register" className="btn-primary">
-                  Sign Up
-                </Link>
+              <div className="hero-video-background">
+                <iframe
+                  src="https://www.youtube.com/embed/xnsxllY5VPw?autoplay=1&mute=1&loop=1&playlist=xnsxllY5VPw"
+                  title="VibeSync Background"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+              <div className="hero-content">
+                <h1>Connect, Share, Discover</h1>
+                <p>
+                  Join VibeSync and immerse yourself in a world of music. Share your
+                  playlists, connect with friends, and discover new sounds tailored
+                  just for you.
+                </p>
+                <div className="hero-actions">
+                  <Link to="/login" className="btn-primary">
+                    Login
+                  </Link>
+                  <span style={{ margin: '0 1rem' }}></span>
+                  <Link to="/register" className="btn-primary">
+                    Sign Up
+                  </Link>
+                </div>
               </div>
             </div>
           )
