@@ -35,8 +35,7 @@ function RegisterForm({ onRegister, onBack }) {
 
   return (
     <div className="auth-container">
-      <h1 className="auth-app-title">VibeSync</h1>
-      <h2>Register</h2>
+      <h2 className="auth-form-title">Register</h2>
       {error && <div className="error-message">{error}</div>}
       <form onSubmit={handleSubmit}>
         <div className="form-group">
