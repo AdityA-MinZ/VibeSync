@@ -9,6 +9,7 @@ import SaveToBoard from "./SaveToBoard";
 import EditProfileModal from "./EditProfileModal";
 import PlaylistModal from "./PlaylistModal";
 import ImageCropper from "./ImageCropper";
+import MiniPlayer from "./MiniPlayer";
 import { getUserProfile, getUserPlaylists, getUserStats, getUserActivity, updateUserProfile, updateStreak, importYouTubePlaylist, searchTracks, createPlaylist, deletePlaylist } from "../services/userService";
 import { getNotifications, markAsRead, markAllAsRead, getUnreadCount } from "../services/notificationService";
 import API_URL from '../config';
@@ -1894,6 +1895,9 @@ function HomePage({ user, onLogout }) {
           onClose={handleClosePlaylistModal}
         />
       )}
+
+      {/* Mini Player - persists across navigation */}
+      <MiniPlayer />
     </>
   );
 }

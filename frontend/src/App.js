@@ -5,6 +5,7 @@ import HomePage from "./components/HomePage";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
 import { getCurrentUser, isAuthenticated, logout } from "./services/authService";
+import { MusicPlayerProvider } from "./context/MusicPlayerContext";
 import "./App.css";
 
 function App() {
@@ -123,7 +124,8 @@ function AppContent({ currentUser, onLogin, onRegister, onLogout }) {
   return (
     <div className="app">
       {/* Routes */}
-      <Routes>
+      <MusicPlayerProvider>
+        <Routes>
         {/* Landing/Home */}
         <Route path="/" element={
           isAuthenticated() ? (
@@ -213,6 +215,7 @@ function AppContent({ currentUser, onLogin, onRegister, onLogout }) {
           )
         } />
       </Routes>
+      </MusicPlayerProvider>
     </div>
   );
 }

@@ -64,6 +64,18 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
+// GET all users (for friend search)
+router.get('/all', auth, async (req, res) => {
+  try {
+    const users = await User.find({ _id: { $ne: req.user.id } })
+      .select('username email');
+    res.json(users);
+  } catch (error) {
+    console.error('Get all users error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.get('/:id', auth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
