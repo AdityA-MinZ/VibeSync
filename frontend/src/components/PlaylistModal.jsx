@@ -79,12 +79,15 @@ function PlaylistModal({ playlist, onClose }) {
           e.preventDefault();
           setVolume(prev => Math.max(0, prev - 0.1));
           break;
+        default:
+          // Handle any other key presses if needed
+          break;
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentTrack, handlePlayPause, handleNextTrack, handlePrevTrack, handleMuteToggle, handleRepeatToggle, handleShuffleToggle]);
+  }, [currentTrack]);
 
   const formatTime = (seconds) => {
     if (!seconds || isNaN(seconds)) return '0:00';
@@ -188,8 +191,8 @@ function PlaylistModal({ playlist, onClose }) {
     }
   };
 
-  const handleMuteToggle = () => {
-    setIsMuted(!isMuted);
+  const handleMuteToggle = useCallback(() => {
+    setIsMuted(prev => !prev);
     if (ytPlayerRef.current) {
       if (isMuted) {
         ytPlayerRef.current.unMute();
@@ -198,17 +201,17 @@ function PlaylistModal({ playlist, onClose }) {
         ytPlayerRef.current.mute();
       }
     }
-  };
+  }, [isMuted, volume]);
 
-  const handleRepeatToggle = () => {
-    setIsRepeat(!isRepeat);
-  };
+  const handleRepeatToggle = useCallback(() => {
+    setIsRepeat(prev => !prev);
+  }, []);
 
-  const handleShuffleToggle = () => {
-    setIsShuffle(!isShuffle);
-  };
+  const handleShuffleToggle = useCallback(() => {
+    setIsShuffle(prev => !prev);
+  }, []);
 
-  const handlePlayPause = () => {
+  const handlePlayPause = useCallback(() => {
     if (!currentTrack) return;
     
     const source = getTrackSource(currentTrack);
@@ -220,7 +223,7 @@ function PlaylistModal({ playlist, onClose }) {
       }
       setIsPlaying(!isPlaying);
     }
-  };
+  }, [currentTrack, isPlaying, getTrackSource]);
 
   const handleSeek = (e) => {
     if (!ytPlayerRef.current || !duration) return;
