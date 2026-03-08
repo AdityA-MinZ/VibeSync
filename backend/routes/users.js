@@ -76,6 +76,36 @@ router.get('/all', auth, async (req, res) => {
   }
 });
 
+// Get user by username
+router.get('/username/:username', auth, async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.params.username })
+      .select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const playlists = await Playlist.find({ owner: user._id });
+    
+    const isFollowing = req.user.id === user._id.toString() 
+      ? null 
+      : user.followers?.some(id => id.toString() === req.user.id);
+
+    res.json({
+      ...user.toObject(),
+      playlistsCount: playlists.length,
+      followersCount: user.followers?.length || 0,
+      followingCount: user.followings?.length || 0,
+      isFollowing: isFollowing,
+      createdAt: user.createdAt
+    });
+  } catch (error) {
+    console.log('Get user by username error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.get('/:id', auth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id)

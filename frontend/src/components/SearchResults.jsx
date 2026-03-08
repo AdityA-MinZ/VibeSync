@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { searchAll, getSuggestions, getTrendingSearches } from '../services/searchService';
 import { followUser, unfollowUser, checkFollowStatus } from '../services/socialService';
 import './SearchResults.css';
@@ -234,10 +235,14 @@ function SearchResults({ query, onClose, onTrackSelect }) {
               <div className="artists-grid">
                 {results.artists.map(artist => (
                   <div key={artist._id} className="artist-result-card">
-                    <div className="artist-avatar-large">
-                      {artist.username.charAt(0).toUpperCase()}
-                    </div>
-                    <h4 className="artist-name">{artist.username}</h4>
+                    <Link to={`/dashboard?view=profile&user=${artist.username}`}>
+                      <div className="artist-avatar-large">
+                        {artist.username.charAt(0).toUpperCase()}
+                      </div>
+                    </Link>
+                    <Link to={`/dashboard?view=profile&user=${artist.username}`} className="profile-link">
+                      <h4 className="artist-name">{artist.username}</h4>
+                    </Link>
                     <p className="artist-followers">
                       {formatNumber(artist.followers?.length || 0)} followers
                     </p>
@@ -269,7 +274,9 @@ function SearchResults({ query, onClose, onTrackSelect }) {
                     </div>
                     <div className="playlist-info">
                       <h4 className="playlist-title">{playlist.title}</h4>
-                      <p className="playlist-creator">by {playlist.owner?.username}</p>
+                      <p className="playlist-creator">
+                        by <Link to={`/dashboard?view=profile&user=${playlist.owner?.username}`} className="profile-link">{playlist.owner?.username}</Link>
+                      </p>
                       {playlist.description && (
                         <p className="playlist-desc">{playlist.description}</p>
                       )}
@@ -291,7 +298,9 @@ function SearchResults({ query, onClose, onTrackSelect }) {
                       {user.username.charAt(0).toUpperCase()}
                     </div>
                     <div className="user-info">
-                      <h4 className="user-name">{user.username}</h4>
+                      <Link to={`/dashboard?view=profile&user=${user.username}`} className="profile-link">
+                        <h4 className="user-name">{user.username}</h4>
+                      </Link>
                       <p className="user-email">{user.email}</p>
                     </div>
                     <button 

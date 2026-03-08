@@ -1,5 +1,6 @@
 // frontend/src/components/HomePage.jsx
 import React, { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import FriendsPage from "./FriendsPage";
 import SearchResults from "./SearchResults";
@@ -10,7 +11,7 @@ import EditProfileModal from "./EditProfileModal";
 import PlaylistModal from "./PlaylistModal";
 import ImageCropper from "./ImageCropper";
 import MiniPlayer from "./MiniPlayer";
-import { getUserProfile, getUserPlaylists, getUserStats, getUserActivity, updateUserProfile, updateStreak, importYouTubePlaylist, searchTracks, createPlaylist, deletePlaylist } from "../services/userService";
+import { getUserProfile, getUserByUsername, getUserPlaylists, getUserStats, getUserActivity, updateUserProfile, updateStreak, importYouTubePlaylist, searchTracks, createPlaylist, deletePlaylist } from "../services/userService";
 import { getNotifications, markAsRead, markAllAsRead, getUnreadCount } from "../services/notificationService";
 import API_URL from '../config';
 
@@ -28,6 +29,8 @@ function HomePage({ user, onLogout }) {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [modalTrack, setModalTrack] = useState(null);
   const [showSaveToBoard, setShowSaveToBoard] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [viewedUser, setViewedUser] = useState(null);
 
   // Create page state
   const [importMode, setImportMode] = useState(null); // 'youtube', 'manual'
@@ -690,6 +693,19 @@ function HomePage({ user, onLogout }) {
     }
   }, [showSearchResults]);
 
+  // Handle URL query parameters for viewing other users' profiles
+  useEffect(() => {
+    const view = searchParams.get('view');
+    const username = searchParams.get('user');
+    
+    if (view === 'profile' && username) {
+      setCurrentPage('profile');
+      setViewedUser(username);
+    } else if (view === 'profile' && !username) {
+      setViewedUser(null);
+    }
+  }, [searchParams]);
+
   // Fetch profile data when on profile page
   useEffect(() => {
     if (currentPage === "profile") {
@@ -698,30 +714,45 @@ function HomePage({ user, onLogout }) {
         setProfileError(null);
         
         try {
-          // Update streak when visiting profile (once per day)
-          const lastStreakUpdate = localStorage.getItem('lastStreakUpdate');
-          const today = new Date().toDateString();
-          if (lastStreakUpdate !== today) {
-            try {
-              await updateStreak();
-              localStorage.setItem('lastStreakUpdate', today);
-            } catch (streakError) {
-              console.log('Streak update skipped:', streakError.message);
+          // If viewing another user's profile, don't update streak
+          if (!viewedUser) {
+            const lastStreakUpdate = localStorage.getItem('lastStreakUpdate');
+            const today = new Date().toDateString();
+            if (lastStreakUpdate !== today) {
+              try {
+                await updateStreak();
+                localStorage.setItem('lastStreakUpdate', today);
+              } catch (streakError) {
+                console.log('Streak update skipped:', streakError.message);
+              }
             }
           }
 
-          const [profile, stats, playlists, activity] = await Promise.all([
-            getUserProfile(),
-            getUserStats(),
-            getUserPlaylists(),
-            getUserActivity()
-          ]);
+          let profile, stats, playlists, activity;
+          
+          if (viewedUser) {
+            // Fetch other user's profile by username
+            profile = await getUserByUsername(viewedUser);
+            // For other users, we only get basic info (no stats/activity for now)
+            stats = null;
+            playlists = profile ? await getUserPlaylists(profile._id) : [];
+            activity = [];
+          } else {
+            // Fetch own profile
+            [profile, stats, playlists, activity] = await Promise.all([
+              getUserProfile(),
+              getUserStats(),
+              getUserPlaylists(),
+              getUserActivity()
+            ]);
+          }
+          
           console.log('Profile loaded:', profile);
           console.log('Stats loaded:', stats);
           console.log('Playlists loaded:', playlists);
           setProfileData(profile);
           setProfileStats(stats);
-          setProfilePlaylists(playlists);
+          setProfilePlaylists(playlists || []);
           setProfileActivity(activity);
         } catch (error) {
           console.error('Error fetching profile data:', error);
@@ -734,7 +765,7 @@ function HomePage({ user, onLogout }) {
       
       fetchProfileData();
     }
-  }, [currentPage]);
+  }, [currentPage, viewedUser]);
 
   // Fetch notifications when on notifications page
   useEffect(() => {

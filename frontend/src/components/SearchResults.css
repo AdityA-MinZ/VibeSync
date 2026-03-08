@@ -443,8 +443,19 @@
 
 .playlist-creator {
   font-size: 0.875rem;
-  color: var(--color-accent);
+  color: var(--color-text-secondary);
   margin-bottom: 0.5rem;
+}
+
+.profile-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.profile-link:hover {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
 }
 
 .playlist-desc {

@@ -37,6 +37,24 @@ export const getUserProfile = async (userId) => {
   }
 };
 
+export const getUserByUsername = async (username) => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      return null;
+    }
+    
+    const response = await axios.get(`${API_URL}/users/username/${username}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Get user by username error:', error);
+    return null;
+  }
+};
+
 export const updateUserProfile = async (userData) => {
   try {
     const token = localStorage.getItem('token');
