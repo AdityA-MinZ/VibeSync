@@ -56,7 +56,7 @@ function HomePage({ user, onLogout }) {
   // Profile state
   const [profileData, setProfileData] = useState(null);
   const [profileStats, setProfileStats] = useState(null);
-  const [safeProfilePlaylists, setProfilePlaylists] = useState([]);
+  const [profilePlaylists, setProfilePlaylists] = useState([]);
   const [profileActivity, setProfileActivity] = useState([]);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -193,7 +193,7 @@ function HomePage({ user, onLogout }) {
     try {
       await deletePlaylist(playlistId);
       setHomePlaylists(homePlaylists.filter(p => p._id !== playlistId));
-      setProfilePlaylists(safeProfilePlaylists.filter(p => p._id !== playlistId));
+      setProfilePlaylists(profilePlaylists.filter(p => p._id !== playlistId));
       alert('Playlist deleted successfully');
     } catch (error) {
       console.error('Delete playlist error:', error);
