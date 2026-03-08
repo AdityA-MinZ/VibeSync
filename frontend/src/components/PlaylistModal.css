@@ -580,49 +580,56 @@
 
 .youtube-player-section {
   padding: 1rem;
-  background: #000;
-}
-
-.youtube-player-container {
-  position: relative;
-  width: 100%;
-  padding-bottom: 56.25%;
-  background: #000;
+  background: #1a1a1a;
   border-radius: 8px;
-  overflow: hidden;
+  margin: 1rem;
 }
 
-.youtube-player-container iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.youtube-fallback {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+.youtube-audio-player {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  background: #222;
-  color: #fff;
+  gap: 1rem;
 }
 
-.youtube-fallback button {
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
+.youtube-audio-cover {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.youtube-audio-info {
+  flex: 1;
+}
+
+.youtube-audio-title {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.youtube-audio-artist {
+  color: #aaa;
+  font-size: 0.85rem;
+}
+
+.youtube-external-btn {
+  padding: 0.6rem 1rem;
   background: #FF0000;
   color: #fff;
   border: none;
-  border-radius: 4px;
+  border-radius: 20px;
   cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
 }
+
+.youtube-external-btn:hover {
+  background: #cc0000;
+}
+
+/* End of styles */
 
 .youtube-external-btn {
   width: 100%;

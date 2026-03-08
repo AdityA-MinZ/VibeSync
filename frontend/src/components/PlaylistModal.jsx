@@ -268,36 +268,20 @@ function PlaylistModal({ playlist, onClose }) {
 
         {currentTrack && getTrackSource(currentTrack) === 'youtube' && (
           <div className="youtube-player-section">
-            <div className="youtube-player-container">
-              {getYoutubeVideoId(currentTrack.youtubeUrl) ? (
-                <div className="youtube-player-wrapper">
-                  <iframe
-                    ref={youtubePlayerRef}
-                    src={`https://www.youtube.com/embed/${getYoutubeVideoId(currentTrack.youtubeUrl)}?enablejsapi=1&playsinline=1&rel=0&modestbranding=1&controls=0&disablekb=1&fs=0&iv_load_policy=3`}
-                    title="YouTube audio player"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen={false}
-                    className="youtube-iframe youtube-audio-only"
-                    onLoad={() => console.log('YouTube iframe loaded')}
-                    onError={() => console.error('YouTube iframe error')}
-                  />
-                  {!isPlaying && (
-                    <div className="youtube-play-overlay" onClick={() => setIsPlaying(true)}>
-                      <div className="youtube-play-button">▶</div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="youtube-error">
-                  <p>YouTube video not available</p>
-                  <p>Please check the video URL or try a different track.</p>
-                </div>
-              )}
+            <div className="youtube-audio-player">
+              <img 
+                src={currentTrack.image || 'https://picsum.photos/100/100'} 
+                alt={currentTrack.title}
+                className="youtube-audio-cover"
+              />
+              <div className="youtube-audio-info">
+                <div className="youtube-audio-title">{currentTrack.title || currentTrack.name}</div>
+                <div className="youtube-audio-artist">{currentTrack.artist}</div>
+              </div>
+              <button className="youtube-external-btn" onClick={() => openYouTubeExternal(currentTrack)}>
+                ▶ Play on YouTube
+              </button>
             </div>
-            <button className="youtube-external-btn" onClick={() => openYouTubeExternal(currentTrack)}>
-              Open in YouTube ↗
-            </button>
           </div>
         )}
 
