@@ -60,17 +60,100 @@ export function MusicPlayerProvider({ children }) {
     return null;
   }, []);
 
-  const getYoutubeVideoId = (url) => {
+  const getYoutubeVideoId = useCallback((url) => {
     if (!url) return null;
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
     return match ? match[1] : null;
-  };
+  }, []);
 
-  const getAudioUrl = (track) => {
+  const getAudioUrl = useCallback((track) => {
     const relativeUrl = track.audioUrl || track.sourceUrl || null;
     if (!relativeUrl) return null;
     return getFullUrl(relativeUrl);
-  };
+  }, []);
+
+  // eslint-disable-next-line no-use-before-define
+  const initYouTubePlayer = useCallback(() => {
+    if (playerRef.current) return;
+    
+    loadYouTubeApi().then(() => {
+      playerRef.current = new window.YT.Player('youtube-player-hidden', {
+        height: '0',
+        width: '0',
+        playerVars: { autoplay: 0, controls: 0 },
+        events: {
+          onReady: (event) => {
+            ytPlayerRef.current = event.target;
+          },
+          // eslint-disable-next-line no-use-before-define
+          onStateChange: handleYouTubeStateChange,
+        },
+      });
+    });
+    // eslint-disable-next-line no-use-before-define
+  }, [loadYouTubeApi, handleYouTubeStateChange]);
+
+  // eslint-disable-next-line no-use-before-define
+  const playNext = useCallback(() => {
+    if (!playlist || !currentTrack) return;
+    const nextIndex = (currentIndex + 1) % playlist.length;
+    setCurrentIndex(nextIndex);
+    const nextTrack = playlist[nextIndex];
+    setCurrentTrack({ ...nextTrack, index: nextIndex });
+    setCurrentTime(0);
+    setDuration(0);
+    
+    const source = getTrackSource(nextTrack);
+    if (source === 'youtube') {
+      initYouTubePlayer();
+      setTimeout(() => {
+        if (ytPlayerRef.current) {
+          const videoId = getYoutubeVideoId(nextTrack.youtubeUrl) || nextTrack.youtubeId;
+          if (videoId) {
+            ytPlayerRef.current.loadVideoById(videoId);
+            setIsPlaying(true);
+          }
+        }
+      }, 500);
+    } else if (source === 'uploaded') {
+      const audioUrl = getAudioUrl(nextTrack);
+      if (audioUrl && audioRef.current) {
+        audioRef.current.src = audioUrl;
+        audioRef.current.play()
+          .then(() => setIsPlaying(true))
+          .catch(err => console.error('Audio play error:', err));
+        
+        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = setInterval(() => {
+          if (audioRef.current) {
+            setCurrentTime(audioRef.current.currentTime);
+            setDuration(audioRef.current.duration || 0);
+          }
+        }, 1000);
+      }
+    }
+  }, [playlist, currentTrack, currentIndex, getTrackSource, getYoutubeVideoId, getAudioUrl, initYouTubePlayer]);
+
+  const handleYouTubeStateChange = useCallback((event) => {
+    if (event.data === window.YT.PlayerState.PLAYING) {
+      setIsPlaying(true);
+      const dur = ytPlayerRef.current?.getDuration();
+      setDuration(dur || 0);
+      
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = setInterval(() => {
+        if (ytPlayerRef.current?.getCurrentTime) {
+          setCurrentTime(ytPlayerRef.current.getCurrentTime());
+        }
+      }, 1000);
+    } else if (event.data === window.YT.PlayerState.PAUSED) {
+      setIsPlaying(false);
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    } else if (event.data === window.YT.PlayerState.ENDED) {
+      setIsPlaying(false);
+      playNext();
+    }
+  }, [playNext]);
 
   // Core functions with minimal dependencies
   const playTrack = useCallback((track, playlistData = null, index = 0) => {
@@ -116,60 +199,7 @@ export function MusicPlayerProvider({ children }) {
         }, 1000);
       }
     }
-  }, [getTrackSource, getYoutubeVideoId, getAudioUrl]);
-
-  const playNext = useCallback(() => {
-    if (!playlist || !currentTrack) return;
-    const nextIndex = (currentIndex + 1) % playlist.length;
-    playTrack(playlist[nextIndex], playlist, nextIndex);
-  }, [playlist, currentIndex, currentTrack, playTrack]);
-
-  const handleYouTubeStateChange = useCallback((event) => {
-    if (event.data === window.YT.PlayerState.PLAYING) {
-      setIsPlaying(true);
-      const dur = ytPlayerRef.current?.getDuration();
-      setDuration(dur || 0);
-      
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = setInterval(() => {
-        if (ytPlayerRef.current?.getCurrentTime) {
-          setCurrentTime(ytPlayerRef.current.getCurrentTime());
-        }
-      }, 1000);
-    } else if (event.data === window.YT.PlayerState.PAUSED) {
-      setIsPlaying(false);
-      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-    } else if (event.data === window.YT.PlayerState.ENDED) {
-      setIsPlaying(false);
-      playNext();
-    }
-  }, [playNext]);
-
-  const initYouTubePlayer = useCallback(() => {
-    if (playerRef.current) return;
-    
-    loadYouTubeApi().then(() => {
-      playerRef.current = new window.YT.Player('youtube-player-hidden', {
-        height: '0',
-        width: '0',
-        playerVars: { autoplay: 0, controls: 0 },
-        events: {
-          onReady: (event) => {
-            ytPlayerRef.current = event.target;
-            // Auto-play current track if it's a YouTube track
-            if (currentTrack && getTrackSource(currentTrack) === 'youtube') {
-              const videoId = getYoutubeVideoId(currentTrack.youtubeUrl) || currentTrack.youtubeId;
-              if (videoId) {
-                ytPlayerRef.current.loadVideoById(videoId);
-                setIsPlaying(true);
-              }
-            }
-          },
-          onStateChange: handleYouTubeStateChange,
-        },
-      });
-    });
-  }, [loadYouTubeApi, currentTrack, getTrackSource, getYoutubeVideoId, handleYouTubeStateChange]);
+  }, [getTrackSource, getYoutubeVideoId, getAudioUrl, initYouTubePlayer]);
 
   const togglePlayPause = useCallback(() => {
     const source = currentTrack ? getTrackSource(currentTrack) : null;
