@@ -81,7 +81,18 @@ function PlaylistModal({ playlist, onClose }) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handlePlayTrack = async (track, index) => {
+  const getTrackSource = (track) => {
+    if (track.youtubeUrl || track.youtubeId) return 'youtube';
+    return null;
+  };
+
+  const getYoutubeVideoId = (url) => {
+    if (!url) return null;
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+    return match ? match[1] : null;
+  };
+
+  const handlePlayTrack = useCallback(async (track, index) => {
     console.log('Playing track:', track);
     setCurrentTrack({ ...track, index });
     setCurrentTime(0);
@@ -110,30 +121,19 @@ function PlaylistModal({ playlist, onClose }) {
       console.log('Track cannot be played directly:', track);
       alert('This track cannot be played directly. Try importing from YouTube.');
     }
-  };
+  }, [getTrackSource, getYoutubeVideoId]);
 
-  const handlePrevTrack = async () => {
-    if (!currentTrack || !playlist?.tracks) return;
-    const prevIndex = currentTrack.index === 0 ? playlist.tracks.length - 1 : currentTrack.index - 1;
-    handlePlayTrack(playlist.tracks[prevIndex], prevIndex);
-  };
-
-  const handleNextTrack = async () => {
+  const handleNextTrack = useCallback(async () => {
     if (!currentTrack || !playlist?.tracks) return;
     const nextIndex = (currentTrack.index + 1) % playlist.tracks.length;
     handlePlayTrack(playlist.tracks[nextIndex], nextIndex);
-  };
+  }, [currentTrack, playlist, handlePlayTrack]);
 
-  const getTrackSource = (track) => {
-    if (track.youtubeUrl || track.youtubeId) return 'youtube';
-    return null;
-  };
-
-  const getYoutubeVideoId = (url) => {
-    if (!url) return null;
-    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
-    return match ? match[1] : null;
-  };
+  const handlePrevTrack = useCallback(async () => {
+    if (!currentTrack || !playlist?.tracks) return;
+    const prevIndex = currentTrack.index === 0 ? playlist.tracks.length - 1 : currentTrack.index - 1;
+    handlePlayTrack(playlist.tracks[prevIndex], prevIndex);
+  }, [currentTrack, playlist, handlePlayTrack]);
 
   const handlePlayPause = () => {
     if (!currentTrack) return;
