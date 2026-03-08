@@ -646,7 +646,7 @@ function HomePage({ user, onLogout }) {
   }, [homePlaylists, currentFilter, searchTerm]);
 
   const safeFilteredData = Array.isArray(filteredData) ? filteredData : [];
-  const safeProfilePlaylists = Array.isArray(safeProfilePlaylists) ? safeProfilePlaylists : [];
+  const safeProfilePlaylists = Array.isArray(profilePlaylists) ? profilePlaylists : [];
 
   const handleSearch = (e) => {
     e.preventDefault();
