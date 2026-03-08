@@ -11,7 +11,15 @@ function MiniPlayer() {
     togglePlayPause, 
     playNext, 
     playPrev,
-    seekTo 
+    seekTo,
+    volume,
+    isMuted,
+    isRepeat,
+    isShuffle,
+    toggleMute,
+    changeVolume,
+    toggleShuffle,
+    toggleRepeat
   } = useMusicPlayer();
 
   if (!currentTrack) return null;
@@ -30,6 +38,10 @@ function MiniPlayer() {
     seekTo(seekTime);
   };
 
+  const handleVolumeChange = (e) => {
+    changeVolume(parseFloat(e.target.value));
+  };
+
   return (
     <div className="mini-player">
       <div className="mini-player-content">
@@ -46,11 +58,25 @@ function MiniPlayer() {
         </div>
 
         <div className="mini-player-controls">
+          <button 
+            className={`mini-player-btn mini-player-shuffle-btn ${isShuffle ? 'active' : ''}`} 
+            onClick={toggleShuffle}
+            title="Shuffle"
+          >
+            🔀
+          </button>
           <button className="mini-player-btn" onClick={playPrev} title="Previous">⏮</button>
           <button className="mini-player-btn mini-player-play-btn" onClick={togglePlayPause}>
             {isPlaying ? '⏸' : '▶'}
           </button>
           <button className="mini-player-btn" onClick={playNext} title="Next">⏭</button>
+          <button 
+            className={`mini-player-btn mini-player-repeat-btn ${isRepeat ? 'active' : ''}`} 
+            onClick={toggleRepeat}
+            title="Repeat"
+          >
+            🔁
+          </button>
         </div>
 
         <div className="mini-player-progress-section">
@@ -62,6 +88,22 @@ function MiniPlayer() {
             />
           </div>
           <span className="mini-player-time">{formatTime(duration)}</span>
+        </div>
+
+        <div className="mini-player-volume">
+          <button className="mini-player-btn mini-player-mute-btn" onClick={toggleMute} title="Mute/Unmute">
+            {isMuted ? '🔇' : '🔊'}
+          </button>
+          <input 
+            type="range" 
+            min="0" 
+            max="1" 
+            step="0.1" 
+            value={isMuted ? 0 : volume}
+            onChange={handleVolumeChange}
+            className="mini-player-volume-slider"
+            title="Volume"
+          />
         </div>
 
         <div className="mini-player-source-badge">

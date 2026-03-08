@@ -19,6 +19,10 @@ export function MusicPlayerProvider({ children }) {
   const [duration, setDuration] = useState(0);
   const [playlist, setPlaylist] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [volume, setVolume] = useState(0.7);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isRepeat, setIsRepeat] = useState(false);
+  const [isShuffle, setIsShuffle] = useState(false);
   
   const ytPlayerRef = useRef(null);
   const audioRef = useRef(null);
@@ -242,6 +246,38 @@ export function MusicPlayerProvider({ children }) {
     }
   }, [currentTrack, getTrackSource]);
 
+  const toggleMute = useCallback(() => {
+    if (ytPlayerRef.current) {
+      if (isMuted) {
+        ytPlayerRef.current.unMute();
+      } else {
+        ytPlayerRef.current.mute();
+      }
+    }
+    if (audioRef.current) {
+      audioRef.current.muted = !isMuted;
+    }
+    setIsMuted(!isMuted);
+  }, [isMuted]);
+
+  const changeVolume = useCallback((newVolume) => {
+    setVolume(newVolume);
+    if (ytPlayerRef.current) {
+      ytPlayerRef.current.setVolume(newVolume * 100);
+    }
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume;
+    }
+  }, []);
+
+  const toggleShuffle = useCallback(() => {
+    setIsShuffle(prev => !prev);
+  }, []);
+
+  const toggleRepeat = useCallback(() => {
+    setIsRepeat(prev => !prev);
+  }, []);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -279,6 +315,14 @@ export function MusicPlayerProvider({ children }) {
     playPrev,
     seekTo,
     audioRef,
+    volume,
+    isMuted,
+    isRepeat,
+    isShuffle,
+    toggleMute,
+    changeVolume,
+    toggleShuffle,
+    toggleRepeat,
   };
 
   return (

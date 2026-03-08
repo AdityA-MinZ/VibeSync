@@ -264,11 +264,6 @@ function PlaylistModal({ playlist, onClose }) {
                 🔗 Share
               </button>
             </div>
-            {currentTrack && (
-              <div className="keyboard-shortcuts-hint">
-                <small>💡 Keyboard shortcuts: Space (play/pause) | ←→ (prev/next) | M (mute) | R (repeat) | S (shuffle) | ↑↓ (volume)</small>
-              </div>
-            )}
           </div>
         </div>
 
@@ -324,112 +319,40 @@ function PlaylistModal({ playlist, onClose }) {
           </div>
 
           {comments && (
-          <div className="comments-section">
-            <h3>Comments</h3>
-            <div className="comment-input-wrapper">
-              <input
-                type="text"
-                placeholder="Add a comment..."
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
-              />
-              <button onClick={handleAddComment} disabled={loadingComment}>Post</button>
+            <div className="comments-section">
+              <h3>Comments</h3>
+              <div className="comment-input-wrapper">
+                <input
+                  type="text"
+                  placeholder="Add a comment..."
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
+                />
+                <button onClick={handleAddComment} disabled={loadingComment}>Post</button>
+              </div>
+              <ul className="comments-list">
+                {comments.map((comment, idx) => (
+                  <li key={idx} className="comment-item">
+                    <div className="comment-avatar">
+                      {comment.user?.username?.[0]?.toUpperCase() || 'U'}
+                    </div>
+                    <div className="comment-content">
+                      <span className="comment-user">{comment.user?.username || 'User'}</span>
+                      <span className="comment-text">{comment.text}</span>
+                      <span className="comment-time">
+                        {new Date(comment.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+                {comments.length === 0 && (
+                  <li className="no-comments">No comments yet. Be the first!</li>
+                )}
+              </ul>
             </div>
-            <ul className="comments-list">
-              {comments.map((comment, idx) => (
-                <li key={idx} className="comment-item">
-                  <div className="comment-avatar">
-                    {comment.user?.username?.[0]?.toUpperCase() || 'U'}
-                  </div>
-                  <div className="comment-content">
-                    <span className="comment-user">{comment.user?.username || 'User'}</span>
-                    <span className="comment-text">{comment.text}</span>
-                    <span className="comment-time">
-                      {new Date(comment.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                </li>
-              ))}
-              {comments.length === 0 && (
-                <li className="no-comments">No comments yet. Be the first!</li>
-              )}
-            </ul>
-          </div>
           )}
-
         </div>
-
-        {currentTrack && (
-          <div className="music-player-bar">
-            <div className="player-track-info">
-              <img 
-                src={currentTrack.image || currentTrack.album?.images?.[2]?.url || 'https://picsum.photos/50/50'} 
-                alt="" 
-                className="player-track-img"
-              />
-              <div>
-                <div className="player-track-name">{currentTrack.title || currentTrack.name}</div>
-                <div className="player-track-artist">
-                  {currentTrack.artist || (currentTrack.artists && currentTrack.artists.map(a => a.name).join(', '))}
-                </div>
-              </div>
-            </div>
-            <div className="player-controls">
-              <button 
-                className={`control-btn ${isShuffle ? 'active' : ''}`}
-                onClick={handleShuffleToggle}
-                title="Shuffle"
-              >
-                🔀
-              </button>
-              <button onClick={handlePrevTrack} title="Previous">⏮</button>
-              <button className="play-pause-btn" onClick={handlePlayPause} title="Play/Pause">
-                {isPlaying ? '⏸' : '▶'}
-              </button>
-              <button onClick={handleNextTrack} title="Next">⏭</button>
-              <button 
-                className={`control-btn ${isRepeat ? 'active' : ''}`}
-                onClick={handleRepeatToggle}
-                title="Repeat"
-              >
-                🔁
-              </button>
-            </div>
-            <div className="player-progress">
-              <span className="player-time">{formatTime(currentTime)}</span>
-              <div className="progress-bar" onClick={handleSeek}>
-                <div 
-                  className="progress-fill" 
-                  style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-                ></div>
-              </div>
-              <span className="player-time">{formatTime(duration)}</span>
-            </div>
-            <div className="player-volume">
-              <button onClick={handleMuteToggle} title="Mute/Unmute">
-                {isMuted ? '🔇' : '🔊'}
-              </button>
-              <input 
-                type="range" 
-                min="0" 
-                max="1" 
-                step="0.1" 
-                value={isMuted ? 0 : volume}
-                onChange={handleVolumeChange}
-                className="volume-slider"
-                title="Volume"
-              />
-            </div>
-            {getTrackSource(currentTrack) === 'youtube' && (
-              <div className="player-yt-badge">YouTube</div>
-            )}
-          </div>
-        )}
-
-        {currentTrack && getTrackSource(currentTrack) === 'youtube' && (
-          <div className="player-yt-badge">YouTube</div>
-        )}
       </div>
     </div>
   );

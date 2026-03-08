@@ -156,6 +156,45 @@
   font-size: 1.25rem;
 }
 
+.mini-player-volume {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mini-player-volume-slider {
+  width: 80px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #374151;
+  border-radius: 2px;
+  outline: none;
+}
+
+.mini-player-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+}
+
+.mini-player-volume-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  border: none;
+}
+
+.mini-player-btn.active {
+  color: #667eea;
+}
+
 @media (max-width: 768px) {
   .mini-player-content {
     flex-wrap: wrap;
