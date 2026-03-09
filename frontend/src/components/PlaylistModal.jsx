@@ -302,7 +302,7 @@ function PlaylistModal({ playlist, onClose, onViewProfile, currentUserId }) {
             <div className="playlist-modal-actions">
               <LikeButton
                 targetType="playlist"
-                targetId={playlist._id || playlist.id}
+                targetId={String(playlist._id || playlist.id)}
                 initialCount={playlist.likes || 0}
                 showCount={true}
                 size="medium"

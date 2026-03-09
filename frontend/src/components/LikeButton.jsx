@@ -7,12 +7,14 @@ function LikeButton({ targetType, targetId, initialCount = 0, showCount = true, 
   const [count, setCount] = useState(initialCount || 0);
   const [loading, setLoading] = useState(false);
 
+  const stringTargetId = String(targetId || '');
+
   useEffect(() => {
     // Check if user already liked this item
     const checkLikedStatus = async () => {
       try {
-        const result = await checkLike(targetType, targetId);
-        setIsLiked(result.liked);
+        const result = await checkLike(targetType, stringTargetId);
+        setIsLiked(result.liked || result.hasLiked);
       } catch (error) {
         console.error('Failed to check like status:', error);
       }
@@ -21,18 +23,18 @@ function LikeButton({ targetType, targetId, initialCount = 0, showCount = true, 
     // Get current like count
     const fetchCount = async () => {
       try {
-        const result = await getLikeCount(targetType, targetId);
-        setCount(result.count ?? 0);
+        const result = await getLikeCount(targetType, stringTargetId);
+        setCount(result.count ?? result.likeCount ?? 0);
       } catch (error) {
         console.error('Failed to fetch like count:', error);
       }
     };
 
-    if (targetId) {
+    if (stringTargetId) {
       checkLikedStatus();
       fetchCount();
     }
-  }, [targetType, targetId]);
+  }, [targetType, stringTargetId]);
 
   const handleClick = async (e) => {
     if (e) {
@@ -43,9 +45,9 @@ function LikeButton({ targetType, targetId, initialCount = 0, showCount = true, 
     
     setLoading(true);
     try {
-      const result = await toggleLike(targetType, targetId);
+      const result = await toggleLike(targetType, stringTargetId);
       setIsLiked(result.liked);
-      setCount(result.count ?? 0);
+      setCount(result.count ?? result.likeCount ?? 0);
     } catch (error) {
       console.error('Failed to toggle like:', error);
     } finally {

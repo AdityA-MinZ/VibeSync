@@ -1102,7 +1102,7 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
                         <div className="playlist-card-actions">
                           <LikeButton
                             targetType="playlist"
-                            targetId={playlist._id || playlist.id}
+                            targetId={String(playlist._id || playlist.id)}
                             initialCount={playlist.likes || 0}
                             showCount={true}
                             size="small"
@@ -1906,7 +1906,7 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
                 <div className="stat-item">
                   <LikeButton
                     targetType="track"
-                    targetId={modalTrack.id.toString()}
+                    targetId={String(modalTrack.id)}
                     initialCount={modalTrack.likes}
                     showCount={true}
                     size="medium"
