@@ -86,13 +86,55 @@ router.post('/import-playlist', async (req, res) => {
       },
     });
 
-    const tracks = (itemsResponse.data.items || []).map(item => ({
-      id: item.snippet.resourceId.videoId,
-      title: item.snippet.title,
-      artist: item.snippet.channelTitle,
-      image: item.snippet.thumbnails?.medium?.url || '',
-      youtubeUrl: `https://www.youtube.com/watch?v=${item.snippet.resourceId.videoId}`,
-    })).filter(t => t.id && t.title !== 'Private video' && t.title !== 'Deleted video');
+    const items = itemsResponse.data.items || [];
+    const videoIds = items.map(item => item.snippet.resourceId.videoId).filter(id => id);
+    
+    // Fetch video details to get duration
+    let videoDetails = {};
+    if (videoIds.length > 0) {
+      try {
+        const videosResponse = await axios.get(`${YT_API_URL}/videos`, {
+          params: {
+            key: YOUTUBE_API_KEY,
+            part: 'contentDetails',
+            id: videoIds.join(','),
+          },
+        });
+        
+        videosResponse.data.items?.forEach(video => {
+          videoDetails[video.id] = video.contentDetails?.duration || 'PT0M0S';
+        });
+      } catch (videoError) {
+        console.error('Error fetching video details:', videoError.message);
+      }
+    }
+
+    // Helper to parse YouTube ISO 8601 duration to seconds
+    const parseDuration = (isoDuration) => {
+      if (!isoDuration) return 0;
+      const match = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+      if (!match) return 0;
+      const hours = parseInt(match[1] || 0);
+      const minutes = parseInt(match[2] || 0);
+      const seconds = parseInt(match[3] || 0);
+      return (hours * 3600) + (minutes * 60) + seconds;
+    };
+
+    const tracks = items.map(item => {
+      const videoId = item.snippet.resourceId.videoId;
+      const isoDuration = videoDetails[videoId];
+      const durationSeconds = parseDuration(isoDuration);
+      
+      return {
+        id: videoId,
+        title: item.snippet.title,
+        artist: item.snippet.channelTitle,
+        image: item.snippet.thumbnails?.medium?.url || '',
+        youtubeUrl: `https://www.youtube.com/watch?v=${videoId}`,
+        duration: durationSeconds,
+        duration_ms: durationSeconds * 1000,
+      };
+    }).filter(t => t.id && t.title !== 'Private video' && t.title !== 'Deleted video');
 
     res.json({
       name: playlistInfo.snippet.title,

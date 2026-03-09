@@ -275,7 +275,7 @@ function SearchResults({ query, onClose, onTrackSelect }) {
                     <div className="playlist-info">
                       <h4 className="playlist-title">{playlist.title}</h4>
                       <p className="playlist-creator">
-                        by <Link to={`/${playlist.owner?.username}`} className="profile-link">{playlist.owner?.username}</Link>
+                        by {playlist.tracks?.[0]?.artist || playlist.owner?.username || 'Unknown'}
                       </p>
                       {playlist.description && (
                         <p className="playlist-desc">{playlist.description}</p>
