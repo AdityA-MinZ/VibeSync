@@ -312,58 +312,39 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
             </p>
             
             <div className="session-form">
-              {playlists.length > 0 && (
-                <div className="form-group">
-                  <label>Select Playlist</label>
-                  <select
-                    value={selectedPlaylist}
-                    onChange={(e) => {
-                      const playlist = playlists.find(p => p._id === e.target.value);
-                      setSelectedPlaylist(e.target.value);
-                      if (playlist) {
-                        setSessionSongName(playlist.title || playlist.name);
-                        setSessionSongUrl(playlist.tracks?.[0]?.youtubeUrl || '');
-                      }
-                    }}
-                  >
-                    <option value="">Select a playlist...</option>
-                    {playlists.map(playlist => (
-                      <option key={playlist._id} value={playlist._id}>
-                        {playlist.title || playlist.name} ({playlist.tracks?.length || 0} tracks)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              
               <div className="form-group">
-                <label>Playlist Name *</label>
-                <input
-                  type="text"
-                  placeholder="Enter playlist name"
-                  value={sessionSongName}
-                  onChange={(e) => setSessionSongName(e.target.value)}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>First Track URL (optional)</label>
-                <input
-                  type="text"
-                  placeholder="YouTube or Spotify URL"
-                  value={sessionSongUrl}
-                  onChange={(e) => setSessionSongUrl(e.target.value)}
-                />
+                <label>Select Your Playlist</label>
+                <select
+                  value={selectedPlaylist}
+                  onChange={(e) => setSelectedPlaylist(e.target.value)}
+                >
+                  <option value="">Select a playlist...</option>
+                  {playlists.map(playlist => (
+                    <option key={playlist._id} value={playlist._id}>
+                      {playlist.title || playlist.name} ({playlist.tracks?.length || 0} tracks)
+                    </option>
+                  ))}
+                </select>
               </div>
               
               <div className="session-form-actions">
-                <button className="btn-secondary" onClick={() => setShowSessionModal(false)}>
+                <button className="btn-secondary" onClick={() => {
+                  setShowSessionModal(false);
+                  setSelectedPlaylist('');
+                }}>
                   Cancel
                 </button>
                 <button 
                   className="btn-primary"
-                  onClick={createSession}
-                  disabled={!sessionSongName.trim()}
+                  onClick={() => {
+                    const playlist = playlists.find(p => p._id === selectedPlaylist);
+                    if (playlist) {
+                      setSessionSongName(playlist.title || playlist.name);
+                      setSessionSongUrl(playlist.tracks?.[0]?.youtubeUrl || '');
+                      createSession();
+                    }
+                  }}
+                  disabled={!selectedPlaylist}
                 >
                   Create Session
                 </button>
