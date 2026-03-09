@@ -19,7 +19,8 @@ function MiniPlayer() {
     toggleMute,
     changeVolume,
     toggleShuffle,
-    toggleRepeat
+    toggleRepeat,
+    closePlayer
   } = useMusicPlayer();
 
   if (!currentTrack) return null;
@@ -113,6 +114,10 @@ function MiniPlayer() {
             <span className="source-uploaded">🎵</span>
           )}
         </div>
+
+        <button className="mini-player-close-btn" onClick={closePlayer} title="Close">
+          ✕
+        </button>
       </div>
     </div>
   );

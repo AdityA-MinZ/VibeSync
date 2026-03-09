@@ -323,6 +323,17 @@ export function MusicPlayerProvider({ children }) {
     changeVolume,
     toggleShuffle,
     toggleRepeat,
+    closePlayer: () => {
+      setCurrentTrack(null);
+      setIsPlaying(false);
+      setCurrentTime(0);
+      setDuration(0);
+      setPlaylist(null);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    },
   };
 
   return (
