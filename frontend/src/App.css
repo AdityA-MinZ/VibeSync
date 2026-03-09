@@ -205,6 +205,23 @@ opacity: 0.2;
   text-align: left;
 }
 
+.auth-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.auth-container .form-group {
+  width: 100%;
+}
+
+.auth-container input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  font-size: 1rem;
+}
+
 .auth-container h2 {
   margin-bottom: 1.5rem;
   font-size: 1.8rem;
