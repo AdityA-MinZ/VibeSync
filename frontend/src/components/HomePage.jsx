@@ -251,19 +251,35 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
   };
 
   const handleSendFriendRequest = async () => {
-    if (!profileData?._id) return;
+    console.log('Sending friend request, profileData:', profileData);
+    console.log('ProfileData _id:', profileData?._id);
+    console.log('Current user id:', user?._id);
+    
+    if (!profileData?._id) {
+      alert('Unable to send friend request. Profile not loaded.');
+      return;
+    }
+    
+    // Check if trying to friend yourself
+    if (profileData._id === user?._id) {
+      alert('You cannot send a friend request to yourself.');
+      return;
+    }
+    
     setFriendLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.post(
+      const response = await axios.post(
         `${API_URL}/friends/request/${profileData._id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      console.log('Friend request response:', response.data);
       setFriendStatus('pending');
       alert('Friend request sent!');
     } catch (error) {
       console.error('Friend request error:', error);
+      console.error('Error response:', error.response?.data);
       if (error.response?.data?.error) {
         alert(error.response.data.error);
       } else {

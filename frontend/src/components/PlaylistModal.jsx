@@ -41,17 +41,19 @@ function PlaylistModal({ playlist, onClose, onViewProfile, currentUserId }) {
   const isOwnPlaylist = currentUserId && ownerId && (currentUserId === ownerId || currentUserId === ownerId.toString());
 
   useEffect(() => {
-    const checkFollowStatus = async () => {
+    const checkFollow = async () => {
       if (ownerId && !isOwnPlaylist) {
         try {
-          const { isFollowing } = await checkFollowStatus(ownerId);
-          setIsFollowing(isFollowing);
+          const result = await checkFollowStatus(ownerId);
+          if (result) {
+            setIsFollowing(result.isFollowing || false);
+          }
         } catch (err) {
           console.error('Check follow status error:', err);
         }
       }
     };
-    checkFollowStatus();
+    checkFollow();
   }, [ownerId, isOwnPlaylist]);
 
   useEffect(() => {

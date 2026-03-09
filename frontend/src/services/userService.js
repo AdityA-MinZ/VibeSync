@@ -42,15 +42,19 @@ export const getUserByUsername = async (username) => {
     const token = localStorage.getItem('token');
     
     if (!token) {
+      console.log('No token found');
       return null;
     }
     
+    console.log('Fetching user by username:', username);
     const response = await axios.get(`${API_URL}/users/username/${username}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
+    console.log('getUserByUsername response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Get user by username error:', error);
+    console.error('Error response:', error.response?.data);
     return null;
   }
 };
