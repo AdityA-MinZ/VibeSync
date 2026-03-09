@@ -789,9 +789,10 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
             profile = await getUserByUsername(viewedUser);
             console.log('Viewed user profile:', profile);
             console.log('Viewed user ID:', profile?._id);
-            // For other users, we only get basic info (no stats/activity for now)
-            stats = null;
+            // Fetch stats for other users
+            stats = profile ? await getUserStats(profile._id) : null;
             playlists = profile ? await getUserPlaylists(profile._id) : [];
+            console.log('Fetched other user stats:', stats);
             console.log('Fetched other user playlists:', playlists);
             activity = [];
           } else {
@@ -1095,10 +1096,6 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
                               {playlist.tracks?.length || 0}
                             </span>
                             <span className="stat">
-                              <span className="stat-icon">❤️</span>
-                              {playlist.likes || 0}
-                            </span>
-                            <span className="stat">
                               <span className="stat-icon">▶</span>
                               {playlist.plays || 0}
                             </span>
@@ -1214,27 +1211,49 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
                   <div className="stat-label">Playlists</div>
                 </div>
               </div>
-              <div className="stat-card">
-                <div className="stat-icon-wrapper">👥</div>
-                <div className="stat-info">
-                  <div className="stat-number">{profileStats?.followersCount || 0}</div>
-                  <div className="stat-label">Followers</div>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon-wrapper">🎧</div>
-                <div className="stat-info">
-                  <div className="stat-number">{Math.round((profileStats?.totalListeningTime || 0) / 60)}</div>
-                  <div className="stat-label">Hours Listened</div>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon-wrapper">🔥</div>
-                <div className="stat-info">
-                  <div className="stat-number">{profileStats?.currentStreak || 0}</div>
-                  <div className="stat-label">Day Streak</div>
-                </div>
-              </div>
+              {!viewedUser && (
+                <>
+                  <div className="stat-card">
+                    <div className="stat-icon-wrapper">👥</div>
+                    <div className="stat-info">
+                      <div className="stat-number">{profileStats?.followersCount || 0}</div>
+                      <div className="stat-label">Followers</div>
+                    </div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-icon-wrapper">🎧</div>
+                    <div className="stat-info">
+                      <div className="stat-number">{Math.round((profileStats?.totalListeningTime || 0) / 60)}</div>
+                      <div className="stat-label">Hours Listened</div>
+                    </div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-icon-wrapper">🔥</div>
+                    <div className="stat-info">
+                      <div className="stat-number">{profileStats?.currentStreak || 0}</div>
+                      <div className="stat-label">Day Streak</div>
+                    </div>
+                  </div>
+                </>
+              )}
+              {viewedUser && (
+                <>
+                  <div className="stat-card">
+                    <div className="stat-icon-wrapper">👥</div>
+                    <div className="stat-info">
+                      <div className="stat-number">{profileStats?.followersCount || 0}</div>
+                      <div className="stat-label">Followers</div>
+                    </div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-icon-wrapper">▶</div>
+                    <div className="stat-info">
+                      <div className="stat-number">{profileStats?.totalPlays || 0}</div>
+                      <div className="stat-label">Total Plays</div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Recent Activity */}

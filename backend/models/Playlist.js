@@ -20,6 +20,7 @@ const playlistSchema = new mongoose.Schema({
     previewUrl: String
   }],
   isPublic: { type: Boolean, default: true },
+  plays: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 

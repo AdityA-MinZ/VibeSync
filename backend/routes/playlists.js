@@ -39,6 +39,24 @@ router.get('/user/:userId', auth, async (req, res) => {
   }
 });
 
+// POST increment plays (public - anyone can play a playlist)
+router.post('/:id/plays', async (req, res) => {
+  try {
+    const playlist = await Playlist.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { plays: 1 } },
+      { new: true }
+    );
+    if (!playlist) {
+      return res.status(404).json({ error: 'Playlist not found' });
+    }
+    res.json({ plays: playlist.plays });
+  } catch (error) {
+    console.error('Increment plays error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // POST create (protected)
 router.post('/', auth, async (req, res) => {
   try {

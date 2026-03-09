@@ -238,3 +238,13 @@ export const deletePlaylist = async (playlistId) => {
     throw error;
   }
 };
+
+export const incrementPlaylistPlays = async (playlistId) => {
+  try {
+    const response = await axios.post(`${API_URL}/playlists/${playlistId}/plays`);
+    return response.data;
+  } catch (error) {
+    console.error('Increment plays error:', error);
+    throw error;
+  }
+};

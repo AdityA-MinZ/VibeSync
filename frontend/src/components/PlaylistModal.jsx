@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toggleLike, followUser, unfollowUser, checkFollowStatus } from '../services/socialService';
+import { incrementPlaylistPlays } from '../services/userService';
 import { useMusicPlayer } from '../context/MusicPlayerContext';
 import LikeButton from './LikeButton';
 import './PlaylistModal.css';
@@ -45,6 +46,19 @@ function PlaylistModal({ playlist, onClose, onViewProfile, currentUserId }) {
     };
     checkFollowStatus();
   }, [ownerId, isOwnPlaylist]);
+
+  useEffect(() => {
+    const incrementPlays = async () => {
+      if (playlist?._id) {
+        try {
+          await incrementPlaylistPlays(playlist._id);
+        } catch (err) {
+          console.error('Increment plays error:', err);
+        }
+      }
+    };
+    incrementPlays();
+  }, [playlist?._id]);
 
   const handleFollowToggle = async () => {
     if (!ownerId || isOwnPlaylist) return;

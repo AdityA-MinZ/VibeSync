@@ -195,6 +195,34 @@ router.get('/me/stats', auth, async (req, res) => {
   }
 });
 
+// Get user stats by ID (public - for viewing other users)
+router.get('/:id/stats', async (req, res) => {
+  try {
+    console.log('Fetching stats for userId:', req.params.id);
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const playlists = await Playlist.find({ owner: req.params.id });
+    const totalTracks = playlists.reduce((sum, p) => sum + (p.tracks?.length || 0), 0);
+    const totalPlays = playlists.reduce((sum, p) => sum + (p.plays || 0), 0);
+
+    res.json({
+      playlistsCount: playlists.length,
+      tracksCount: totalTracks,
+      followersCount: user.followers?.length || 0,
+      followingCount: user.followings?.length || 0,
+      totalPlays: totalPlays,
+      currentStreak: 0,
+      longestStreak: 0
+    });
+  } catch (error) {
+    console.log('Get user stats error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.get('/me/activity', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
