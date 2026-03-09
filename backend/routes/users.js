@@ -79,10 +79,16 @@ router.get('/all', auth, async (req, res) => {
 // Get user by username
 router.get('/username/:username', auth, async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.params.username })
+    const usernameParam = decodeURIComponent(req.params.username);
+    console.log('Searching for username:', usernameParam);
+    
+    const user = await User.findOne({ 
+      username: { $regex: new RegExp(`^${usernameParam}$`, 'i') }
+    })
       .select('-password');
     
     if (!user) {
+      console.log('User not found for username:', usernameParam);
       return res.status(404).json({ error: 'User not found' });
     }
 

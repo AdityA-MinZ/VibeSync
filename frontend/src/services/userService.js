@@ -92,12 +92,15 @@ export const getUserPlaylists = async (userId, limit = 20, skip = 0) => {
   try {
     const token = localStorage.getItem('token');
     
-    // If no token, try to get public playlists
+    // If no token, return empty array
     if (!token) {
-      const response = await axios.get(`${API_URL}/playlists`, {
-        params: { limit, skip }
-      });
-      return response.data;
+      return [];
+    }
+    
+    // If userId is provided but invalid, return empty array
+    if (userId && typeof userId !== 'string') {
+      console.error('Invalid userId:', userId);
+      return [];
     }
     
     const url = userId 
@@ -113,16 +116,8 @@ export const getUserPlaylists = async (userId, limit = 20, skip = 0) => {
   } catch (error) {
     console.error('Get user playlists error:', error);
     console.error('Error response:', error.response?.data);
-    // Fallback to public playlists if auth fails
-    try {
-      const response = await axios.get(`${API_URL}/playlists`, {
-        params: { limit, skip }
-      });
-      return response.data;
-    } catch (fallbackError) {
-      console.error('Fallback playlists error:', fallbackError);
-      throw fallbackError;
-    }
+    // Return empty array on error instead of falling back to all playlists
+    return [];
   }
 };
 
