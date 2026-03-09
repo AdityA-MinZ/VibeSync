@@ -79,6 +79,17 @@ function FriendsPage({ user, sidebarExpanded }) {
     }
   };
 
+  // Poll for new messages every 3 seconds
+  useEffect(() => {
+    if (!selectedFriend) return;
+    
+    const interval = setInterval(() => {
+      fetchMessages(selectedFriend._id);
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, [selectedFriend]);
+
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !selectedFriend) return;
