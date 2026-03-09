@@ -38,19 +38,23 @@ router.post('/request/:userId', auth, async (req, res) => {
     // Create notification for the target user
     try {
       const requester = await User.findById(requesterId).select('username');
-      const notification = new Notification({
-        recipient: userId,
-        type: 'friend_request',
-        title: 'New Friend Request',
-        message: `${requester?.username || 'Someone'} sent you a friend request`,
-        data: {
-          requestId: friendReq._id,
-          requesterId: requesterId,
-          requesterUsername: requester?.username
-        }
-      });
-      await notification.save();
-      console.log('Notification created:', notification._id);
+      const targetUser = await User.findById(userId);
+      
+      if (targetUser) {
+        const notification = new Notification({
+          recipient: userId,
+          sender: requesterId,
+          type: 'friend_request',
+          message: `${requester?.username || 'Someone'} sent you a friend request`,
+          data: {
+            requestId: friendReq._id,
+            requesterId: requesterId,
+            requesterUsername: requester?.username
+          }
+        });
+        await notification.save();
+        console.log('Notification created:', notification._id);
+      }
     } catch (notifError) {
       console.log('Notification creation failed:', notifError.message);
     }

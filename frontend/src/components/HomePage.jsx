@@ -720,10 +720,24 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
         console.error('Error fetching unread count:', error);
       }
     };
+
+    const fetchNotifications = async () => {
+      try {
+        const result = await getNotifications({ limit: 20 });
+        setNotifications(result.notifications || []);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      }
+    };
+
     fetchUnreadCount();
+    fetchNotifications();
 
     // Poll for new notifications every 30 seconds
-    const interval = setInterval(fetchUnreadCount, 30000);
+    const interval = setInterval(() => {
+      fetchUnreadCount();
+      fetchNotifications();
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
