@@ -1373,7 +1373,7 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
 
         {/* Friends */}
         {currentPage === "friends" && (
-          <FriendsPage user={user} sidebarExpanded={sidebarExpanded} />
+          <FriendsPage user={user} sidebarExpanded={sidebarExpanded} playlists={homePlaylists} />
         )}
 
         {/* Notifications */}

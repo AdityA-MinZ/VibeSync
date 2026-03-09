@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../api';
 import './FriendsPage.css';
 
-function FriendsPage({ user, sidebarExpanded }) {
+function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
   const [friends, setFriends] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
@@ -13,6 +13,7 @@ function FriendsPage({ user, sidebarExpanded }) {
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [sessionSongName, setSessionSongName] = useState('');
   const [sessionSongUrl, setSessionSongUrl] = useState('');
+  const [selectedPlaylist, setSelectedPlaylist] = useState('');
   const [, setActiveSession] = useState(null);
   const messagesEndRef = useRef(null);
 
@@ -311,18 +312,42 @@ function FriendsPage({ user, sidebarExpanded }) {
             </p>
             
             <div className="session-form">
+              {playlists.length > 0 && (
+                <div className="form-group">
+                  <label>Select Playlist</label>
+                  <select
+                    value={selectedPlaylist}
+                    onChange={(e) => {
+                      const playlist = playlists.find(p => p._id === e.target.value);
+                      setSelectedPlaylist(e.target.value);
+                      if (playlist) {
+                        setSessionSongName(playlist.title || playlist.name);
+                        setSessionSongUrl(playlist.tracks?.[0]?.youtubeUrl || '');
+                      }
+                    }}
+                  >
+                    <option value="">Select a playlist...</option>
+                    {playlists.map(playlist => (
+                      <option key={playlist._id} value={playlist._id}>
+                        {playlist.title || playlist.name} ({playlist.tracks?.length || 0} tracks)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
               <div className="form-group">
-                <label>Song Name *</label>
+                <label>Playlist Name *</label>
                 <input
                   type="text"
-                  placeholder="Enter song name"
+                  placeholder="Enter playlist name"
                   value={sessionSongName}
                   onChange={(e) => setSessionSongName(e.target.value)}
                 />
               </div>
               
               <div className="form-group">
-                <label>Song URL (optional)</label>
+                <label>First Track URL (optional)</label>
                 <input
                   type="text"
                   placeholder="YouTube or Spotify URL"

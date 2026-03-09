@@ -418,6 +418,21 @@
   border-color: #7c3aed;
 }
 
+.session-form select {
+  background: #2d2d44;
+  border: 1px solid #3d3d5c;
+  border-radius: 8px;
+  padding: 12px;
+  color: #fff;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.session-form select:focus {
+  outline: none;
+  border-color: #7c3aed;
+}
+
 .session-form-actions {
   display: flex;
   gap: 12px;
