@@ -99,7 +99,7 @@ router.put('/accept/:requestId', auth, async (req, res) => {
     await Promise.all([user1.save(), user2.save()]);
     console.log('Followings updated');
 
-    const populated = await Friend.findById(requestId).populate('user1 user2', 'username email');
+    const populated = await Friend.findById(requestId).populate('user1 user2', 'username email profileImage');
 
     // Notify the requester that their friend request was accepted
     try {
@@ -164,7 +164,7 @@ router.get('/', auth, async (req, res) => {
     console.log('Fetching friends list for:', req.user.id);
     const requests = await Friend.find({
       $or: [{ user1: req.user.id }, { user2: req.user.id }]
-    }).populate('user1 user2', 'username email');
+    }).populate('user1 user2', 'username email profileImage');
     res.json(requests);
   } catch (error) {
     console.log('Friends list ERROR:', error.message);

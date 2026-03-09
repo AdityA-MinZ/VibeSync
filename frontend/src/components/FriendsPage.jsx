@@ -179,7 +179,11 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
             {pendingRequests.map(request => (
               <div key={request.requestId} className="pending-item">
                 <div className="friend-avatar">
-                  {request.username.charAt(0).toUpperCase()}
+                  {request.profileImage ? (
+                    <img src={request.profileImage} alt={request.username} />
+                  ) : (
+                    request.username?.charAt(0).toUpperCase()
+                  )}
                 </div>
                 <div className="pending-info">
                   <span className="friend-name">{request.username}</span>
@@ -217,7 +221,11 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
                 onClick={() => setSelectedFriend(friend)}
               >
                 <div className="friend-avatar">
-                  {friend.username.charAt(0).toUpperCase()}
+                  {friend.profileImage ? (
+                    <img src={friend.profileImage} alt={friend.username} />
+                  ) : (
+                    friend.username?.charAt(0).toUpperCase()
+                  )}
                 </div>
                 <div className="friend-info">
                   <span className="friend-name">{friend.username}</span>
@@ -236,7 +244,11 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
             <div className="chat-header">
               <div className="chat-header-info">
                 <div className="friend-avatar">
-                  {selectedFriend.username.charAt(0).toUpperCase()}
+                  {selectedFriend.profileImage ? (
+                    <img src={selectedFriend.profileImage} alt={selectedFriend.username} />
+                  ) : (
+                    selectedFriend.username?.charAt(0).toUpperCase()
+                  )}
                 </div>
                 <div className="chat-header-text">
                   <h4>{selectedFriend.username}</h4>
