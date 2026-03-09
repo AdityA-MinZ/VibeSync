@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 
 class FollowService {
   /**
@@ -24,7 +25,24 @@ class FollowService {
       }
       
       // Follow
-      await user.follow(userIdToFollow);
+      await user.follow(userToFollow);
+      
+      // Create notification for the followed user
+      try {
+        const notification = new Notification({
+          recipient: userIdToFollow,
+          type: 'new_follower',
+          title: 'New Follower',
+          message: `${user.username} started following you`,
+          data: {
+            followerId: userId,
+            followerUsername: user.username
+          }
+        });
+        await notification.save();
+      } catch (notifError) {
+        console.log('Follow notification creation failed:', notifError.message);
+      }
       
       return {
         success: true,

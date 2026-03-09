@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Friend = require('../models/Friend');
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 const auth = require('../middleware/auth');
 
 // POST /api/friends/request/:userId
@@ -33,6 +34,26 @@ router.post('/request/:userId', auth, async (req, res) => {
     });
     await friendReq.save();
     console.log('Friend request saved:', friendReq._id);
+
+    // Create notification for the target user
+    try {
+      const requester = await User.findById(requesterId).select('username');
+      const notification = new Notification({
+        recipient: userId,
+        type: 'friend_request',
+        title: 'New Friend Request',
+        message: `${requester?.username || 'Someone'} sent you a friend request`,
+        data: {
+          requestId: friendReq._id,
+          requesterId: requesterId,
+          requesterUsername: requester?.username
+        }
+      });
+      await notification.save();
+      console.log('Notification created:', notification._id);
+    } catch (notifError) {
+      console.log('Notification creation failed:', notifError.message);
+    }
 
     res.status(201).json({ 
       message: 'Friend request sent',
@@ -75,6 +96,26 @@ router.put('/accept/:requestId', auth, async (req, res) => {
     console.log('Followings updated');
 
     const populated = await Friend.findById(requestId).populate('user1 user2', 'username email');
+
+    // Notify the requester that their friend request was accepted
+    try {
+      const acceptor = await User.findById(req.user.id).select('username');
+      const requesterId = friendReq.user1.toString() === req.user.id ? friendReq.user2 : friendReq.user1;
+      const notification = new Notification({
+        recipient: requesterId,
+        type: 'friend_accepted',
+        title: 'Friend Request Accepted',
+        message: `${acceptor?.username || 'Someone'} accepted your friend request`,
+        data: {
+          friendId: req.user.id,
+          friendUsername: acceptor?.username
+        }
+      });
+      await notification.save();
+      console.log('Friend accepted notification created');
+    } catch (notifError) {
+      console.log('Notification creation failed:', notifError.message);
+    }
 
     res.json({ 
       message: 'Friend request accepted',

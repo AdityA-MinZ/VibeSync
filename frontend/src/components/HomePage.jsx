@@ -1257,11 +1257,11 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
               </div>
             </div>
 
-            {/* Your Playlists */}
+            {/* Your Playlists / User's Playlists */}
             <div className="section-card">
               <div className="section-header">
-                <h3>Your Playlists</h3>
-                <button className="view-all-btn" onClick={handleViewAllPlaylists}>See All</button>
+                <h3>{viewedUser ? `${viewedUser}'s Playlists` : 'Your Playlists'}</h3>
+                {!viewedUser && <button className="view-all-btn" onClick={handleViewAllPlaylists}>See All</button>}
               </div>
               <div className="playlist-mini-grid">
                 {safeProfilePlaylists.length > 0 ? (
