@@ -751,6 +751,7 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
     if (viewedUserProp === 'route' && urlUsername) {
       setCurrentPage('profile');
       setViewedUser(urlUsername);
+      setSelectedPlaylist(null);
       navigate(`/dashboard?view=profile&user=${urlUsername}`, { replace: true });
     } else if (viewedUserProp === 'route' && !urlUsername) {
       navigate('/dashboard', { replace: true });
