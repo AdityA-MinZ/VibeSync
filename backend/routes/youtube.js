@@ -120,15 +120,38 @@ router.post('/import-playlist', async (req, res) => {
       return (hours * 3600) + (minutes * 60) + seconds;
     };
 
+    // Helper to extract artist from video title
+    const extractArtist = (title, channelTitle) => {
+      if (!title) return channelTitle;
+      
+      // Try common separators: "Artist - Title", "Artist: Title", "Artist | Title"
+      const separators = [' - ', ' : ', ' | ', ' – ', ' — '];
+      
+      for (const sep of separators) {
+        const parts = title.split(sep);
+        if (parts.length >= 2) {
+          const possibleArtist = parts[0].trim();
+          // If the first part is not too long, it's likely the artist
+          if (possibleArtist.length > 0 && possibleArtist.length < 50) {
+            return possibleArtist;
+          }
+        }
+      }
+      
+      // Fallback to channel title
+      return channelTitle;
+    };
+
     const tracks = items.map(item => {
       const videoId = item.snippet.resourceId.videoId;
       const isoDuration = videoDetails[videoId];
       const durationSeconds = parseDuration(isoDuration);
+      const title = item.snippet.title;
       
       return {
         id: videoId,
-        title: item.snippet.title,
-        artist: item.snippet.channelTitle,
+        title: title,
+        artist: extractArtist(title, item.snippet.channelTitle),
         image: item.snippet.thumbnails?.medium?.url || '',
         youtubeUrl: `https://www.youtube.com/watch?v=${videoId}`,
         duration: durationSeconds,
