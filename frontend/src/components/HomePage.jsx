@@ -1086,7 +1086,7 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
                         <div className="playlist-card-content">
                           <h3 className="playlist-card-title">{playlist.title}</h3>
                           <p className="playlist-card-artist">
-                            By {playlist.owner?.username || 'Unknown'}
+                            {playlist.tracks?.[0]?.artist ? `By ${playlist.tracks[0].artist}` : `By ${playlist.owner?.username || 'Unknown'}`}
                           </p>
                           {playlist.description && (
                             <p className="playlist-card-description">
@@ -1512,7 +1512,7 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
                         className="form-input-modern"
                         placeholder="e.g., Pop, Rock, Electronic"
                         value={playlistGenre}
-                        onChange={(e) => setPlaylistGenre(e.target.value)}
+                        onChange={(e) => setPlaylistGenre(e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1).toLowerCase())}
                       />
                     </div>
 
