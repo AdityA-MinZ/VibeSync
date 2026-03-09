@@ -944,7 +944,12 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
       {/* Sidebar */}
       <Sidebar
         currentPage={currentPage}
-        onNavigate={setCurrentPage}
+        onNavigate={(page) => {
+          if (page !== 'profile') {
+            setViewedUser(null);
+          }
+          setCurrentPage(page);
+        }}
         expanded={sidebarExpanded}
         onToggle={() => setSidebarExpanded((s) => !s)}
         unreadCount={unreadCount}
