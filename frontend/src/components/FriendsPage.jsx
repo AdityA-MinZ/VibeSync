@@ -209,7 +209,6 @@ function FriendsPage({ user, sidebarExpanded }) {
                 </div>
                 <div className="friend-info">
                   <span className="friend-name">{friend.username}</span>
-                  <span className="friend-status">Online</span>
                 </div>
               </div>
             ))
@@ -229,7 +228,6 @@ function FriendsPage({ user, sidebarExpanded }) {
                 </div>
                 <div className="chat-header-text">
                   <h4>{selectedFriend.username}</h4>
-                  <span className="online-indicator">● Online</span>
                 </div>
               </div>
               <button 
