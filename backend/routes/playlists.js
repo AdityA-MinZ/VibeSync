@@ -76,7 +76,7 @@ router.post('/', auth, async (req, res) => {
         album: track.album?.name || track.album,
         image: track.image || track.album?.images?.[0]?.url || track.coverImage,
         duration: track.duration,
-        durationMs: track.duration_ms,
+        duration_ms: track.duration_ms,
         source: track.source || 'youtube',
         sourceUrl: track.sourceUrl || track.externalUrl,
         youtubeUrl: track.youtubeUrl || track.url,
