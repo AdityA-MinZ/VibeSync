@@ -363,13 +363,6 @@ function PlaylistModal({ playlist, onClose, onViewProfile, currentUserId }) {
                     <span className="track-source">No Source</span>
                   )}
                   <span className="track-time">{formatTime(getTrackDuration(track) / 1000)}</span>
-                  <button 
-                    className={`track-like-btn ${trackLikes[idx]?.liked ? 'liked' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); handleTrackLike(idx); }}
-                  >
-                    {trackLikes[idx]?.liked ? '❤️' : '🤍'}
-                    <span className="like-count">{trackLikes[idx]?.count || 0}</span>
-                  </button>
                 </li>
               ))}
               {(!playlist.tracks || playlist.tracks.length === 0) && (
