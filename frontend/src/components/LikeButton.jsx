@@ -14,7 +14,7 @@ function LikeButton({ targetType, targetId, initialCount = 0, showCount = true, 
     const checkLikedStatus = async () => {
       try {
         const result = await checkLike(targetType, stringTargetId);
-        setIsLiked(result.liked || result.hasLiked);
+        setIsLiked(result.hasLiked || false);
       } catch (error) {
         console.error('Failed to check like status:', error);
       }
@@ -24,7 +24,7 @@ function LikeButton({ targetType, targetId, initialCount = 0, showCount = true, 
     const fetchCount = async () => {
       try {
         const result = await getLikeCount(targetType, stringTargetId);
-        setCount(result.count ?? result.likeCount ?? 0);
+        setCount(result.likeCount ?? 0);
       } catch (error) {
         console.error('Failed to fetch like count:', error);
       }
@@ -47,7 +47,7 @@ function LikeButton({ targetType, targetId, initialCount = 0, showCount = true, 
     try {
       const result = await toggleLike(targetType, stringTargetId);
       setIsLiked(result.liked);
-      setCount(result.count ?? result.likeCount ?? 0);
+      setCount(result.likeCount ?? 0);
     } catch (error) {
       console.error('Failed to toggle like:', error);
     } finally {
