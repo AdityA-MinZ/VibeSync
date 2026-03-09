@@ -47,7 +47,7 @@ function MiniPlayer() {
       <div className="mini-player-content">
         <div className="mini-player-track-info">
           <img 
-            src={currentTrack.image || 'https://picsum.photos/50/50'} 
+            src={currentTrack.image || `https://picsum.photos/seed/${currentTrack.id || currentTrack.title}/50/50`} 
             alt="" 
             className="mini-player-track-img"
           />

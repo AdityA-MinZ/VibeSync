@@ -70,6 +70,20 @@ export const updateUserProfile = async (userData) => {
   }
 };
 
+export const getPublicPlaylists = async (limit = 20, skip = 0) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${API_URL}/playlists`, {
+      params: { limit, skip },
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Get public playlists error:', error);
+    throw error;
+  }
+};
+
 export const getUserPlaylists = async (userId, limit = 20, skip = 0) => {
   try {
     const token = localStorage.getItem('token');

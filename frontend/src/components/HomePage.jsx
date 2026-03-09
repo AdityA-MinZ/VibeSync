@@ -11,7 +11,7 @@ import EditProfileModal from "./EditProfileModal";
 import PlaylistModal from "./PlaylistModal";
 import ImageCropper from "./ImageCropper";
 import MiniPlayer from "./MiniPlayer";
-import { getUserProfile, getUserByUsername, getUserPlaylists, getUserStats, getUserActivity, updateUserProfile, updateStreak, importYouTubePlaylist, searchTracks, createPlaylist, deletePlaylist } from "../services/userService";
+import { getUserProfile, getUserByUsername, getUserPlaylists, getUserStats, getUserActivity, getPublicPlaylists, updateUserProfile, updateStreak, importYouTubePlaylist, searchTracks, createPlaylist, deletePlaylist } from "../services/userService";
 import { getNotifications, markAsRead, markAllAsRead, getUnreadCount } from "../services/notificationService";
 import API_URL from '../config';
 
@@ -420,7 +420,7 @@ function HomePage({ user, onLogout }) {
     
     try {
       const [playlists, stats] = await Promise.all([
-        getUserPlaylists(),
+        getPublicPlaylists(),
         getUserStats()
       ]);
       console.log('Playlists loaded:', playlists);
@@ -1013,7 +1013,7 @@ function HomePage({ user, onLogout }) {
                       >
                         <div className="playlist-card-image">
                           <img 
-                            src={playlist.coverImage || `https://picsum.photos/400/500?random=${playlist._id || playlist.id}`} 
+                            src={playlist.coverImage || `https://picsum.photos/seed/${playlist._id || playlist.id}/400/500`} 
                             alt={playlist.title} 
                           />
                           <div className="genre-badge">

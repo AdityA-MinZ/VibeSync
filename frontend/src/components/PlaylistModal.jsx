@@ -278,7 +278,7 @@ function PlaylistModal({ playlist, onClose, onViewProfile, currentUserId }) {
         
         <div className="playlist-modal-header">
           <img 
-            src={playlist.coverImage || `https://picsum.photos/400/400?random=${playlist._id}`}
+            src={playlist.coverImage || `https://picsum.photos/seed/${playlist._id || playlist.id}/400/400`}
             alt={playlist.title}
             className="playlist-modal-cover"
           />
