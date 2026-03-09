@@ -1,5 +1,5 @@
 // frontend/src/components/FriendsPage.jsx
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import api from '../api';
 import './FriendsPage.css';
 
@@ -14,8 +14,15 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
   const [sessionSongName, setSessionSongName] = useState('');
   const [sessionSongUrl, setSessionSongUrl] = useState('');
   const [selectedPlaylist, setSelectedPlaylist] = useState('');
-  const [, setActiveSession] = useState(null);
+  const [activeSession, setActiveSession] = useState(null);
+  const [sessionPlaylist, setSessionPlaylist] = useState(null);
   const messagesEndRef = useRef(null);
+
+  // Filter to only show current user's own playlists
+  const userPlaylists = useMemo(() => {
+    const userId = user?._id || user?.id;
+    return playlists.filter(p => p.owner?._id === userId || p.owner === userId);
+  }, [playlists, user]);
 
   const fetchFriends = useCallback(async () => {
     try {
@@ -111,17 +118,21 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
     if (!sessionSongName.trim() || !selectedFriend) return;
 
     try {
+      const playlist = userPlaylists.find(p => p._id === selectedPlaylist);
       const response = await api.post('/listening-sessions/create', {
         songName: sessionSongName,
         songUrl: sessionSongUrl,
         platform: 'youtube',
-        friendId: selectedFriend._id
+        friendId: selectedFriend._id,
+        playlistId: selectedPlaylist
       });
 
       setSessionSongName('');
       setSessionSongUrl('');
+      setSelectedPlaylist('');
       setShowSessionModal(false);
       setActiveSession(response.data.session);
+      setSessionPlaylist(playlist || null);
       fetchMessages(selectedFriend._id);
     } catch (error) {
       console.log('Error creating session:', error.message);
@@ -132,7 +143,7 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
     try {
       const response = await api.post(`/listening-sessions/${sessionId}/join`);
       setActiveSession(response.data);
-      alert(`Joined session: ${response.data.songName}`);
+      setSessionPlaylist(null);
     } catch (error) {
       console.log('Error joining session:', error.message);
     }
@@ -319,7 +330,7 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
                   onChange={(e) => setSelectedPlaylist(e.target.value)}
                 >
                   <option value="">Select a playlist...</option>
-                  {playlists.map(playlist => (
+                  {userPlaylists.map(playlist => (
                     <option key={playlist._id} value={playlist._id}>
                       {playlist.title || playlist.name} ({playlist.tracks?.length || 0} tracks)
                     </option>
@@ -337,7 +348,7 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
                 <button 
                   className="btn-primary"
                   onClick={() => {
-                    const playlist = playlists.find(p => p._id === selectedPlaylist);
+                    const playlist = userPlaylists.find(p => p._id === selectedPlaylist);
                     if (playlist) {
                       setSessionSongName(playlist.title || playlist.name);
                       setSessionSongUrl(playlist.tracks?.[0]?.youtubeUrl || '');
@@ -350,6 +361,40 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Active Session Panel */}
+      {activeSession && (
+        <div className="session-panel">
+          <div className="session-panel-header">
+            <h4>Listening Session</h4>
+            <button className="session-close-btn" onClick={() => setActiveSession(null)}>×</button>
+          </div>
+          <div className="session-panel-content">
+            <div className="session-track-info">
+              <h5>{activeSession.songName || 'No track'}</h5>
+              {activeSession.songUrl && (
+                <a href={activeSession.songUrl} target="_blank" rel="noopener noreferrer" className="session-track-link">
+                  Open in YouTube
+                </a>
+              )}
+            </div>
+            {sessionPlaylist && sessionPlaylist.tracks && (
+              <div className="session-playlist">
+                <h6>Playlist: {sessionPlaylist.title}</h6>
+                <div className="session-tracks-list">
+                  {sessionPlaylist.tracks.map((track, idx) => (
+                    <div key={idx} className="session-track-item">
+                      <span className="track-number">{idx + 1}</span>
+                      <span className="track-title">{track.title || track.name}</span>
+                      <span className="track-artist">{track.artist}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

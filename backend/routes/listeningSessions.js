@@ -2,13 +2,18 @@ const express = require('express');
 const router = express.Router();
 const ListeningSession = require('../models/ListeningSession');
 const Message = require('../models/Message');
+const User = require('../models/User');
 const auth = require('../middleware/auth');
 
 // POST /api/listening-sessions/create - Create a new listening session
 router.post('/create', auth, async (req, res) => {
   try {
-    const { songName, songUrl, platform, friendId } = req.body;
+    const { songName, songUrl, platform, friendId, playlistId } = req.body;
     const userId = req.user.id;
+    
+    // Get user info
+    const user = await User.findById(userId).select('username');
+    const username = user?.username || 'Someone';
     
     // Create the session
     const session = new ListeningSession({
@@ -16,6 +21,7 @@ router.post('/create', auth, async (req, res) => {
       participants: [userId],
       songName,
       songUrl,
+      playlistId,
       platform: platform || 'youtube',
       status: 'active'
     });
@@ -26,12 +32,13 @@ router.post('/create', auth, async (req, res) => {
     const inviteMessage = new Message({
       sender: userId,
       receiver: friendId,
-      content: `${req.user.username} is listening to ${songName}`,
+      content: `${username} is listening to ${songName}`,
       type: 'session_invite',
       sessionData: {
         sessionId: session._id.toString(),
         songName,
-        songUrl
+        songUrl,
+        hostUsername: username
       }
     });
     

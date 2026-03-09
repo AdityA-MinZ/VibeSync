@@ -484,3 +484,112 @@
   height: 100vh;
   color: #6b7280;
 }
+
+/* Session Panel */
+.session-panel {
+  position: fixed;
+  bottom: 0;
+  right: 20px;
+  width: 350px;
+  max-height: 400px;
+  background: #1a1a2e;
+  border: 1px solid #2d2d44;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+}
+
+.session-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #2d2d44;
+}
+
+.session-panel-header h4 {
+  margin: 0;
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.session-close-btn {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.session-close-btn:hover {
+  color: #fff;
+}
+
+.session-panel-content {
+  padding: 12px 16px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.session-track-info {
+  margin-bottom: 12px;
+}
+
+.session-track-info h5 {
+  margin: 0 0 6px 0;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.session-track-link {
+  color: #7c3aed;
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.session-track-link:hover {
+  text-decoration: underline;
+}
+
+.session-playlist h6 {
+  margin: 0 0 8px 0;
+  color: #9ca3af;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.session-tracks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.session-track-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: rgba(124, 58, 237, 0.1);
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.track-number {
+  color: #6b7280;
+  min-width: 20px;
+}
+
+.track-title {
+  flex: 1;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-artist {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
