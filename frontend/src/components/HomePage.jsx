@@ -35,6 +35,12 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewedUser, setViewedUser] = useState(null);
 
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${API_URL.replace('/api', '')}${imagePath}`;
+  };
+
   // Create page state
   const [importMode, setImportMode] = useState(null); // 'youtube', 'manual'
   const [importUrl, setImportUrl] = useState("");
@@ -1067,7 +1073,7 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
                       >
                         <div className="playlist-card-image">
                           <img 
-                            src={playlist.coverImage || `https://picsum.photos/seed/${playlist._id || playlist.id}/400/500`} 
+                            src={getImageUrl(playlist.coverImage) || `https://picsum.photos/seed/${playlist._id || playlist.id}/400/500`} 
                             alt={playlist.title} 
                           />
                           <div className="genre-badge">

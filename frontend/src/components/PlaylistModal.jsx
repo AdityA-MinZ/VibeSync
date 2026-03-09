@@ -3,11 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { toggleLike, followUser, unfollowUser, checkFollowStatus } from '../services/socialService';
 import { incrementPlaylistPlays } from '../services/userService';
 import { useMusicPlayer } from '../context/MusicPlayerContext';
+import API_URL from '../config';
 import LikeButton from './LikeButton';
 import './PlaylistModal.css';
 
 function PlaylistModal({ playlist, onClose, onViewProfile, currentUserId }) {
   const navigate = useNavigate();
+
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${API_URL.replace('/api', '')}${imagePath}`;
+  };
   const { 
     currentTrack, 
     isPlaying,
@@ -294,7 +301,7 @@ function PlaylistModal({ playlist, onClose, onViewProfile, currentUserId }) {
         
         <div className="playlist-modal-header">
           <img 
-            src={playlist.coverImage || `https://picsum.photos/seed/${playlist._id || playlist.id}/400/400`}
+            src={getImageUrl(playlist.coverImage) || `https://picsum.photos/seed/${playlist._id || playlist.id}/400/400`}
             alt={playlist.title}
             className="playlist-modal-cover"
           />
