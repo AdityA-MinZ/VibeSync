@@ -205,13 +205,15 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
     if (!window.confirm('Are you sure you want to delete this playlist?')) return;
     
     try {
-      await deletePlaylist(playlistId);
+      const result = await deletePlaylist(playlistId);
+      console.log('Delete result:', result);
       setHomePlaylists(homePlaylists.filter(p => p._id !== playlistId));
       setProfilePlaylists(profilePlaylists.filter(p => p._id !== playlistId));
       alert('Playlist deleted successfully');
     } catch (error) {
       console.error('Delete playlist error:', error);
-      alert('Failed to delete playlist');
+      const errorMessage = error.response?.data?.error || error.message || 'Failed to delete playlist';
+      alert(errorMessage);
     }
   };
 
@@ -785,9 +787,12 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
           if (viewedUser) {
             // Fetch other user's profile by username
             profile = await getUserByUsername(viewedUser);
+            console.log('Viewed user profile:', profile);
+            console.log('Viewed user ID:', profile?._id);
             // For other users, we only get basic info (no stats/activity for now)
             stats = null;
             playlists = profile ? await getUserPlaylists(profile._id) : [];
+            console.log('Fetched other user playlists:', playlists);
             activity = [];
           } else {
             // Fetch own profile
@@ -1257,10 +1262,10 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
               </div>
             </div>
 
-            {/* Your Playlists / User's Playlists */}
+            {/* Playlists */}
             <div className="section-card">
               <div className="section-header">
-                <h3>{viewedUser ? `${viewedUser}'s Playlists` : 'Your Playlists'}</h3>
+                <h3>{viewedUser ? `${profileData?.username}'s Playlists` : 'Your Playlists'}</h3>
                 {!viewedUser && <button className="view-all-btn" onClick={handleViewAllPlaylists}>See All</button>}
               </div>
               <div className="playlist-mini-grid">
@@ -1278,20 +1283,22 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
                         <h4>{playlist.name || playlist.title}</h4>
                         <span>{playlist.tracks?.length || 0} tracks</span>
                       </div>
-                      <button
-                        className="action-btn delete-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeletePlaylist(playlist._id, e);
-                        }}
-                        title="Delete playlist"
-                      >
-                        🗑️
-                      </button>
+                      {!viewedUser && (
+                        <button
+                          className="action-btn delete-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeletePlaylist(playlist._id, e);
+                          }}
+                          title="Delete playlist"
+                        >
+                          🗑️
+                        </button>
+                      )}
                     </div>
                   ))
                 ) : (
-                  <p className="no-playlists">No playlists yet. Create your first playlist!</p>
+                  <p className="no-playlists">{viewedUser ? 'No public playlists yet.' : 'No playlists yet. Create your first playlist!'}</p>
                 )}
               </div>
             </div>

@@ -26,10 +26,17 @@ router.get('/me', auth, async (req, res) => {
 
 // GET playlists by user ID
 router.get('/user/:userId', auth, async (req, res) => {
-  const playlists = await Playlist.find({ owner: req.params.userId, isPublic: true })
-    .populate('owner', 'username')
-    .sort({ createdAt: -1 });
-  res.json(playlists);
+  try {
+    console.log('Fetching playlists for userId:', req.params.userId);
+    const playlists = await Playlist.find({ owner: req.params.userId, isPublic: true })
+      .populate('owner', 'username')
+      .sort({ createdAt: -1 });
+    console.log('Found playlists for user:', playlists.length);
+    res.json(playlists);
+  } catch (error) {
+    console.error('Get user playlists error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // POST create (protected)
@@ -82,9 +89,35 @@ router.put('/:id', auth, async (req, res) => {
 
 // DELETE (owner only)
 router.delete('/:id', auth, async (req, res) => {
-  const playlist = await Playlist.findOneAndDelete({ _id: req.params.id, owner: req.user.id });
-  if (!playlist) return res.status(404).json({ error: 'Not found' });
-  res.json({ message: 'Deleted' });
+  try {
+    console.log('Delete playlist request:', req.params.id);
+    console.log('User making request:', req.user.id);
+    
+    const playlist = await Playlist.findById(req.params.id);
+    if (!playlist) {
+      console.log('Playlist not found');
+      return res.status(404).json({ error: 'Playlist not found' });
+    }
+    
+    console.log('Playlist owner:', playlist.owner);
+    console.log('Request user:', req.user.id);
+    
+    // Check if user is the owner
+    const playlistOwnerId = playlist.owner.toString();
+    const requestUserId = req.user.id.toString();
+    
+    if (playlistOwnerId !== requestUserId) {
+      console.log('User is not the owner');
+      return res.status(403).json({ error: 'Not authorized to delete this playlist' });
+    }
+    
+    await Playlist.findByIdAndDelete(req.params.id);
+    console.log('Playlist deleted successfully');
+    res.json({ message: 'Deleted' });
+  } catch (error) {
+    console.error('Delete playlist error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 module.exports = router;

@@ -99,13 +99,16 @@ export const getUserPlaylists = async (userId, limit = 20, skip = 0) => {
     const url = userId 
       ? `${API_URL}/playlists/user/${userId}` 
       : `${API_URL}/playlists/me`;
+    console.log('Fetching playlists from URL:', url, 'with userId:', userId);
     const response = await axios.get(url, {
       params: { limit, skip },
       headers: { Authorization: `Bearer ${token}` }
     });
+    console.log('Playlists response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Get user playlists error:', error);
+    console.error('Error response:', error.response?.data);
     // Fallback to public playlists if auth fails
     try {
       const response = await axios.get(`${API_URL}/playlists`, {
