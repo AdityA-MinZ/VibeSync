@@ -1,6 +1,7 @@
 // frontend/src/components/HomePage.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useParams, useNavigate } from "react-router-dom";
+import axios from 'axios';
 import Sidebar from "./Sidebar";
 import FriendsPage from "./FriendsPage";
 import SearchResults from "./SearchResults";
@@ -21,7 +22,9 @@ function formatNumber(num) {
   return num.toString();
 }
 
-function HomePage({ user, onLogout }) {
+function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
+  const { username: urlUsername } = useParams();
+  const navigate = useNavigate();
   const [currentFilter, setCurrentFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState("home");
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
@@ -64,6 +67,10 @@ function HomePage({ user, onLogout }) {
   const [showImageCropper, setShowImageCropper] = useState(false);
   const [imageToCrop, setImageToCrop] = useState(null);
   const [userTopGenres, setUserTopGenres] = useState([]);
+
+  // Friend request state
+  const [friendStatus, setFriendStatus] = useState('none'); // 'none', 'pending', 'friends'
+  const [friendLoading, setFriendLoading] = useState(false);
 
   // Notifications state
   const [notifications, setNotifications] = useState([]);
@@ -232,6 +239,30 @@ function HomePage({ user, onLogout }) {
       document.execCommand('copy');
       document.body.removeChild(tempInput);
       alert('Profile link copied to clipboard!');
+    }
+  };
+
+  const handleSendFriendRequest = async () => {
+    if (!profileData?._id) return;
+    setFriendLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${API_URL}/friends/request/${profileData._id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setFriendStatus('pending');
+      alert('Friend request sent!');
+    } catch (error) {
+      console.error('Friend request error:', error);
+      if (error.response?.data?.error) {
+        alert(error.response.data.error);
+      } else {
+        alert('Failed to send friend request');
+      }
+    } finally {
+      setFriendLoading(false);
     }
   };
 
@@ -715,6 +746,17 @@ function HomePage({ user, onLogout }) {
     }
   }, [searchParams]);
 
+  // Handle route-based profile viewing (/:username)
+  useEffect(() => {
+    if (viewedUserProp === 'route' && urlUsername) {
+      setCurrentPage('profile');
+      setViewedUser(urlUsername);
+      navigate(`/dashboard?view=profile&user=${urlUsername}`, { replace: true });
+    } else if (viewedUserProp === 'route' && !urlUsername) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [viewedUserProp, urlUsername, navigate]);
+
   // Fetch profile data when on profile page
   useEffect(() => {
     if (currentPage === "profile") {
@@ -1136,7 +1178,17 @@ function HomePage({ user, onLogout }) {
                   </div>
                 </div>
                 <div className="profile-actions">
-                  <button className="btn-primary" onClick={() => setIsEditingProfile(true)}>Edit Profile</button>
+                  {!viewedUser ? (
+                    <button className="btn-primary" onClick={() => setIsEditingProfile(true)}>Edit Profile</button>
+                  ) : (
+                    <button 
+                      className="btn-primary" 
+                      onClick={handleSendFriendRequest}
+                      disabled={friendLoading || friendStatus === 'pending'}
+                    >
+                      {friendLoading ? 'Sending...' : friendStatus === 'pending' ? 'Request Sent' : 'Add Friend'}
+                    </button>
+                  )}
                   <button className="action-btn" onClick={handleShareProfile}>Share Profile</button>
                 </div>
               </div>

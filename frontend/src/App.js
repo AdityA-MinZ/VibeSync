@@ -208,10 +208,19 @@ function AppContent({ currentUser, onLogin, onRegister, onLogout }) {
           )
         } />
         
-        {/* Dashboard/Home */}
+        {/* Dashboard/Home - own profile */}
         <Route path="/dashboard" element={
           isAuthenticated() ? (
-            <HomePage user={currentUser} onLogout={onLogout} />
+            <HomePage user={currentUser} onLogout={onLogout} viewedUser={null} />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        } />
+
+        {/* User Profile - /username */}
+        <Route path="/:username" element={
+          isAuthenticated() ? (
+            <HomePage user={currentUser} onLogout={onLogout} viewedUser="route" />
           ) : (
             <Navigate to="/login" replace />
           )

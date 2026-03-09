@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toggleLike, followUser, unfollowUser, checkFollowStatus } from '../services/socialService';
 import { useMusicPlayer } from '../context/MusicPlayerContext';
 import LikeButton from './LikeButton';
 import './PlaylistModal.css';
 
 function PlaylistModal({ playlist, onClose, onViewProfile, currentUserId }) {
+  const navigate = useNavigate();
   const { 
     currentTrack, 
     isPlaying,
@@ -63,8 +65,8 @@ function PlaylistModal({ playlist, onClose, onViewProfile, currentUserId }) {
   };
 
   const handleViewProfile = () => {
-    if (onViewProfile && playlist.owner?.username) {
-      onViewProfile(playlist.owner.username);
+    if (playlist.owner?.username) {
+      navigate(`/${playlist.owner.username}`);
     }
   };
 
@@ -292,19 +294,7 @@ function PlaylistModal({ playlist, onClose, onViewProfile, currentUserId }) {
               >
                 {playlist.owner?.username || 'Unknown'}
               </span>
-              {!isOwnPlaylist && ownerId && (
-                <button 
-                  className="follow-owner-btn"
-                  onClick={handleFollowToggle}
-                  disabled={followLoading}
-                >
-                  {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
-                </button>
-              )}
             </p>
-            {playlist.description && (
-              <p className="playlist-modal-description">{playlist.description}</p>
-            )}
             <div className="playlist-modal-stats">
               <span>{playlist.tracks?.length || 0} tracks</span>
               <span>{playlist.likes || 0} likes</span>
