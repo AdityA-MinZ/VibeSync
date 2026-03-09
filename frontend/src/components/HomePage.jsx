@@ -1107,7 +1107,7 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
                         <div className="playlist-card-content">
                           <h3 className="playlist-card-title">{playlist.title}</h3>
                           <p className="playlist-card-artist">
-                            {playlist.tracks?.[0]?.artist ? `By ${playlist.tracks[0].artist}` : `By ${playlist.owner?.username || 'Unknown'}`}
+                            By {playlist.owner?.username || 'Unknown'}
                           </p>
                           {playlist.description && (
                             <p className="playlist-card-description">
