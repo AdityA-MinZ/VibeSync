@@ -265,8 +265,10 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
                   >
                     {message.type === 'session_invite' ? (
                       <div className="session-invite-message">
-                        <p className="session-text">{message.content}</p>
-                        {message.sender !== user.id && (
+                        <p className="session-text">
+                          {message.sender?.username || message.sessionData?.hostUsername || 'Someone'} is listening to {message.sessionData?.songName || 'a song'}
+                        </p>
+                        {message.sender?._id !== user.id && message.sender !== user.id && (
                           <button
                             className="join-session-btn"
                             onClick={() => joinSession(message.sessionData.sessionId)}
