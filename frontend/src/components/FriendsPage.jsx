@@ -180,7 +180,11 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
               <div key={request.requestId} className="pending-item">
                 <div className="friend-avatar">
                   {request.profileImage ? (
-                    <img src={request.profileImage} alt={request.username} />
+                    <img 
+                      src={request.profileImage.startsWith('http') ? request.profileImage : `https://vibesync-n1fk.onrender.com${request.profileImage}`} 
+                      alt={request.username}
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
                   ) : (
                     request.username?.charAt(0).toUpperCase()
                   )}
@@ -222,7 +226,11 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
               >
                 <div className="friend-avatar">
                   {friend.profileImage ? (
-                    <img src={friend.profileImage} alt={friend.username} />
+                    <img 
+                      src={friend.profileImage.startsWith('http') ? friend.profileImage : `https://vibesync-n1fk.onrender.com${friend.profileImage}`} 
+                      alt={friend.username} 
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
                   ) : (
                     friend.username?.charAt(0).toUpperCase()
                   )}
@@ -245,7 +253,11 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
               <div className="chat-header-info">
                 <div className="friend-avatar">
                   {selectedFriend.profileImage ? (
-                    <img src={selectedFriend.profileImage} alt={selectedFriend.username} />
+                    <img 
+                      src={selectedFriend.profileImage.startsWith('http') ? selectedFriend.profileImage : `https://vibesync-n1fk.onrender.com${selectedFriend.profileImage}`} 
+                      alt={selectedFriend.username}
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
                   ) : (
                     selectedFriend.username?.charAt(0).toUpperCase()
                   )}
