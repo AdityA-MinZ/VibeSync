@@ -132,6 +132,32 @@ router.put('/accept/:requestId', auth, async (req, res) => {
   }
 });
 
+// DELETE /api/friends/:requestId - Decline friend request
+router.delete('/:requestId', auth, async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    console.log('Declining request:', requestId);
+
+    const friendReq = await Friend.findOne({
+      _id: requestId,
+      status: 'pending',
+      user2: req.user.id // Only the recipient can decline
+    });
+    
+    if (!friendReq) {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+
+    await Friend.findByIdAndDelete(requestId);
+    console.log('Request declined');
+    
+    res.json({ message: 'Friend request declined' });
+  } catch (error) {
+    console.log('Decline ERROR:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET /api/friends
 router.get('/', auth, async (req, res) => {
   try {

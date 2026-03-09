@@ -5,6 +5,7 @@ import './FriendsPage.css';
 
 function FriendsPage({ user, sidebarExpanded }) {
   const [friends, setFriends] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -18,19 +19,51 @@ function FriendsPage({ user, sidebarExpanded }) {
   const fetchFriends = useCallback(async () => {
     try {
       const response = await api.get('/friends');
+      
+      // Get accepted friends
       const acceptedFriends = response.data
         .filter(friend => friend.status === 'accepted')
         .map(friend => {
           const friendUser = friend.user1._id === user.id ? friend.user2 : friend.user1;
           return { ...friendUser, friendshipId: friend._id };
         });
+      
+      // Get pending incoming requests (where user2 is current user)
+      const pending = response.data
+        .filter(friend => friend.status === 'pending' && friend.user2._id === user.id)
+        .map(friend => ({
+          ...friend.user1,
+          requestId: friend._id
+        }));
+      
       setFriends(acceptedFriends);
+      setPendingRequests(pending);
       setLoading(false);
     } catch (error) {
       console.log('Error fetching friends:', error.message);
       setLoading(false);
     }
   }, [user.id]);
+
+  // Accept friend request
+  const acceptRequest = async (requestId) => {
+    try {
+      await api.put(`/friends/accept/${requestId}`);
+      fetchFriends();
+    } catch (error) {
+      console.log('Error accepting request:', error.message);
+    }
+  };
+
+  // Decline friend request
+  const declineRequest = async (requestId) => {
+    try {
+      await api.delete(`/friends/${requestId}`);
+      fetchFriends();
+    } catch (error) {
+      console.log('Error declining request:', error.message);
+    }
+  };
 
   // Fetch friends list
   useEffect(() => {
@@ -112,6 +145,40 @@ function FriendsPage({ user, sidebarExpanded }) {
           <h3>Friends</h3>
           <span className="friends-count">{friends.length}</span>
         </div>
+        
+        {/* Pending Requests Section */}
+        {pendingRequests.length > 0 && (
+          <div className="pending-requests">
+            <div className="pending-header">
+              <span>Pending Requests</span>
+              <span className="pending-count">{pendingRequests.length}</span>
+            </div>
+            {pendingRequests.map(request => (
+              <div key={request.requestId} className="pending-item">
+                <div className="friend-avatar">
+                  {request.username.charAt(0).toUpperCase()}
+                </div>
+                <div className="pending-info">
+                  <span className="friend-name">{request.username}</span>
+                </div>
+                <div className="pending-actions">
+                  <button 
+                    className="accept-btn"
+                    onClick={() => acceptRequest(request.requestId)}
+                  >
+                    ✓
+                  </button>
+                  <button 
+                    className="decline-btn"
+                    onClick={() => declineRequest(request.requestId)}
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         
         <div className="friends-list">
           {friends.length === 0 ? (

@@ -40,6 +40,77 @@
   font-size: 0.8rem;
 }
 
+/* Pending Requests */
+.pending-requests {
+  padding: 10px;
+  border-bottom: 1px solid #2d2d44;
+}
+
+.pending-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  color: var(--color-accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.pending-count {
+  background: var(--color-accent);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+}
+
+.pending-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(124, 58, 237, 0.1);
+  margin-bottom: 8px;
+}
+
+.pending-info {
+  flex: 1;
+  margin-left: 10px;
+}
+
+.pending-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.accept-btn, .decline-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.accept-btn {
+  background: #22c55e;
+  color: white;
+}
+
+.accept-btn:hover {
+  background: #16a34a;
+}
+
+.decline-btn {
+  background: #ef4444;
+  color: white;
+}
+
+.decline-btn:hover {
+  background: #dc2626;
+}
+
 .friends-list {
   flex: 1;
   overflow-y: auto;
