@@ -680,8 +680,8 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
             return playlistText.includes('hip') || playlistText.includes('rap') || playlistText.includes('hop');
           case 'jazz':
             return playlistText.includes('jazz') || playlistText.includes('blues') || playlistText.includes('swing');
-          case 'classical':
-            return playlistText.includes('classical') || playlistText.includes('orchestra') || playlistText.includes('symphony');
+          case 'metal':
+            return playlistText.includes('metal') || playlistText.includes('heavy') || playlistText.includes('rock');
           default:
             return true;
         }
@@ -1042,7 +1042,7 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
                         >
                           All
                         </button>
-                        {['electronic', 'pop', 'rock', 'hiphop', 'jazz', 'classical'].filter(g => !userTopGenres.slice(0, 4).map(g => g.toLowerCase()).includes(g)).slice(0, 3).map((genre) => (
+                        {['electronic', 'pop', 'rock', 'hiphop', 'jazz', 'metal'].filter(g => !userTopGenres.slice(0, 4).map(g => g.toLowerCase()).includes(g)).slice(0, 3).map((genre) => (
                           <button
                             key={genre}
                             className={`filter-pill ${currentFilter === genre ? 'active' : ''}`}
@@ -1054,7 +1054,7 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
                       </>
                     ) : (
                       <>
-                        {['all', 'electronic', 'pop', 'rock', 'hiphop', 'jazz', 'classical'].map((genre) => (
+                        {['all', 'electronic', 'pop', 'rock', 'hiphop', 'jazz', 'metal'].map((genre) => (
                           <button
                             key={genre}
                             className={`filter-pill ${currentFilter === genre ? 'active' : ''}`}
