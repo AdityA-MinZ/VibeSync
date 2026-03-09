@@ -808,7 +808,14 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
             // Fetch other user's profile by username
             profile = await getUserByUsername(viewedUser);
             console.log('Viewed user profile:', profile);
-            console.log('Viewed user ID:', profile?._id);
+            
+            if (!profile) {
+              setProfileError('User not found');
+              setProfileLoading(false);
+              return;
+            }
+            
+            console.log('Viewed user ID:', profile._id);
             // Fetch stats for other users
             stats = profile ? await getUserStats(profile._id) : null;
             playlists = profile ? await getUserPlaylists(profile._id) : [];
@@ -1178,7 +1185,7 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
                         className="profile-avatar-img"
                       />
                     ) : (
-                      (profileData?.username || user?.username || "A").charAt(0).toUpperCase()
+                      ((profileData?.username || viewedUser || user?.username) || "A").charAt(0).toUpperCase()
                     )}
                   </div>
                   <input
@@ -1197,8 +1204,10 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
                   </button>
                 </div>
                 <div className="profile-details">
-                  <h2 className="profile-name">{profileData?.username || user?.username || "User"}</h2>
-                  <p className="profile-handle">@{(profileData?.username || user?.username || "user").toLowerCase()}</p>
+                  <h2 className="profile-name">
+                    {profileData?.displayName || profileData?.username || (viewedUser || user?.username) || "User"}
+                  </h2>
+                  <p className="profile-handle">@{((profileData?.username || viewedUser || user?.username) || "user").toLowerCase()}</p>
                   <p className="profile-bio">{profileData?.bio || "add your bio"}</p>
                   <div className="profile-meta">
                     <span className="meta-item">📅 Joined {profileData?.createdAt ? new Date(profileData.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : "Recently"}</span>
