@@ -258,6 +258,7 @@
   background: #7c3aed;
   color: #fff;
   border-bottom-right-radius: 4px;
+  text-align: right;
 }
 
 .message.received {
@@ -266,6 +267,7 @@
   background: #2d2d44;
   color: #fff;
   border-bottom-left-radius: 4px;
+  text-align: left;
 }
 
 .message-text {

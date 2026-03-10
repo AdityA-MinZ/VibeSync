@@ -16,11 +16,6 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
   const [selectedPlaylist, setSelectedPlaylist] = useState('');
   const [activeSession, setActiveSession] = useState(null);
   const [sessionPlaylist, setSessionPlaylist] = useState(null);
-  const [showAddFriendModal, setShowAddFriendModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [searching, setSearching] = useState(false);
-  const [sendingRequest, setSendingRequest] = useState(null);
   const messagesEndRef = useRef(null);
 
   // Filter to only show current user's own playlists
@@ -161,56 +156,6 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
     });
   };
 
-  const searchUsers = async (query) => {
-    if (!query.trim() || query.trim().length < 2) {
-      setSearchResults([]);
-      return;
-    }
-    setSearching(true);
-    try {
-      const response = await api.get(`/search?type=users&q=${encodeURIComponent(query.trim())}&limit=20`);
-      const currentUserId = user?._id || user?.id;
-      const filteredUsers = (response.data.results.users || []).filter(
-        u => u._id !== currentUserId
-      );
-      const friendsIds = friends.map(f => f._id);
-      const pendingIds = pendingRequests.map(p => p._id);
-      setSearchResults(filteredUsers.map(u => ({
-        ...u,
-        isFriend: friendsIds.includes(u._id),
-        isPending: pendingIds.includes(u._id)
-      })));
-    } catch (error) {
-      console.log('Error searching users:', error.message);
-      setSearchResults([]);
-    }
-    setSearching(false);
-  };
-
-  const sendFriendRequest = async (userId) => {
-    setSendingRequest(userId);
-    try {
-      await api.post(`/friends/request/${userId}`);
-      setSearchResults(prev => prev.map(u => 
-        u._id === userId ? { ...u, isPending: true } : u
-      ));
-    } catch (error) {
-      console.log('Error sending friend request:', error.message);
-    }
-    setSendingRequest(null);
-  };
-
-  const handleSearchChange = (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    if (query.length >= 2) {
-      const timeoutId = setTimeout(() => searchUsers(query), 300);
-      return () => clearTimeout(timeoutId);
-    } else {
-      setSearchResults([]);
-    }
-  };
-
   if (loading) {
     return <div className="friends-loading">Loading friends...</div>;
   }
@@ -218,20 +163,13 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
   return (
     <div className={`friends-page ${sidebarExpanded ? 'sidebar-expanded' : ''}`}>
       {/* Friends Sidebar */}
-      <div className="friends-sidebar">
-        <div className="friends-sidebar-header">
-          <h3>Friends</h3>
-          <div className="header-actions">
-            <span className="friends-count">{friends.length}</span>
-            <button 
-              className="add-friend-btn"
-              onClick={() => setShowAddFriendModal(true)}
-              title="Add Friend"
-            >
-              +
-            </button>
+        <div className="friends-sidebar">
+          <div className="friends-sidebar-header">
+            <h3>Friends</h3>
+            <div className="header-actions">
+              <span className="friends-count">{friends.length}</span>
+            </div>
           </div>
-        </div>
         
         {/* Pending Requests Section */}
         {pendingRequests.length > 0 && (
@@ -399,75 +337,6 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
           </div>
         )}
       </div>
-
-      {/* Add Friend Modal */}
-      {showAddFriendModal && (
-        <div className="modal active" onClick={(e) => e.target === e.currentTarget && setShowAddFriendModal(false)}>
-          <div className="modal-content add-friend-modal">
-            <button className="modal-close" onClick={() => setShowAddFriendModal(false)}>
-              &times;
-            </button>
-            <h3>Add Friends</h3>
-            <p className="add-friend-description">
-              Search for users to send friend requests
-            </p>
-            
-            <div className="search-users-input">
-              <input
-                type="text"
-                placeholder="Search by username..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                autoFocus
-              />
-            </div>
-
-            <div className="search-results-list">
-              {searching && <div className="searching">Searching...</div>}
-              {!searching && searchResults.length === 0 && searchQuery.length >= 2 && (
-                <div className="no-results">No users found</div>
-              )}
-              {!searching && searchQuery.length < 2 && (
-                <div className="search-hint">Enter at least 2 characters to search</div>
-              )}
-              {searchResults.map(resultUser => (
-                <div key={resultUser._id} className="search-user-item">
-                  <div className="user-avatar">
-                    {resultUser.profileImage ? (
-                      <img 
-                        src={resultUser.profileImage.startsWith('http') ? resultUser.profileImage : `https://vibesync-n1fk.onrender.com${resultUser.profileImage}`} 
-                        alt={resultUser.username}
-                        onError={(e) => { e.target.style.display = 'none'; }}
-                      />
-                    ) : (
-                      resultUser.username?.charAt(0).toUpperCase()
-                    )}
-                  </div>
-                  <div className="user-info">
-                    <span className="user-name">{resultUser.username}</span>
-                    <span className="user-email">{resultUser.email}</span>
-                  </div>
-                  <div className="user-actions">
-                    {resultUser.isFriend ? (
-                      <span className="friend-status">Already Friends</span>
-                    ) : resultUser.isPending ? (
-                      <span className="pending-status">Request Sent</span>
-                    ) : (
-                      <button 
-                        className="send-request-btn"
-                        onClick={() => sendFriendRequest(resultUser._id)}
-                        disabled={sendingRequest === resultUser._id}
-                      >
-                        {sendingRequest === resultUser._id ? 'Sending...' : 'Add Friend'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Create Session Modal */}
       {showSessionModal && (
