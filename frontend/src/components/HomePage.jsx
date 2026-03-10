@@ -293,20 +293,16 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
   const handleRemoveFriend = async () => {
     if (!profileData?._id) return;
     
-    if (!confirm('Are you sure you want to remove this friend?')) return;
-    
     setFriendLoading(true);
     try {
       const token = localStorage.getItem('token');
       await axios.delete(
-        `${API_URL}/friends/${profileData._id}`,
+        `${API_URL}/friends/remove/${profileData._id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setFriendStatus('none');
-      alert('Friend removed!');
     } catch (error) {
       console.error('Remove friend error:', error);
-      alert('Failed to remove friend');
     } finally {
       setFriendLoading(false);
     }
