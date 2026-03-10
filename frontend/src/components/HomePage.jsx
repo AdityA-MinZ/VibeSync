@@ -290,6 +290,28 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
     }
   };
 
+  const handleRemoveFriend = async () => {
+    if (!profileData?._id) return;
+    
+    if (!confirm('Are you sure you want to remove this friend?')) return;
+    
+    setFriendLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(
+        `${API_URL}/friends/${profileData._id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setFriendStatus('none');
+      alert('Friend removed!');
+    } catch (error) {
+      console.error('Remove friend error:', error);
+      alert('Failed to remove friend');
+    } finally {
+      setFriendLoading(false);
+    }
+  };
+
   // Settings handlers
   const handleSettingsNavClick = (section) => {
     setSettingsSection(section);
@@ -838,6 +860,19 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
             console.log('Fetched other user stats:', stats);
             console.log('Fetched other user playlists:', playlists);
             activity = [];
+            
+            // Check friend status
+            try {
+              const token = localStorage.getItem('token');
+              const statusRes = await axios.get(
+                `${API_URL}/friends/status/${profile._id}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+              setFriendStatus(statusRes.data.status);
+            } catch (err) {
+              console.log('Error checking friend status:', err.message);
+              setFriendStatus('none');
+            }
           } else {
             // Fetch own profile
             [profile, stats, playlists, activity] = await Promise.all([
@@ -1233,6 +1268,14 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
                 <div className="profile-actions">
                   {!viewedUser ? (
                     <button className="btn-primary" onClick={() => setIsEditingProfile(true)}>Edit Profile</button>
+                  ) : friendStatus === 'friends' ? (
+                    <button 
+                      className="btn-danger" 
+                      onClick={handleRemoveFriend}
+                      disabled={friendLoading}
+                    >
+                      {friendLoading ? 'Removing...' : 'Remove Friend'}
+                    </button>
                   ) : (
                     <button 
                       className="btn-primary" 

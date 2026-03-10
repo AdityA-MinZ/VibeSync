@@ -172,4 +172,52 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+// GET /api/friends/status/:userId
+router.get('/status/:userId', auth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const currentUserId = req.user.id;
+    
+    const friendship = await Friend.findOne({
+      $or: [
+        { user1: currentUserId, user2: userId },
+        { user1: userId, user2: currentUserId }
+      ]
+    });
+    
+    if (!friendship) {
+      return res.json({ status: 'none' });
+    }
+    
+    res.json({ status: friendship.status });
+  } catch (error) {
+    console.log('Friend status ERROR:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/friends/remove/:userId - Remove a friend
+router.delete('/remove/:userId', auth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const currentUserId = req.user.id;
+    
+    const friendship = await Friend.findOneAndDelete({
+      $or: [
+        { user1: currentUserId, user2: userId, status: 'accepted' },
+        { user1: userId, user2: currentUserId, status: 'accepted' }
+      ]
+    });
+    
+    if (!friendship) {
+      return res.status(404).json({ error: 'Friendship not found' });
+    }
+    
+    res.json({ message: 'Friend removed successfully' });
+  } catch (error) {
+    console.log('Remove friend ERROR:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
