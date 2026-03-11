@@ -110,7 +110,7 @@ export const unfollowUser = async (userId) => {
 export const checkFollowStatus = async (userId) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${SOCIAL_API_URL}/follow/status/${userId}`, {
+    const response = await axios.get(`${SOCIAL_API_URL}/social/follow/status/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
@@ -218,7 +218,7 @@ export const addComment = async (targetType, targetId, content, parentCommentId 
 export const getComments = async (targetType, targetId, limit = 20, skip = 0, sortBy = 'newest') => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${SOCIAL_API_URL}/comments`, {
+    const response = await axios.get(`${SOCIAL_API_URL}/social/comments`, {
       params: { targetType, targetId, limit, skip, sortBy },
       headers: { Authorization: `Bearer ${token}` }
     });
