@@ -320,7 +320,6 @@ function PlaylistModal({ playlist, onClose, onViewProfile, currentUserId }) {
             </p>
             <div className="playlist-modal-stats">
               <span>{playlist.tracks?.length || 0} tracks</span>
-              <span>{playlist.likes || 0} likes</span>
             </div>
             <div className="playlist-modal-actions">
               <LikeButton
