@@ -1235,20 +1235,24 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
                       ((profileData?.username || viewedUser || user?.username) || "A").charAt(0).toUpperCase()
                     )}
                   </div>
-                  <input
-                    type="file"
-                    id="profile-image-upload"
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                    onChange={handleProfilePictureUpload}
-                  />
-                  <button 
-                    className="edit-avatar-btn" 
-                    title="Change photo" 
-                    onClick={() => document.getElementById('profile-image-upload').click()}
-                  >
-                    📷
-                  </button>
+                  {!viewedUser && (
+                    <>
+                      <input
+                        type="file"
+                        id="profile-image-upload"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={handleProfilePictureUpload}
+                      />
+                      <button 
+                        className="edit-avatar-btn" 
+                        title="Change photo" 
+                        onClick={() => document.getElementById('profile-image-upload').click()}
+                      >
+                        📷
+                      </button>
+                    </>
+                  )}
                 </div>
                 <div className="profile-details">
                   <h2 className="profile-name">
