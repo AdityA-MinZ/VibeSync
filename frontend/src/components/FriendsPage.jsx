@@ -284,11 +284,14 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
                   <p>Send a message to start the conversation!</p>
                 </div>
               ) : (
-                messages.map(message => (
-                  <div
-                    key={message._id}
-                    className={`message ${message.sender === user.id ? 'sent' : 'received'}`}
-                  >
+                messages.map(message => {
+                    const senderId = message.sender?._id || message.sender;
+                    const isSent = senderId === user.id || senderId === user._id;
+                    return (
+                      <div
+                        key={message._id}
+                        className={`message ${isSent ? 'sent' : 'received'}`}
+                      >
                     {message.type === 'session_invite' ? (
                       <div className="session-invite-message">
                         <p className="session-text">
