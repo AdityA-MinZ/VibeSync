@@ -414,7 +414,16 @@ function PlaylistModal({ playlist, onClose, onViewProfile, currentUserId }) {
                 {comments.map((comment, idx) => (
                   <li key={idx} className="comment-item">
                     <div className="comment-avatar">
-                      {comment.user?.username?.[0]?.toUpperCase() || 'U'}
+                      {comment.user?.profileImage ? (
+                        <img 
+                          src={comment.user.profileImage.startsWith('http') ? comment.user.profileImage : `https://vibesync-n1fk.onrender.com${comment.user.profileImage}`} 
+                          alt={comment.user?.username}
+                          onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling && (e.target.nextSibling.style.display = 'flex'); }}
+                        />
+                      ) : null}
+                      <span className="comment-avatar-letter" style={comment.user?.profileImage ? { display: 'none' } : {}}>
+                        {comment.user?.username?.[0]?.toUpperCase() || 'U'}
+                      </span>
                     </div>
                     <div className="comment-content">
                       <span className="comment-user">{comment.user?.username || 'User'}</span>
