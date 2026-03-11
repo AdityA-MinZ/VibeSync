@@ -18,6 +18,11 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
   const [sessionPlaylist, setSessionPlaylist] = useState(null);
   const messagesEndRef = useRef(null);
 
+  const isMessageSent = (message) => {
+    const senderId = message.sender?._id || message.sender;
+    return senderId === user.id || senderId === user._id;
+  };
+
   // Filter to only show current user's own playlists
   const userPlaylists = useMemo(() => {
     const userId = user?._id || user?.id;
@@ -284,14 +289,11 @@ function FriendsPage({ user, sidebarExpanded, playlists = [] }) {
                   <p>Send a message to start the conversation!</p>
                 </div>
               ) : (
-                messages.map(message => {
-                    const senderId = message.sender?._id || message.sender;
-                    const isSent = senderId === user.id || senderId === user._id;
-                    return (
-                      <div
-                        key={message._id}
-                        className={`message ${isSent ? 'sent' : 'received'}`}
-                      >
+                messages.map(message => (
+                  <div
+                    key={message._id}
+                    className={`message ${isMessageSent(message) ? 'sent' : 'received'}`}
+                  >
                     {message.type === 'session_invite' ? (
                       <div className="session-invite-message">
                         <p className="session-text">
