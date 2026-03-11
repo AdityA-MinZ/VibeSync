@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toggleLike, followUser, unfollowUser, checkFollowStatus } from '../services/socialService';
+import { toggleLike, followUser, unfollowUser, checkFollowStatus, getComments } from '../services/socialService';
 import { incrementPlaylistPlays } from '../services/userService';
 import { useMusicPlayer } from '../context/MusicPlayerContext';
 import API_URL from '../config';
@@ -100,7 +100,22 @@ function PlaylistModal({ playlist, onClose, onViewProfile, currentUserId }) {
         initialLikes[idx] = { liked: false, count: track.likes || 0 };
       });
       setTrackLikes(initialLikes);
-      setComments(playlist.comments || []);
+      
+      const fetchPlaylistComments = async () => {
+        const playlistId = playlist._id || playlist.id;
+        if (playlistId) {
+          try {
+            const result = await getComments('playlist', playlistId, 50, 0, 'newest');
+            setComments(result.comments || []);
+          } catch (err) {
+            console.log('Error fetching comments:', err.message);
+            setComments(playlist.comments || []);
+          }
+        } else {
+          setComments(playlist.comments || []);
+        }
+      };
+      fetchPlaylistComments();
     }
   }, [playlist]);
 
