@@ -3,15 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
-    "mongo:start": "../mongodb-start.sh",
-    "mongo:stop": "../mongodb-stop.sh",
-    "test:socket": "node test-socket.js",
-    "test:youtube": "node test-youtube.js",
-    "test:streaks": "node test-streaks.js",
-    "test:playback": "node test-playback.js",
-    "test:social": "node test-social.js",
-    "test:all": "npm run test:youtube && npm run test:streaks && npm run test:playback && npm run test:social"
+    "dev": "nodemon server.js"
   },
   "dependencies": {
     "axios": "^1.7.0",
