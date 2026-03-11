@@ -204,7 +204,7 @@ export const addComment = async (targetType, targetId, content, parentCommentId 
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${SOCIAL_API_URL}/comments`,
+      `${SOCIAL_API_URL}/social/comments`,
       { targetType, targetId, content, parentCommentId },
       { headers: { Authorization: `Bearer ${token}` } }
     );
