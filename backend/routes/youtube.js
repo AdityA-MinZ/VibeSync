@@ -122,10 +122,14 @@ router.post('/import-playlist', async (req, res) => {
 
     // Helper to extract artist from video title
     const extractArtist = (title, channelTitle) => {
-      if (!title) return channelTitle;
+      if (!title) return 'Unknown Artist';
+      
+      // If channel is YouTube Music, try harder to extract artist from title
+      const isYouTubeMusic = channelTitle?.toLowerCase().includes('youtube music') || 
+                             channelTitle?.toLowerCase().includes('music');
       
       // Try common separators: "Artist - Title", "Artist: Title", "Artist | Title"
-      const separators = [' - ', ' : ', ' | ', ' – ', ' — '];
+      const separators = [' - ', ' : ', ' | ', ' – ', ' — ', '-'];
       
       for (const sep of separators) {
         const parts = title.split(sep);
@@ -133,13 +137,34 @@ router.post('/import-playlist', async (req, res) => {
           const possibleArtist = parts[0].trim();
           // If the first part is not too long, it's likely the artist
           if (possibleArtist.length > 0 && possibleArtist.length < 50) {
+            // For YouTube Music, also check if it looks like an artist name
+            if (isYouTubeMusic) {
+              // Remove any common suffixes like "Topic", "VEVO", etc.
+              const cleanedArtist = possibleArtist
+                .replace(/\s*(Topic|VEVO|Official|Live|HD|MV)$/i, '')
+                .trim();
+              if (cleanedArtist.length > 0) {
+                return cleanedArtist;
+              }
+            }
             return possibleArtist;
           }
         }
       }
       
-      // Fallback to channel title
-      return channelTitle;
+      // Fallback to channel title, but clean up YouTube Music branding
+      if (channelTitle) {
+        let cleanChannel = channelTitle
+          .replace(/\s*-\ Topic$/i, '')
+          .replace(/\s*YouTube Music$/i, '')
+          .replace(/\s*Music$/i, '')
+          .trim();
+        if (cleanChannel && cleanChannel.length > 0 && cleanChannel.length < 50) {
+          return cleanChannel;
+        }
+      }
+      
+      return 'Unknown Artist';
     };
 
     const tracks = items.map(item => {

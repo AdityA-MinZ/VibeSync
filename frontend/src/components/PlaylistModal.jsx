@@ -375,7 +375,6 @@ function PlaylistModal({ playlist, onClose, onViewProfile, currentUserId }) {
                   ) : (
                     <span className="track-source">No Source</span>
                   )}
-                  <span className="track-time">{formatTime(getTrackDuration(track) / 1000)}</span>
                 </li>
               ))}
               {(!playlist.tracks || playlist.tracks.length === 0) && (
