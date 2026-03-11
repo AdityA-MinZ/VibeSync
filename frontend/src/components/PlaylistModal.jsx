@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toggleLike, followUser, unfollowUser, checkFollowStatus, getComments } from '../services/socialService';
+import { toggleLike, followUser, unfollowUser, checkFollowStatus, getComments, addComment } from '../services/socialService';
 import { incrementPlaylistPlays } from '../services/userService';
 import { useMusicPlayer } from '../context/MusicPlayerContext';
 import API_URL from '../config';
@@ -277,12 +277,9 @@ function PlaylistModal({ playlist, onClose, onViewProfile, currentUserId }) {
     if (!commentText.trim()) return;
     setLoadingComment(true);
     try {
-      const newComment = {
-        text: commentText,
-        user: { username: 'You' },
-        createdAt: new Date().toISOString()
-      };
-      setComments([newComment, ...comments]);
+      const playlistId = playlist._id || playlist.id;
+      const result = await addComment('playlist', playlistId, commentText);
+      setComments([result.comment || result, ...comments]);
       setCommentText('');
     } catch (error) {
       console.error('Failed to add comment:', error);
@@ -427,7 +424,7 @@ function PlaylistModal({ playlist, onClose, onViewProfile, currentUserId }) {
                     </div>
                     <div className="comment-content">
                       <span className="comment-user">{comment.user?.username || 'User'}</span>
-                      <span className="comment-text">{comment.text}</span>
+                      <span className="comment-text">{comment.content || comment.text}</span>
                       <span className="comment-time">
                         {new Date(comment.createdAt).toLocaleDateString()}
                       </span>
