@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const Playlist = require('../models/Playlist');
+const Friend = require('../models/Friend');
 const auth = require('../middleware/auth');
 const mongoose = require('mongoose');
 const multer = require('multer');
@@ -187,10 +188,15 @@ router.get('/me/stats', auth, async (req, res) => {
     const playlists = await Playlist.find({ owner: req.user.id });
     const totalTracks = playlists.reduce((sum, p) => sum + (p.tracks?.length || 0), 0);
 
+    const friendsCount = await Friend.countDocuments({
+      $or: [{ user1: req.user.id }, { user2: req.user.id }],
+      status: 'accepted'
+    });
+
     res.json({
       playlistsCount: playlists.length,
       tracksCount: totalTracks,
-      followersCount: user.followers?.length || 0,
+      followersCount: friendsCount,
       followingCount: user.followings?.length || 0,
       currentStreak: user.streak?.currentStreak || 0,
       longestStreak: user.streak?.longestStreak || 0
@@ -214,10 +220,15 @@ router.get('/:id/stats', async (req, res) => {
     const totalTracks = playlists.reduce((sum, p) => sum + (p.tracks?.length || 0), 0);
     const totalPlays = playlists.reduce((sum, p) => sum + (p.plays || 0), 0);
 
+    const friendsCount = await Friend.countDocuments({
+      $or: [{ user1: req.params.id }, { user2: req.params.id }],
+      status: 'accepted'
+    });
+
     res.json({
       playlistsCount: playlists.length,
       tracksCount: totalTracks,
-      followersCount: user.followers?.length || 0,
+      followersCount: friendsCount,
       followingCount: user.followings?.length || 0,
       totalPlays: totalPlays,
       currentStreak: 0,

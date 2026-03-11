@@ -1301,7 +1301,7 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
                     <div className="stat-icon-wrapper">👥</div>
                     <div className="stat-info">
                       <div className="stat-number">{profileStats?.followersCount || 0}</div>
-                      <div className="stat-label">Followers</div>
+                      <div className="stat-label">Friends</div>
                     </div>
                   </div>
                   <div className="stat-card">
@@ -1326,7 +1326,7 @@ function HomePage({ user, onLogout, viewedUser: viewedUserProp }) {
                     <div className="stat-icon-wrapper">👥</div>
                     <div className="stat-info">
                       <div className="stat-number">{profileStats?.followersCount || 0}</div>
-                      <div className="stat-label">Followers</div>
+                      <div className="stat-label">Friends</div>
                     </div>
                   </div>
                   <div className="stat-card">
